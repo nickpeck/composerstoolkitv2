@@ -300,15 +300,19 @@ def concertize(seq: Sequence,
     in voicing and the given scale context
     """
     for event in seq.events:
+        if len(event.pitches) == 0:
+            yield event
+            continue
+        new_pitches = []
         base_index = scale.index(event.pitches[-1])
         if direction == "up":
-            event.pitches = event.pitches +\
+            new_pitches = event.pitches +\
                 [scale[base_index + i] for i in voicing]
         if direction == "down":
-            event.pitches = event.pitches +\
+            new_pitches = event.pitches +\
                 [scale[base_index - i] for i in voicing]
         event.pitches = sorted(event.pitches)
-        yield event
+        yield Event(new_pitches, event.duration)
 
 @Transformer
 def batch(seq: Sequence,
