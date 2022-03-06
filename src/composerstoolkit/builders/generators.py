@@ -226,7 +226,7 @@ def using_markov_table(starting_event: Event,
 
 def random_slice(base_seq: Sequence,
     slice_size: Optional[int]=None,
-    max_length: Optional[int]=None) -> Iterator[Event]:
+    max_len: Optional[int]=None) -> Iterator[Event]:
     """Return a series Events by slicing random
     portions of base_seq up to size max_length
     If slice_size is None, a slice of randomly chosen
@@ -247,23 +247,23 @@ def random_slice(base_seq: Sequence,
             cummulative_len = cummulative_len \
                 + sum([event.duration for event in sliced])
             if max_len is not None:
-                if cummulative_len >= max_len:
+                if cummulative_len > max_len:
                     return
             for event in sliced:
                 yield event
-    return _get_slice(src_events, max_length)
+    return _get_slice(src_events, max_len)
 
 def chord_cycle(scale: Set[int],
     start: Event,
     cycle_of=-4,
     voice_lead=True,
-    max_length: Optional[int]=None) -> Iterator[Event]:
+    max_len: Optional[int]=None) -> Iterator[Event]:
     """
     Useful for creating simple progressions (cycle of fifths).
     Scale can be diatonic, or chromatic.
     Given a chord event ('start') that is part of scale,
     transpose the chord about the given scalic distance (cycle_of)
-    up to a duration of max_length beats.
+    up to a duration of max_len events.
     Each chord takes the duration of event start.
     If voice_lead is true, use octave displacement to preserve the best
     voice-leading between each chord motion.
@@ -273,11 +273,11 @@ def chord_cycle(scale: Set[int],
     scale = list(scale)
     sorted(scale)
     yield start
-    i = start.duration
+    i = 1
     if {*start.pitches}.difference({*scale}) != set():
         raise Exception("Starting chord is not part of the given scale")
     while True:
-        if max_length is not None and i > max_length:
+        if max_len is not None and i >= max_len:
             return
         next_pitches = []
         for pitch in start.pitches:
@@ -302,7 +302,7 @@ def chord_cycle(scale: Set[int],
         next_pitches = sorted(next_pitches)
         start = Event(pitches=next_pitches, duration=start.duration)
         yield start
-        i = i + start.duration
+        i = i + 1
 
 def chords_from_scale(pitch_classes: Iterator[int],
     spacing=2,
@@ -314,7 +314,7 @@ def chords_from_scale(pitch_classes: Iterator[int],
     voices (eg, 2 for tertiary, 3 for quartal).
     Return a sequence of events, one for each chord, of duration 0
     """
-    scale_span = abs(max(pitch_classes) - min(pitch_classes))
+    scale_span = abs(max(pitch_classes) - min(pitch_classes)) + 1
     for index, root in enumerate(pitch_classes):
         seq = itertools.cycle(pitch_classes)
         pitches = list(more_itertools.islice_extended(
@@ -336,7 +336,7 @@ def chords_from_scale(pitch_classes: Iterator[int],
             chord.append(pitch)
         yield Event(pitches=chord)
 
-def voice_lead(event: Event,
+def select_chords(event: Event,
     scales: Iterator[Set[int]],
     chord_lexicon: List[Event]) -> Iterator[Event]:
     """

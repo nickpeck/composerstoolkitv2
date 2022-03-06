@@ -6,8 +6,7 @@ from composerstoolkit import *
 from composerstoolkit.resources import scales
 
 symetrical_scale = [e.pitches[-1] for e in resultant_pitches(
-    counter1=5,
-    counter2=6,
+    counters=[5,6],
     start_at=60)]
 
 symetrical_scale_span = symetrical_scale[-1] - symetrical_scale[0]

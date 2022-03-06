@@ -1,7 +1,7 @@
 """Use a generator to find all the chords that can be produced from a given scale
 """
 
-from composerstoolkit.core import *
+from composerstoolkit import *
 from composerstoolkit.resources import scales
 
 chords = Sequence.from_generator(chords_from_scale(

@@ -16,7 +16,7 @@ melody = Sequence.from_generator(
     axis_melody(
         axis_pitch = pf("C6"),
         scale = scales.C_mel_minor,
-        steps = 14,
+        max_steps = 14,
         direction="contract"
 )).transform(map_to_pulses(
      Sequence.from_generator(collision_pattern(4,5)).transform(loop())
@@ -46,7 +46,7 @@ accompaniment = Sequence.from_generator(
     axis_melody(
         axis_pitch = pf("C3"),
         scale = scales.C_mel_minor,
-        steps = 14,
+        max_steps = 14,
         direction="contract"
 )).transform(map_to_pulses(
      Sequence.from_generator(pulses([WHOLE_NOTE])).transform(loop())

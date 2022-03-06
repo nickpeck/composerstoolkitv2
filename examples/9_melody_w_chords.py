@@ -10,7 +10,7 @@ chords = Sequence.from_generator(
         scale=scales.C_major,
         start=Event(pitches=[60,64,67,71], duration=WHOLE_NOTE),
         cycle_of=-4,
-        max_length=16)).bake()
+        max_len=16)).bake()
 
 @Constraint
 def constraint_use_chord_tone_on_first_beat(

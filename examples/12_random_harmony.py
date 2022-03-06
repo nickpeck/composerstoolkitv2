@@ -40,7 +40,7 @@ start = Event([
     duration=WHOLE_NOTE)
 
 progression = Sequence.from_generator(
-    voice_lead(event=start,
+    select_chords(event=start,
     scales=Permutations(starting_list=modes).flatten(),
     chord_lexicon = chord_lexicon)
 ).transform(fit_to_range(
