@@ -37,13 +37,13 @@ def slice_looper(seq: Sequence,
     n_repeats: int = 1) -> Iterator[Event]:
     buffer = []
     for event in seq.events:
-        if len(buffer) <= n_events:
+        if len(buffer) < n_events:
             buffer.append(event)
         else:
             for _i in range(n_repeats):
-                for event in buffer:
-                    yield event
-            buffer = []
+                for evt in buffer:
+                    yield evt
+            buffer = [event]
     for event in buffer:
         yield event
 
@@ -181,25 +181,32 @@ def linear_interpolate(seq: Sequence,
     for left, right in more_itertools.windowed(seq.events, 2, fillvalue=None):
         if right is None:
             yield left
+            continue
         pitch_vector = right.pitches[-1] - left.pitches[-1]
         if pitch_vector == 0:
             yield left
+            continue
         pitch_increment = int(pitch_vector/steps)
         if pitch_increment == 0:
             yield left
+            continue
+        yield left
         duration_increment = left.duration/steps
-        for _i in range(steps):
+        for _i in range(steps-1):
             new_pitch = left.pitches[-1] + pitch_increment
             if constrain_to_scale is not None:
                 new_pitch = min(constrain_to_scale, key=lambda x:abs(x-new_pitch))
             yield Event([new_pitch], duration_increment)
             pitch_increment = pitch_increment + pitch_increment
+    yield right
 
 @Transformer
 def motivic_interpolation(seq: Sequence,
     motive: FiniteSequence) -> Iterator[Event]:
     """Map fixed sequence motive to every note of motive
     """
+    if not isinstance(motive, FiniteSequence):
+        raise Exception("Motive should be a FiniteSequence")
     is_first = True
     if motive.events[0].pitches == []:
         raise Exception("The motive must start with a pitch event")
@@ -210,10 +217,12 @@ def motivic_interpolation(seq: Sequence,
         if is_first:
             pitch_delta = base_evt.pitches[-1] - motive.events[0].pitches[-1]
             is_first = False
+        else:
+            pitch_delta = base_evt.pitches[-1] - motive.events[0].pitches[-1]
         duration = base_evt.duration
         for motive_evt in motive.events:
             relative_dur = motive_evt.duration/motive.duration
-            dur = motive_evt.duration * relative_dur
+            dur = duration * relative_dur
             if motive.pitches == []:
                 yield Event([], dur)
                 continue
@@ -332,19 +341,6 @@ def fit_to_range(seq: Sequence,
             while pitch < min_pitch:
                 pitch = pitch + 12
             pitches.append(pitch)
-        pitches = sorted(pitches)
-        yield Event(pitches, event.duration)
-
-@Transformer
-def correct_voicings(seq: Sequence,
-    prevent_intervals: List[int] = [1,2,6]) -> Iterator[Event]:
-    for event in seq.events:
-        pitches = sorted(event.pitches)
-        for i in range(len(pitches)-1):
-            lower = pitches[i]
-            upper = pitches[i+1]
-            if upper-lower in prevent_intervals:
-                pitches[i+1] = upper - 12
         pitches = sorted(pitches)
         yield Event(pitches, event.duration)
 

@@ -84,13 +84,24 @@ class TransformerTests(unittest.TestCase):
         pitches = [next(transformed.events).pitches[-1] for i in range(500)]
         assert pitches[-5:] == [60,62,64,65,67]
 
-    # def test_slice_looper(self):
-        # transformed = self.test_seq.transform(
-            # slice_looper(n_events=2,n_repeats=2)
-        # ).bake()
-        # print(transformed.pitches)
-        # assert transformed.pitches == [
-            # 60,62,64,60,62,64,60,62,64,65,67]
+    def test_slice_looper(self):
+        transformed = self.test_seq.transform(
+            slice_looper(n_events=2,n_repeats=2)
+        ).bake()
+        assert transformed.pitches == [
+            60,62,60,62,64,65,64,65,67]
+
+    def test_feedback(self):
+        transformed = self.test_seq.transform(
+            feedback(n_events=2)
+        ).bake()
+        chords = [e.pitches for e in transformed.events]
+        assert chords == [
+            [60],
+            [60, 62],
+            [60, 62, 64],
+            [60, 62, 64, 65],
+            [60, 62, 64, 65, 67]]
 
     def test_transpose(self):
         transformed = self.test_seq.transform(
@@ -282,12 +293,12 @@ class TransformerTests(unittest.TestCase):
             Event(pitches=[67], duration=1)
         ]
 
-    # def test_modal_quantize(self):
-        # transformed = self.test_seq.transform(
-            # modal_quantize(scale=scales.D_major)
-        # ).bake()
-        # assert transformed.pitches == [
-            # 59,62,64,66,67]
+    def test_modal_quantize(self):
+        transformed = self.test_seq.transform(
+            modal_quantize(scale=scales.D_major)
+        ).bake()
+        assert transformed.pitches == [
+            59,62,64,64,67]
 
     def test_rhythmic_quantize(self):
         seq = Sequence([
@@ -373,8 +384,79 @@ class TransformerTests(unittest.TestCase):
         assert transformed.pitches == [1,2,3,4,5]
         assert transformed.durations == [1,1,1,1,1]
 
+    def test_explode_intervals_linear(self):
+        transformed = self.test_seq.transform(
+            explode_intervals(
+                factor=2,
+                mode="linear")
+        ).bake()
+        assert transformed.pitches == [60,64,68,71,75]
 
+    def test_explode_intervals_exponential(self):
+        transformed = self.test_seq.transform(
+            explode_intervals(
+                factor=2,
+                mode="exponential")
+        ).bake()
+        assert transformed.pitches == [60,64,68,70,74]
 
+    def test_linear_interpolate(self):
+        seq = Sequence([
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1)
+        ])
+        transformed = seq.transform(
+            linear_interpolate(steps=2)
+        ).bake()
+        assert transformed.pitches == [60,61,62,63,64]
+
+    def test_linear_interpolate_constrain_to_scale(self):
+        seq = Sequence([
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1)
+        ])
+        transformed = seq.transform(
+            linear_interpolate(
+                steps=2,
+                constrain_to_scale=scales.C_major)
+        ).bake()
+        assert transformed.pitches == [60,60,62,62,64]
+
+    def test_linear_interpolate(self):
+        motive = FiniteSequence([
+            Event(pitches=[1], duration=1),
+            Event(pitches=[2], duration=1),
+            Event(pitches=[0], duration=1)
+        ])
+        seq = Sequence([
+            Event(pitches=[60], duration=3),
+            Event(pitches=[63], duration=3),
+        ])
+        transformed = seq.transform(
+            motivic_interpolation(motive=motive)
+        ).bake()
+        assert transformed.events == [
+            Event([60], 1),
+            Event([61], 1),
+            Event([59], 1),
+            Event([63], 1),
+            Event([64], 1),
+            Event([62], 1)]
+
+    def test_random_mutation(self):
+        seq = Sequence([Event([0],1) for i in range(1000)])
+        transformed = seq.transform(
+            random_mutation(
+                key_function=lambda e,v: Event([v], e.duration),
+                choices=[1],
+                threshold=0.5
+            )
+        ).bake()
+        new_pitches = transformed.pitches
+        mutated = list(filter(lambda e: e == 1, new_pitches))
+        assert len(mutated) > 400 and len(mutated) < 600
 
 
 if __name__ == "__main__":
