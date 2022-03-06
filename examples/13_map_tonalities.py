@@ -15,34 +15,52 @@ from composerstoolkit.builders.permutators import Permutations
 
 pf = pitches.PitchFactory()
 
-def my_gate1(context):
-    if context.beat_offset % 30 > 15:
-        return False
-    return True
+def time_gate(cycle_length, in_secs, out_secs):
+    def _gate(context):
+        mod = context.beat_offset % cycle_length
+        if mod >= in_secs and mod < out_secs:
+            return False
+        return True
+    return _gate
 
 even_pulse = Sequence.from_generator(
     pulses([EIGHTH_NOTE]))\
     .transform(loop())
 
 chords = Sequence.from_generator(
-    cantus([pf("G2"), pf("A2"), pf("B2"), pf("C2"), pf("D2"), pf("Gb2")])
-).transform(
+    random_slice(Sequence(events=[
+        Event([pf("G2")], duration=EIGHTH_NOTE),
+        Event([pf("C3")], duration=EIGHTH_NOTE),
+        Event([pf("F3")], duration=EIGHTH_NOTE),
+        Event([pf("Bb3")], duration=EIGHTH_NOTE),
+        Event([pf("C4")], duration=EIGHTH_NOTE)])
+)).transform(
     loop()
 ).transform(
     map_to_pulses(even_pulse)
 ).transform(
     fit_to_range(
-        min_pitch = pf("C3"),
-        max_pitch = pf("C5"))
+        min_pitch = pf("C2"),
+        max_pitch = pf("C4"))
 ).transform(
     arpeggiate()
 ).transform(
     gated(
-        map_tonality(scales.Db_major),
-        my_gate1
+        modal_quantize(scales.Eb_major),
+        time_gate(60,15,30)
+    )
+).transform(
+    gated(
+        modal_quantize(scales.Gb_major),
+        time_gate(60,30,45)
+    )
+).transform(
+    gated(
+        modal_quantize(scales.Gb_major),
+        time_gate(60,45,60)
     )
 )
 
-Container(bpm=150, playback_rate=1)\
+Container(bpm=95, playback_rate=1)\
     .add_sequence(chords)\
     .playback()
