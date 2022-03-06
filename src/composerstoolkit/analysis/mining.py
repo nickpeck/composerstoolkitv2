@@ -34,22 +34,21 @@ def common_subsequences(
         return sum(parent[i:i+len(sublist)]==\
             sublist for i in range(len(parent)))
 
+    if max_match_len > len(dataset) > 1:
+        raise Exception("max_match_len cannot be > len(dataset)")
+
     for i1 in range(len(dataset) - max_match_len):
         previous = None
         for i2 in range(min_match_len, max_match_len):
             head = dataset[i1:i1 + i2]
             tail = dataset[i1 + i2:]
             count = _count_occurrences(head, tail)
-            if count == 0:
-                if previous is not None:
-                    head = previous
-                    results.append(head)
-                    previous = None
-                break
-            previous = head
-        results.append(head)
-    results = [list(j) for i, j in itertools.groupby(results)]
+            if head not in results:
+                results = results + [head for i in range(count + 1)]
+
+    results = [list(j) for i, j in itertools.groupby(sorted(results))]
     results = [(len(seq), seq[0]) for seq in results]
+    results = filter(lambda r: r[0] > 1, results)
     results = sorted(results,
         key=lambda m: m[0], reverse=True)
     return results

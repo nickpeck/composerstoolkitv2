@@ -118,5 +118,32 @@ class TestChordalAnalysis(unittest.TestCase):
         # C maj 7 is the largest match
         assert found_chords == [{0,4,7,11}]
 
+class TestCommonSubsequences(unittest.TestCase):
+
+    def test_common_subsequences(self):
+        dataset = [1,2,3,1,2,3,1,2,3]
+        results = common_subsequences(
+            dataset = dataset,
+            min_match_len = 3,
+            max_match_len = 5
+        )
+        assert results == [
+           (3, [1,2,3]),
+           (2, [2,3,1]),
+           (2, [3,1,2])
+        ]
+
+    def test_it_raises_an_exc_if_dataset_too_short(self):
+        dataset = [1,2,3,1,2,3,1,2,3]
+        with self.assertRaises(Exception) as e:
+            results = common_subsequences(
+                dataset = dataset,
+                min_match_len = 3,
+                max_match_len = 10
+            )
+        assert e.exception.args == \
+            ("max_match_len cannot be > len(dataset)",)
+        
+
 if __name__ == "__main__":
     unittest.main()
