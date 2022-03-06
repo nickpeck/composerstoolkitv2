@@ -7,6 +7,32 @@ from mido import MidiFile
 from composerstoolkit.core import (Graph, Edge, Vector,
     Event, Sequence, FiniteSequence, Container)
 
+from composerstoolkit.resources.pitches import PitchFactory
+
+class TestPitchFactory(unittest.TestCase):
+    def test_pitch_factory_returns_midi_pitch_nos_from_note_names(self):
+        pitch = PitchFactory()
+        assert pitch("A4") == 69
+        assert pitch("A#4") == 70
+        assert pitch("Bb4") == 70
+        assert pitch("G9") == 127
+        assert pitch("C-1") == 0
+
+    def test_pitch_factory_can_return_frequencies(self):
+        pitch = PitchFactory(output="hz")
+        assert pitch("A4") == 440
+        assert pitch("A#4") == 466.16
+        assert pitch("Bb4") == 466.16
+        assert pitch("G9") == 12543.85
+        assert pitch("C-1") == 8.18
+
+    def test_pitch_factory_can_convert_midi_nos_to_names(self):
+        pitch = PitchFactory(output="name")
+        assert pitch(69) == "A4"
+        assert pitch(70) == "A#4"
+        assert pitch(127) == "G9"
+        assert pitch(0) == "C-1"
+
 class TestGraph(unittest.TestCase):
 
     def test_graph_is_itterable(self):

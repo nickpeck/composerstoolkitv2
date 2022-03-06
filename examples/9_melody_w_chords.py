@@ -45,6 +45,8 @@ melody = develop(
     min_beats=16
 )
 
+melody = Sequence(melody.events).transform(tie_repeated()).bake()
+
 Container(bpm=60, playback_rate=1)\
     .add_sequence(melody[:16])\
     .add_sequence(chords)\

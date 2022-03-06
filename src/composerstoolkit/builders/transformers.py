@@ -273,7 +273,6 @@ def batch(seq: Sequence,
     """
     for transformer in transformations:
         seq = Sequence(transformer(seq))
-    print(seq)
     return seq.events
 
 @Transformer
@@ -288,23 +287,20 @@ def gated(seq: Sequence,
     transformed = transformer(seq)
     i = 0
     previous: Optional[Event] = None
-    for event in seq.events:
+    for a,b in zip(seq.events, transformed):
         i = i + 1
         context = Context(
-            event = event,
+            event = a,
             sequence = seq,
             beat_offset = i,
             previous = previous
         )
         if condition(context):
-            try:
-                previous = next(transformed)
-                yield previous
-            except StopIteration:
-                return
+            previous = b
+            yield b
         else:
-            previous = event
-            yield previous
+            previous = a
+            yield a
 
 @Transformer
 def arpeggiate(seq: Sequence,
