@@ -17,7 +17,18 @@ sequence = FiniteSequence.from_graph(graph)
 
 common_vectors = common_subsequences(sequence.to_vectors())
 common_rhythms = common_subsequences(sequence.durations)
-chunked = seq_chunked(sequence.pitches, 16)
+
+def chunked(dataset: List[Any], window: int):
+    """Return a list comprising of dataset
+    broken down into down into sizes of
+    length window.
+    """
+    chunks = []
+    for i in range(0, len(dataset), window):
+        chunks.append(dataset[i:i + window])
+    return chunks
+
+chunked = chunked(sequence.pitches, 16)
 
 hidden_pitch_patterns = hidden_subsequences(chunked, 100)
 

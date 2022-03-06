@@ -40,9 +40,10 @@ start = Event([
     duration=WHOLE_NOTE)
 
 progression = Sequence.from_generator(
-    select_chords(event=start,
-    scales=Permutations(starting_list=modes).flatten(),
-    chord_lexicon = chord_lexicon)
+    select_chords(
+        event=start,
+        scales=Permutations(starting_list=modes).flatten(),
+        chord_lexicon=chord_lexicon)
 ).transform(fit_to_range(
     min_pitch = pf("C3"),
     max_pitch = pf("C9")

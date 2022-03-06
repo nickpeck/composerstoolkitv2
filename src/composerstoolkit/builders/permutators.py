@@ -28,10 +28,10 @@ class Permutations(Generic[T]):
         generations = []
         for i in range(self.n_generations):
             a, b = itertools.tee(self.starting_list, 2)
-            perms = set(itertools.permutations(a))
+            perms = itertools.permutations(a)
             if self.return_last_gen_only and i == self.n_generations-1:
-                return itertools.chain(perms)
-            generations.append(perms)
+                return itertools.chain(set(perms))
+            generations.append(set(perms))
             if i < len(range(self.n_generations)):
                 self.starting_list = self.__class__._new_generation(b)
         return itertools.chain(*generations)
