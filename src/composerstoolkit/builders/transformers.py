@@ -4,7 +4,7 @@ Iterator of Event objects.
 """
 import itertools
 import math
-from typing import List, Optional, Iterator, Union, Callable
+from typing import List, Optional, Iterator, Union, Callable, Set
 
 import more_itertools
 
@@ -361,3 +361,17 @@ def arpeggiate(seq: Sequence,
             individual_note_len = event.duration / n_pitches
         for note in event.pitches:
             yield Event(pitches=[note], duration=individual_note_len)
+
+@Transformer
+def map_tonality(seq: Sequence,
+    scale: Set[int]) -> Iterator[Event]:
+    for event in seq.events:
+        new_pitches = []
+        for pitch in event.pitches:
+            if pitch in scale:
+                new_pitches.append(pitch)
+                continue
+            unused = scale.difference({*new_pitches})
+            nearest = min(unused, key=lambda x:abs(x-pitch))
+            new_pitches.append(nearest)
+        yield Event(pitches=new_pitches, duration=event.duration)
