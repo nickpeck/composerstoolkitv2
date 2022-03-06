@@ -21,6 +21,7 @@ lockfile==0.12.2
 mccabe==0.6.1
 MIDIUtil==1.2.1
 mido==1.2.10
+more-itertools==8.12.0
 msgpack==1.0.3
 mypy==0.920
 mypy-extensions==0.4.3

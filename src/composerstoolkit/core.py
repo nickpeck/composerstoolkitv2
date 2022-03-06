@@ -482,6 +482,7 @@ class Container():
         print("Channel {} playback starting".format(channel_no))
         sleep(offset)
         for event in seq.events:
+            print(event)
             for pitch in event.pitches:
                 synth.noteon(0, pitch, 60)
             sleep(event.duration * time_scale_factor)

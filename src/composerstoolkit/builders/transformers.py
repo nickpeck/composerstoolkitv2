@@ -4,6 +4,7 @@ Iterator of Event objects.
 """
 from dataclasses import dataclass
 import itertools
+import more_itertools
 import math
 from typing import List, Optional, Iterator, Union, Callable
 
@@ -81,15 +82,21 @@ def rotate(seq: Sequence, n_pitches: int, no_times=1) -> Iterator[Event]:
     return rotated
 
 @Transformer
-def aggregate_into_chords(seq: Sequence,
+def aggregate(seq: Sequence,
     n_voices: int=4,
     duration: int=1) -> Iterator[Event]:
     """Return a new stream of events in which each slice of
     pitches (up to n_voices) has been aggregated into a chordal
     structure.
     """
-    for pitches in itertools.islice(seq.events, n_voices):
-        yield Event(list(pitches), duration) # type: ignore
+    for group in more_itertools.grouper(seq.events, n_voices):
+        pitches = []
+        for event in group:
+            pitches = pitches + list(
+                filter(lambda p: p is not None, event.pitches))
+        yield Event(
+            sorted(pitches),
+            duration) # type: ignore
 
 # @Transformer
 # def linear_interpolate(seq, resolution=1):
