@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Callable, Iterator, Set
+from time import sleep
+from typing import Any, Dict, List, Optional, Callable, Iterator, Set, Tuple
 
 import itertools
 import functools
+import fluidsynth # type: ignore
+from midiutil.MidiFile import MIDIFile # type: ignore
 from mido import MidiTrack, Message # type: ignore
 
 @dataclass
@@ -263,6 +266,26 @@ class Sequence:
             events = generator
         )
 
+    def to_midi_events(self, time_offset=0) -> Tuple[int, str, int]:
+        events = list(self.events)
+        results = []
+        for e in events:
+            for pitch in e.pitches:
+                results.append((
+                    pitch,
+                    "note_on",
+                    time_offset
+                ))
+                results.append((
+                    pitch,
+                    "note_off",
+                    time_offset + e.duration
+                ))
+            time_offset = time_offset + e.duration
+        # sort by time
+        results.sort(key=lambda x: x[2], reverse=False)
+        return results
+
     def to_pitch_set(self) -> Set[int]:
         """Return a set of unique MIDI pitch numbers that comprise the sequence.
         """
@@ -343,7 +366,7 @@ class Transformer():
 
     def __call__(self, *args, **kwargs):
         @withrepr(
-            lambda x: "<CTTransformer: {}{}>".format(
+            lambda x: "<Transformer: {}{}>".format(
                 self._functor.__name__, args + tuple(kwargs.items())))
         def transform(instance):
             nonlocal args
@@ -359,4 +382,85 @@ class Transformer():
         return transform
 
     def __str__(self):
-        return "<CTTransformer : {}>".format(self._functor.__name__)
+        return "<Transformer : {}>".format(self._functor.__name__)
+
+class Container():
+    """Provides a context for playing back multiple sequences
+    or rendering them out to a MIDI file.
+    """
+    def __init__(self,  **kwargs):
+        """Optional args:
+        synth - a synthesier function (defaults to fluidsynth)
+        bpm - int
+        playback_rate - defaults to 1
+        """
+        if "synth" not in kwargs:
+            # intialise a fallback synth
+            synth = fluidsynth.Synth()
+            synth.start()
+            sfid = synth.sfload("Nice-Steinway-v3.8.sf2")
+            synth.program_select(0, sfid, 0, 0)
+            kwargs["synth"] = synth
+
+        self.options = {
+            "bpm": 120,
+            "playback_rate": 1,
+            "synth": None
+        }
+        self.sequences = []
+        self.options.update(kwargs)
+
+    def add_sequence(self, seq, **kwargs):
+        """Add a sequence to the playback container.
+        optional args:
+            offset (default 0)
+            channel_no (defaults to the next available channel)
+        """
+        try:
+            offset = kwargs["offset"]
+        except KeyError:
+            offset = 0
+        try:
+            channel_no = kwargs["channel_no"]
+        except KeyError:
+            channel_no = len(self.sequences)
+        self.sequences.append((channel_no, offset, seq))
+        return self
+
+    def playback(self):
+        stack = []
+        counter = 0
+        synth = self.options["synth"]
+        playback_rate = self.options["playback_rate"]
+        all_midi_events = []
+        dynamic = 60
+        for (channel_no, offset,seq) in self.sequences:
+            for me in seq.to_midi_events(offset):
+                # (pitch, type, time)
+                all_midi_events.append((me[0], me[1], me[2] / playback_rate))
+        all_midi_events = sorted(all_midi_events, key=lambda x: x[2])
+        count = 0
+        for event in all_midi_events:
+            if event[2] != count:
+                sleep(event[2] - count)
+            count = event[2]
+            if event[1] == "note_on":
+                synth.noteon(0, event[0], dynamic)
+            elif event[1] == "note_off":
+                synth.noteoff(0, event[0])
+
+
+    def save_as_midi_file(self, filename):
+        """Save the contents of the container as a MIDI file
+        """
+        midifile = MIDIFile(len(self.sequences), eventtime_is_ticks=True)
+        for (channel_no, offset, seq) in self.sequences:
+            midifile.addTrackName(channel_no, offset, "Channel {}".format(channel_no))
+            count = offset
+            for event in seq.events:
+                for pitch in event.pitches:
+                    midifile.addNote(channel_no, 0, pitch, count, event.duration, 60)
+                count = count + event.duration
+        midifile.addTempo(0, 0, self.options["bpm"])
+        with open(filename, 'wb') as outf:
+            midifile.writeFile(outf)

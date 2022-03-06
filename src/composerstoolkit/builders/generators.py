@@ -85,17 +85,19 @@ def random_slice(base_seq: Sequence,
     src_events = list(base_seq.events)[:]
     def _get_slice_size() -> int:
         if slice_size is None:
-            return random.choice(range(len(src_events)))
+            return random.choice(range(1, len(src_events)))
         return slice_size
     def _get_slice(src_events, max_len):
         cummulative_len = 0
         while True:
-            start = random.choice(range(len(src_events))-1)
+            start = random.choice(range(len(src_events) -2))
             size = _get_slice_size()
             sliced = src_events[start: start+size]
             cummulative_len = cummulative_len \
-                + [event.duration for event in sliced]
-            if cummulative_len >= max_len:
-                return
-            yield sliced
+                + sum([event.duration for event in sliced])
+            if max_len is not None:
+                if cummulative_len >= max_len:
+                    return
+            for event in sliced:
+                yield event
     return _get_slice(src_events, max_length)
