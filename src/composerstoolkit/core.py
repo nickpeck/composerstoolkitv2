@@ -173,7 +173,7 @@ class Graph:
         
         {from_pitch_class: {to_pitch_class: probability...} ...}
         """
-        result = {i:{i:0 for i in range(11)} for i in range(11)}
+        result = {i:{i:0 for i in range(12)} for i in range(12)}
         for edge in self.edges:
             from_pitch_class = edge.pitch % 12
             for vertex in edge.vertices:

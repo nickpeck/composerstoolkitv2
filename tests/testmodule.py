@@ -42,7 +42,7 @@ class TestGraph(unittest.TestCase):
         graph.add_vertex(pitch_f, pitch_e)
         graph.add_vertex(pitch_f, pitch_c)
 
-        expected = {i:{i:0 for i in range(11)} for i in range(11)}
+        expected = {i:{i:0 for i in range(12)} for i in range(12)}
         expected[5][0] = 0.5
         expected[5][4] = 0.5
         markov = graph.to_markov_table()

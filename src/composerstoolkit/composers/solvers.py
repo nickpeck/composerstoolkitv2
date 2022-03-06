@@ -4,7 +4,9 @@ These are not designed for on-the-fly usage.
 """
 
 from decimal import Decimal
+import math
 import random
+from typing import Dict
 
 from composerstoolkit.core import Event, Sequence, FiniteSequence
 from composerstoolkit.resources import NOTE_MIN, NOTE_MAX
@@ -94,6 +96,104 @@ def develop(seed: FiniteSequence, **kwargs) -> Sequence:
             if opts["adjust_weights"] and weights[mutators.index(mutator)] < 1:
                 weights[mutators.index(mutator)] = weights[mutators.index(mutator)] + Decimal('0.1')
     return result
+
+def backtracking_markov_solver(
+        starting_event: Event,
+        table: Dict[int, Dict[int, int]],
+        **kwargs) -> FiniteSequence:
+    """Compose a melodic sequence based upon the
+    domain and constraints given.
+
+    starting_event: Event dictate the starting pitch.
+    All subsequent events will be of similar duration.
+
+    constraints - list of constraint functions
+    (see composerstoolkit.composers.constraints)
+
+    heuristics - list of heuristics (weight maps)
+    that can be used to provide a rough shape to the line
+    (see composerstoolkit.composers.heuristics)
+
+    n_events - the number of notes of the desired target
+    sequence. (Default 1)
+    """
+    opts = {
+        "constraints": [],
+        "heuristics": [],
+        "n_events": 1
+    }
+    opts.update(kwargs)
+    constraints = opts["constraints"]
+    heuristics = opts["heuristics"]
+    n_events = opts["n_events"]
+
+    tick = 0
+    seq = FiniteSequence([starting_event])
+
+    if n_events == 1:
+        return FiniteSequence(seq)
+
+    results = {True}
+    for constraint in constraints:
+        results.update([constraint(seq)])
+    if results != {True}:
+        raise InputViolatesConstraints("Unable to solve!")
+
+    dead_paths = []
+    while tick < n_events-1:
+        # print("TICK                 ", tick)
+        try:
+            # if use_weights:
+                # note = Event([random.choices(choices, weights)[0]], starting_event.duration)
+            # else:
+                # note = Event([random.choice(choices)], starting_event.duration)
+            previous_note = seq.events[-1].pitches[-1]
+            previous_note_pc = previous_note % 12
+            choices = list(range(12))
+            weights = table[previous_note_pc].values()
+            pitch = random.choices(choices, weights)[0]
+            # print("chose", pitch)
+            # print("previous_note", previous_note)
+            original_8va = math.floor(previous_note / 12)
+            # print("original_8va", previous_note)
+            pitch = (original_8va * 12) + pitch
+            # print("pitch", pitch)
+            # if abs(pitch - previous_note) > 6:
+                # pitch = pitch - 12
+            note = Event([pitch], starting_event.duration)
+            # print(table[previous_note])
+            # print("choices", choices)
+            # print("weights", weights)
+            
+            # TODO THIS IS A PITCH CLASS, NEED TO BRING THIS BACK UP TO THE OCATVE OF THE EXAMPLE
+        except IndexError:
+            # this was thrown because we ran out of choices (we have reached a dead-end)
+            print("backtrack")
+            dead_paths.append(seq[:])
+            seq = seq[:-1]
+            tick = tick -1
+            # choices = list(range(NOTE_MIN, NOTE_MAX))
+            if tick == 0:
+                raise AllRoutesExhausted("Unable to solve!")
+            continue
+        context = FiniteSequence(seq.events[:])
+        context.events.append(note)
+
+        results = {True}
+        for constraint in constraints:
+            results.update([constraint(context)])
+        candidate = seq[:]
+        candidate.events.append(note)
+        # print(results)
+        if results == {True} and candidate not in dead_paths:
+            seq.events.append(note)
+            tick = tick + 1
+            print(tick)
+            # choices = list(range(NOTE_MIN, NOTE_MAX))
+        # else:
+            # #this choice was bad, so we must exclude it
+            # choices.remove(note.pitches[-1])
+    return seq
 
 def backtracking_solver(
         starting_event: Event,
