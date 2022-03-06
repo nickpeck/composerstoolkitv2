@@ -101,10 +101,8 @@ melody = Sequence.from_generator(
     random_choice(choices=[
         Event([pf("C6")]),
         Event([pf("D6")]),
-        Event([pf("E6")]),
         Event([pf("F6")]),
         Event([pf("G6")]),
-        Event([pf("A6")]),
         Event([pf("Bb6")]),
         Event([pf("C7")])])
 ).transform(
