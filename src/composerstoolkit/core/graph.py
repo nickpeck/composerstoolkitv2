@@ -14,6 +14,8 @@ import functools
 import fluidsynth # type: ignore
 from midiutil.MidiFile import MIDIFile # type: ignore
 from mido import MidiTrack, Message # type: ignore
+import numpy
+import pandas as pd
 
 @dataclass
 class Edge:
@@ -176,6 +178,17 @@ class Graph:
                 )
         vector_list.sort(key = lambda v : v.origin.start_time)
         return vector_list
+
+    def to_pandas_dataframe(self):
+        pitches = []
+        times = []
+        for edge in self.edges:
+            pitches.append(edge.pitch)
+            times.append(edge.start_time)
+        dataframe = pd.DataFrame(data={
+            'pitch': numpy.array(pitches),
+            'time': numpy.array(times)})
+        return dataframe
 
     def to_vector_indexed_array(self):
         arr = {}

@@ -6,5 +6,5 @@ REM pylint --rcfile=.pylintrc composerstoolkit
 REM if errorlevel 1 msg "%username%"  "Linting failed. Please review before pushing."
 coverage run -m unittest discover tests
 if errorlevel 1 msg "%username%"  "One or more tests failed. Please review these before pushing."
-coverage html
+coverage html --omit="tests/*,src/composerstoolkit/composers/*"
 REM pydoctor src\composerstoolkit --html-output docs\
