@@ -16,7 +16,6 @@ import functools
 import fluidsynth # type: ignore
 from midiutil.MidiFile import MIDIFile # type: ignore
 from mido import MidiTrack, Message # type: ignore
-import more_itertools
 
 @dataclass
 class Edge:
@@ -315,7 +314,9 @@ class Sequence:
         This can be advanced through without affecting the iteration
         state of the current sequence.
         """
-        return Sequence(events=more_itertools.seekable(self.events))
+        a,b = itertools.tee(seq.events)
+        self.events = a
+        return Sequence(events=b)
 
     def __add__(self, other):
         """Allows sequences to be added together.
