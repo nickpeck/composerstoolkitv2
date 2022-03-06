@@ -8,7 +8,7 @@ from typing import List, Optional, Iterator, Union, Callable, Set
 
 import more_itertools
 
-from ..core import Event, Sequence, Transformer, Context
+from ..core import Event, Sequence, Transformer, Context, Constraint
 from ..resources import NOTE_MIN, NOTE_MAX
 
 @Transformer
@@ -260,7 +260,7 @@ def fit_to_range(seq: Sequence,
     max_pitch=NOTE_MAX) -> Iterator[Event]:
     """Given a series of events, use octave displacement
     to adjust the pitches within the range(min_pitch, max_pitch).
-    Raise an excpetion if max_pitch - min_pitch < 12
+    Raise an exception if max_pitch - min_pitch < 12
     """
     if max_pitch < min_pitch:
         raise Exception("max_pitch cannot be less than min_pitch")
@@ -329,11 +329,13 @@ def gated(seq: Sequence,
     item in the transformed sequence.
     Otherwise, return the next item in the source sequence
     """
-    transformed = transformer(seq)
-    i = 0
+    a,b = itertools.tee(seq.events)
+    transformed = transformer(Sequence(events=b))
+    i = 0.0
     previous: Optional[Event] = None
-    for a,b in zip(seq.events, transformed):
-        i = i + 1
+    for event in a:
+        if previous is not None:
+            i = i + previous.duration
         context = Context(
             event = a,
             sequence = seq,
@@ -341,11 +343,12 @@ def gated(seq: Sequence,
             previous = previous
         )
         if condition(context):
-            previous = b
-            yield b
+            previous = next(transformed)
+            yield previous
         else:
-            previous = a
-            yield a
+            previous = event
+            next(transformed)
+            yield event
 
 @Transformer
 def arpeggiate(seq: Sequence,
@@ -363,8 +366,13 @@ def arpeggiate(seq: Sequence,
             yield Event(pitches=[note], duration=individual_note_len)
 
 @Transformer
-def map_tonality(seq: Sequence,
+def modal_quantize(seq: Sequence,
     scale: Set[int]) -> Iterator[Event]:
+    """Provide modal rhythmic quantization - pitches in
+    seq are aligned to the nearest neigbour in the
+    given scale.
+    """
+    scale = {*scale}
     for event in seq.events:
         new_pitches = []
         for pitch in event.pitches:
@@ -375,3 +383,39 @@ def map_tonality(seq: Sequence,
             nearest = min(unused, key=lambda x:abs(x-pitch))
             new_pitches.append(nearest)
         yield Event(pitches=new_pitches, duration=event.duration)
+
+@Transformer
+def rhythmic_quantize(seq: Sequence,
+    resolution: float = 1.0) -> Iterator[Event]:
+    """Provide basic rhythmic quantization - events in
+    seq are aligned to the nearest whole multiple of resolution
+    """
+    resolution = float(resolution)
+    for event in seq.events:
+        if event.duration <= resolution:
+            yield Event(event.pitches, resolution)
+            continue
+        mod = event.duration % resolution
+        if mod <= (resolution / 2.0):
+            div = int(event.duration / resolution)
+            yield Event(event.pitches, div * resolution)
+            continue
+        yield Event(event.pitches, event.duration + resolution-mod)
+
+@Transformer
+def filter_events(seq: Sequence,
+    condition: Callable[[Event], bool],
+    replace_w_rest = False) -> Iterator[Event]:
+    """Filter events by a given condition.
+    If condition returns true in response to a
+    given event, the event is ommitted from the
+    sequence. Use replace_w_rest to control
+    whether to preserve the original rhythmic
+    intentions of the line.
+    """
+    for event in seq.events:
+        if condition(event):
+            if replace_w_rest:
+                yield Event([], event.duration)
+            continue
+        yield event

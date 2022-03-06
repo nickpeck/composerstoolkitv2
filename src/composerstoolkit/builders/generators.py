@@ -7,6 +7,7 @@ from typing import Iterator, Optional, Set, List
 import random
 
 from ..core import Event, Sequence
+from ..resources import NOTE_MIN, NOTE_MAX
 
 def cantus(pitches: Iterator[int]) -> Iterator[Event]:
     """Return a series of pitched events of duration 0, derrived
@@ -89,6 +90,31 @@ def axis_melody(axis_pitch: int,
         if should_continue(steps, max):
             if direction == "expand":
                 steps = steps +1
+
+def random_noise(max_len: Optional[int] = None,
+    min_notes_per_chord: int = 0,
+    max_notes_per_chord: int = 4) -> Iterator[Event]:
+    """Return events where the pitches, the number of pitches,
+    per event, and duration are fully randomised, within some
+    simple bounds.
+    Durations are in the range 0..1
+    """
+    i = 0
+    pitch_choices = list(range(NOTE_MIN, NOTE_MAX))
+    n_voices_range = list(range(
+        min_notes_per_chord,
+        max_notes_per_chord+1))
+    n_pitches = random_choice(n_voices_range)
+    def is_terminal():
+        if max_len is None:
+            return True
+        return i <= max_len
+    while is_terminal():
+        duration = random.random()
+        pitches = []
+        for _i in range(next(n_pitches)):
+            pitches.append(random.choice(pitch_choices))
+        yield Event(pitches, duration)
 
 def random_choice(choices: Iterator[Event],
     max_length: Optional[int]=None) -> Iterator[Event]:

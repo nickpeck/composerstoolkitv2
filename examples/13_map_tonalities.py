@@ -17,50 +17,58 @@ pf = pitches.PitchFactory()
 
 def time_gate(cycle_length, in_secs, out_secs):
     def _gate(context):
+        nonlocal cycle_length
+        nonlocal in_secs
+        nonlocal out_secs
         mod = context.beat_offset % cycle_length
         if mod >= in_secs and mod < out_secs:
-            return False
-        return True
+            return True
+        return False
     return _gate
 
-even_pulse = Sequence.from_generator(
-    pulses([EIGHTH_NOTE]))\
-    .transform(loop())
-
-chords = Sequence.from_generator(
-    random_slice(Sequence(events=[
-        Event([pf("G2")], duration=EIGHTH_NOTE),
+chords = Sequence(events=[
         Event([pf("C3")], duration=EIGHTH_NOTE),
         Event([pf("F3")], duration=EIGHTH_NOTE),
+        Event([pf("G3")], duration=EIGHTH_NOTE),
         Event([pf("Bb3")], duration=EIGHTH_NOTE),
-        Event([pf("C4")], duration=EIGHTH_NOTE)])
-)).transform(
+        Event([pf("C4")], duration=EIGHTH_NOTE)]
+).transform(
     loop()
 ).transform(
-    map_to_pulses(even_pulse)
-).transform(
-    fit_to_range(
-        min_pitch = pf("C2"),
-        max_pitch = pf("C4"))
-).transform(
-    arpeggiate()
-).transform(
     gated(
-        modal_quantize(scales.Eb_major),
-        time_gate(60,15,30)
+        # maps the pattern to D major between 20-40 secs
+        modal_quantize(scales.D_major),
+        time_gate(60,20,40)
     )
 ).transform(
     gated(
-        modal_quantize(scales.Gb_major),
-        time_gate(60,30,45)
+        # maps the pattern to D major between 40-60 secs
+        modal_quantize(scales.Db_major),
+        time_gate(60,40,60)
+    )
+)
+
+bassline = Sequence(events=[
+        Event([pf("C1")], duration=EIGHTH_NOTE)]
+).transform(
+    loop()
+).transform(
+    gated(
+        # maps the pattern to D major between 20-40 secs
+        modal_quantize(scales.D_major),
+        time_gate(60,20,40)
     )
 ).transform(
     gated(
-        modal_quantize(scales.Gb_major),
-        time_gate(60,45,60)
+        # maps the pattern to D major between 40-60 secs
+        modal_quantize(scales.Db_major),
+        time_gate(60,40,60)
     )
+).transform(
+    tie_repeated()
 )
 
 Container(bpm=95, playback_rate=1)\
     .add_sequence(chords)\
+    .add_sequence(bassline)\
     .playback()
