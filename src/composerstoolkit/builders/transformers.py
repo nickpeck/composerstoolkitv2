@@ -9,7 +9,7 @@ from typing import List, Optional, Iterator, Union, Callable, Set, Any
 
 import more_itertools
 
-from ..core import Event, Sequence, Transformer, Context, Constraint
+from ..core import Event, Sequence, Transformer, Context, Constraint, FiniteSequence
 from ..resources import NOTE_MIN, NOTE_MAX
 
 @Transformer
@@ -195,6 +195,31 @@ def linear_interpolate(seq: Sequence,
                 new_pitch = min(constrain_to_scale, key=lambda x:abs(x-new_pitch))
             yield Event([new_pitch], duration_increment)
             pitch_increment = pitch_increment + pitch_increment
+
+@Transformer
+def motivic_interpolation(seq: Sequence,
+    motive: FiniteSequence) -> Iterator[Event]:
+    """Map fixed sequence motive to every note of motive
+    """
+    is_first = True
+    if motive.events[0].pitches == []:
+        raise Exception("The motive must start with a pitch event")
+    for base_evt in seq.events:
+        if base_evt.pitches == []:
+            yield base_evt
+            continue
+        if is_first:
+            pitch_delta = base_evt.pitches[-1] - motive.events[0].pitches[-1]
+            is_first = False
+        duration = base_evt.duration
+        for motive_evt in motive.events:
+            relative_dur = motive_evt.duration/motive.duration
+            dur = motive_evt.duration * relative_dur
+            if motive.pitches == []:
+                yield Event([], dur)
+                continue
+            new_pitches = [p + pitch_delta for p in motive_evt.pitches]
+            yield Event(new_pitches, dur)
 
 @Transformer
 def explode_intervals(seq: Sequence,

@@ -29,12 +29,17 @@ base_seq = FiniteSequence(events=[
 melodic_variations1 = base_seq.variations(
     n_times = None,
     transformer = random_transformation([
-        rotate(7),
+        rotate(6),
         invert(axis_pitch=pf("C6")),
         map_to_pitches(base_seq),
         map_to_pulses(base_seq),
         slice_looper(n_events=2, n_repeats=4),
-        feedback(n_events=4)
+        feedback(n_events=4),
+        batch(transformations=[
+            transpose(4),
+            motivic_interpolation(base_seq),
+            rhythmic_augmentation(2),]
+        )
     ]),
     repeats_per_var=2
 ).transform(
