@@ -57,6 +57,29 @@ def collision_pattern(clock1: int, clock2: int) -> Iterator[Event]:
         cur_duration = 0
     yield Event(duration=cur_duration + 1)
 
+def resultant_pitches(counter1: int,
+    counter2: int,
+    start_at: int = 0) -> Iterator[Event]:
+    """Similar to the above, but yields a
+    symetrical scale using the intervals
+    derrived from the resultant pattern of
+    counter1 and counter2
+    """
+    if counter1 == counter2:
+        yield Event(duration=counter1)
+        return
+    n_ticks = counter1 * counter2
+    resultant = [0 for i in range(0, n_ticks)]
+    for i in range(len(resultant)):
+        if i % counter1 == 0 or i % counter2 == 0:
+            resultant[i] = 1
+
+    for i in range(n_ticks -1):
+
+        if resultant[i] == 1:
+            yield Event([start_at + i])
+
+
 def axis_melody(axis_pitch: int,
     scale: List[int],
     steps: int=0,
@@ -225,6 +248,7 @@ def chords_from_scale(pitch_classes: Iterator[int],
     voices (eg, 2 for tertiary, 3 for quartal).
     Return a sequence of events, one for each chord, of duration 0
     """
+    scale_span = abs(max(pitch_classes) - min(pitch_classes))
     for index, root in enumerate(pitch_classes):
         seq = itertools.cycle(pitch_classes)
         pitches = list(more_itertools.islice_extended(
@@ -240,7 +264,7 @@ def chords_from_scale(pitch_classes: Iterator[int],
                 continue
             if pitch < chord[-1] and not allow_inversions:
                 while pitch < chord[-1]:
-                    pitch = pitch + 12
+                    pitch = pitch + scale_span
                 chord.append(pitch)
                 continue
             chord.append(pitch)
