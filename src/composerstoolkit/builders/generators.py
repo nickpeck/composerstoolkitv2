@@ -1,6 +1,8 @@
 """Library functions for generating an initial series of Event Objects.
 All generators return a list or Iterator of Event objects
 """
+import itertools
+import more_itertools
 from typing import Iterator, Optional, Set
 import random
 
@@ -102,15 +104,29 @@ def random_slice(base_seq: Sequence,
                 yield event
     return _get_slice(src_events, max_length)
 
-def progression(scale: Set[int],
+def chord_cycle(scale: Set[int],
     start: Event,
     cycle_of=-4,
     voice_lead=True,
     max_length: Optional[int]=None) -> Iterator[Event]:
+    """
+    Useful for creating simple progressions (cycle of fifths).
+    Scale can be diatonic, or chromatic.
+    Given a chord event ('start') that is part of scale,
+    transpose the chord about the given scalic distance (cycle_of)
+    up to a duration of max_length beats.
+    Each chord takes the duration of event start.
+    If voice_lead is true, use octave displacement to preserve the best
+    voice-leading between each chord motion.
+    Raise an exception if the starting chord contains pitches outside the
+    given scale.
+    """
     scale = list(scale)
     sorted(scale)
     yield start
     i = start.duration
+    if {*start.pitches}.difference({*scale}) != {}:
+        raise Exception("Starting chord is not part of the given scale")
     while True:
         if max_length is not None and i > max_length:
             return
@@ -138,3 +154,34 @@ def progression(scale: Set[int],
         start = Event(pitches=next_pitches, duration=start.duration)
         yield start
         i = i + start.duration
+
+def chords_from_scale(pitch_classes: Iterator[int],
+    spacing=2,
+    n_voices=4,
+    allow_inversions=True) -> Iterator[Event]:
+    """Useful for returning all chords within a scale represented
+    by iterable pitch_classes.
+    Where spacing is the number of scale steps between
+    voices (eg, 2 for tertiary, 3 for quartal).
+    Return a sequence of events, one for each chord, of duration 0
+    """
+    for index, root in enumerate(pitch_classes):
+        seq = itertools.cycle(pitch_classes)
+        pitches = list(more_itertools.islice_extended(
+            seq,
+            index, # start
+            (n_voices*spacing) + index, # stop
+            spacing)) # step
+
+        chord = []
+        for pitch in pitches:
+            if chord == []:
+                chord.append(pitch)
+                continue
+            if pitch < chord[-1] and not allow_inversions:
+                while pitch < chord[-1]:
+                    pitch = pitch + 12
+                chord.append(pitch)
+                continue
+            chord.append(pitch)
+        yield Event(pitches=chord)

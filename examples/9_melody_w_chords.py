@@ -12,7 +12,7 @@ from composerstoolkit.composers.heuristics import *
 from composerstoolkit.resources import scales
 
 chords = Sequence.from_generator(
-    progression(
+    chord_cycle(
         scale=scales.C_major,
         start=Event(pitches=[60,64,67,71], duration=WHOLE_NOTE),
         cycle_of=-4,
