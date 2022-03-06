@@ -221,13 +221,15 @@ def chords_from_scale(pitch_classes: Iterator[int],
         yield Event(pitches=chord)
 
 def voice_lead(event: Event,
-    scales: Iterator[Set[int]]) -> Iterator[Event]:
+    scales: Iterator[Set[int]],
+    chord_lexicon: List[Event]) -> Iterator[Event]:
     """
     Given starting chord 'start', and list of
     sets representing different modal colours,
-    create a progression of chords
+    create a progression of chords, using
+    transpositions of the voicings in chord_lexicon,
     that moves through the list of scales using
-    nearest-neighbour voice leading.
+    lowest cost voice leading.
 
     All events take the duration and number of voices
     of the starting event.
@@ -235,30 +237,24 @@ def voice_lead(event: Event,
     yield event
     previous_chord = event
     for scale in scales:
-
         scale = {*scale}
-        next_chord = []
+
+        candidate_chords = []
+        for chord in chord_lexicon:
+            diff = {*chord.pitches}.difference({*scale})
+            if diff == set():
+                candidate_chords.append(chord)
+
         previous_pcs =\
             [(pitch, int(pitch/12), pitch % 12) for pitch in event.pitches]
-        next_pcs = {(pitch % 12) for pitch in scale}
-
-        for pitch, octave, p_class in previous_pcs:
-            if p_class in [p % 12 for p in next_chord]:
-                # common tone, carry over:
-                next_chord.append(pitch)
-                continue
-
-            while True:
-                # find the next neighbour PC that isn't already taken
-                nearest = min(next_pcs, key=lambda x:abs(x-p_class))
-                if nearest in [p % 12 for p in next_chord]:
-                    nearest = min(next_pcs, key=lambda x:abs(x+p_class))
-                if nearest in [p % 12 for p in next_chord]:
-                    p_class = (p_class + 1) % 12
-                else:
-                    break
-
-            next_chord.append((octave * 12) + nearest)
-        next_chord = sorted(next_chord)
-        event =  Event(next_chord, event.duration)
-        yield event
+        weighted_chords = []
+        for chord in candidate_chords:
+            cost = 0
+            for pitch in chord.pitches:
+                nearest = min(previous_chord.pitches, key=lambda x:abs(x-pitch))
+                cost = cost + abs(nearest-pitch)
+            weighted_chords.append((cost, chord))
+        weighted_chords = sorted(weighted_chords, key=lambda c: c[0])
+        next_chord = weighted_chords[0][1]
+        previous_chord = Event(next_chord.pitches, event.duration)
+        yield previous_chord

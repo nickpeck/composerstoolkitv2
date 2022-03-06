@@ -112,6 +112,10 @@ class ChordBuilder:
                         pitches.append(root_pitch+ 6) # b5th
                         # the perfect 5th is usually removed in this case
                         pitches.remove(root_pitch + 7)
+                    if digit == 6:
+                        pitches.append(root_pitch+ 8) # b6 aeolean
+                        # the perfect 5th is usually removed in this case
+                        pitches.remove(root_pitch + 7)
                     if digit == 9:
                         pitches.append(root_pitch+ 13) # b9th
                         if (root_pitch + 14) in pitches:
@@ -129,6 +133,10 @@ class ChordBuilder:
                     digit = int(third_ext.split("b")[1])
                     if digit == 5:
                         pitches.append(root_pitch+ 6) # b5th
+                        # the perfect 5th is usually removed in this case
+                        pitches.remove(root_pitch + 7)
+                    if digit == 6:
+                        pitches.append(root_pitch+ 8) # b6 aeolean
                         # the perfect 5th is usually removed in this case
                         pitches.remove(root_pitch + 7)
                     if digit == 9:
