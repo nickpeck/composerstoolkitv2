@@ -46,6 +46,20 @@ class Event:
     def to_pitch_class_set(self):
         return {*[p % 12 for p in self.pitches]}
 
+    def movement_cost_to(self, event: Event) -> int:
+        other_pcs = sorted(list(event.to_pitch_class_set()))
+        self_pcs = sorted(list(self.to_pitch_class_set()))
+        costs = []
+        for i, pc in enumerate(self_pcs):
+            try:
+                cost = abs(other_pcs[i] - pc)
+                if cost > 6:
+                    cost = cost - 6
+                costs.append(cost)
+            except IndexError:
+                break
+        return sum(costs)
+
     def __hash__(self):
         return hash(" ".join([str(p) for p in self.pitches])) + hash(self.duration)
 
@@ -179,6 +193,7 @@ class FiniteSequence:
         edges: List[Edge] = []
         for event in self.events:
             edges = edges + event.to_edges(offset)
+            offset = offset + event.duration
         return Graph(edges)
 
     @classmethod
@@ -202,6 +217,40 @@ class FiniteSequence:
             offset = offset + event.duration
             if offset >= beat_offset:
                 return event
+
+    def time_slice(self, start_beats: int, end_beats: int) -> FiniteSequence:
+        """Return a new sequence, that contains the events
+        of the current sequence between the window
+        start_beats and end_beats.
+        Closing event durations that overrun the window are truncated to fit.
+        """
+        current_time = 0
+        events = []
+        for event in self.events:
+            if current_time > end_beats:
+                # we are past the window
+                break
+
+            if current_time >= start_beats:
+                if event.duration + current_time < end_beats:
+                    # event is within the window
+                    events.append(event)
+                if event.duration + current_time >= end_beats:
+                    # event overlaps the end of the window
+                    truncated_duration = event.duration + current_time - end_beats
+                    events.append(
+                        Event(pitches=event.pitches,
+                        duration=truncated_duration))
+            elif current_time < start_beats \
+                and current_time + event.duration >= start_beats:
+                # event overlaps the start of the window
+                truncated_duration = event.duration + current_time - start_beats
+                events.append(
+                    Event(pitches=event.pitches,
+                    duration=truncated_duration))
+            current_time = current_time + event.duration
+
+        return FiniteSequence(events)
 
     def progressive_variations(self,
         transformer: Callable[[Sequence], Iterator[Event]],

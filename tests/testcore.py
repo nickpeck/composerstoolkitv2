@@ -197,6 +197,29 @@ class EventTests(unittest.TestCase):
         pcs = evt.to_pitch_class_set()
         assert pcs == {0,4,7}
 
+    def test_event_is_hashable(self):
+        evt1 = Event(pitches=[60,64,67], duration=1)
+        evt2 = Event(pitches=[60,64,67], duration=1)
+        evt3 = Event(pitches=[60,64,68], duration=1)
+        evt4 = Event(pitches=[60,64,68], duration=2)
+        assert hash(evt1) == hash(evt2)
+        assert hash(evt1) != hash(evt3)
+        assert hash(evt1) != hash(evt4)
+
+    def test_get_can_calculate_motion_costs_between_events(self):
+        evt1 = Event(pitches=[60,64,67])
+        evt2 = Event(pitches=[60,64,67])
+        assert evt1.movement_cost_to(evt2) == 0
+        evt3 = Event(pitches=[61,65,68])
+        assert evt1.movement_cost_to(evt3) == 3
+        # uneven no of voices are not counted in the cost
+        evt4 = Event(pitches=[60,64,67,71])
+        assert evt1.movement_cost_to(evt4) == 0
+        evt5 = Event(pitches=[60,64])
+        assert evt1.movement_cost_to(evt5) == 0
+        # inversional eqivalence
+        assert Event([60]).movement_cost_to(Event([69])) == 3
+
 class SequenceTests(unittest.TestCase):
 
     def test_can_create_seq_from_generator_function(self):
@@ -300,6 +323,28 @@ class FiniteSequenceTests(unittest.TestCase):
             Event(pitches=[60], duration=1)])
         assert seq.durations == [1,1,1,1,1]
 
+    def test_we_can_count_the_events_using_len(self):
+        seq = FiniteSequence([
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
+        assert len(seq) == 5
+
+    def test_a_seq_is_hashable(self):
+        seq1 = FiniteSequence([
+            Event(pitches=[67], duration=1)])
+        seq2 = FiniteSequence([
+            Event(pitches=[67], duration=1)])
+        seq3 = FiniteSequence([
+            Event(pitches=[68], duration=1)])
+        seq4 = FiniteSequence([
+            Event(pitches=[67], duration=0)])
+        assert hash(seq1) == hash(seq2)
+        assert hash(seq1) != hash(seq3)
+        assert hash(seq1) != hash(seq4)
+
     def test_we_can_make_a_sequence(self):
         seq = FiniteSequence([
             Event(pitches=[67], duration=1),
@@ -376,6 +421,40 @@ class FiniteSequenceTests(unittest.TestCase):
             Event(pitches=[60], duration=1)]).to_graph()
 
         assert len(g.edges) == 5
+        assert g.edges[0].start_time == 0
+        assert g.edges[1].start_time == 1
+
+    def test_create_it_from_a_graph(self):
+        seq = FiniteSequence([
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
+        g = seq.to_graph()
+        assert FiniteSequence.from_graph(g) == seq
+        assert len(g.edges) == 5
+
+    def test_we_can_make_time_slices(self):
+        seq = FiniteSequence([
+            Event(pitches=[67], duration=0.5),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=2),
+            Event(pitches=[60], duration=1)])
+
+        assert seq.time_slice(0, 1).events == [
+            Event(pitches=[67], duration=0.5),
+            Event(pitches=[60], duration=0.5)
+        ]
+        assert seq.time_slice(2, 5).events == [
+            Event(pitches=[62], duration=0.5),
+            Event(pitches=[64], duration=2),
+            Event(pitches=[60], duration=0.5)
+        ]
+        assert seq.time_slice(5, 10).events == [
+            Event(pitches=[60], duration=0.5)
+        ]
 
     def test_we_can_create_progressive_variations(self):
         seq = FiniteSequence([

@@ -63,7 +63,7 @@ class Container:
         bpm = self.options["bpm"]
         time_scale_factor = (1/(bpm/60)) * (1/playback_rate)
         print("Channel {} playback starting".format(channel_no))
-        sleep(offset)
+        sleep(offset + 1)
         for event in seq.events:
             if self.options["debug"]:
                 print(event)

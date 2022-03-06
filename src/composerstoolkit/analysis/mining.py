@@ -4,7 +4,17 @@ from typing import List, Any, Tuple, Set
 
 from prefixspan import PrefixSpan
 
-from ..core import Graph, FiniteSequence
+from ..core import Graph, FiniteSequence, Container, Event
+
+def seq_chunked(dataset: List[Any], window: int):
+    """Return a list comprising of dataset
+    broken down into down into sizes of
+    length window.
+    """
+    chunks = []
+    for i in range(0, len(dataset), window):
+        chunks.append(dataset[i:i + window])
+    return chunks
 
 def common_subsequences(
     dataset: List[Any],
@@ -17,7 +27,6 @@ def common_subsequences(
     Return a list of (count, subsequence), most
     frequent first.
     """
-
     results = []
 
     def _count_occurrences(sublist, parent):
@@ -58,9 +67,11 @@ def hidden_subsequences(
     detected = sorted(detected, key=lambda x: len(x[1]), reverse=True)
     return detected
 
-def chord_analysis(seq: FiniteSequence,
-    window_size=1,
-    chord_lexicon=List[Set]):
+def chordal_analysis(seq: FiniteSequence,
+    window_size_beats=4,
+    chord_lexicon=List[Set],
+    start_offset = 0,
+    overlap_threshold=0):
     """Break the given seq down into chunks of
     window_size (expressed in beats).
     Analyse the content within to determine the
@@ -69,4 +80,45 @@ def chord_analysis(seq: FiniteSequence,
     the best voice-leading solution.
     Return a list of transposed chord voicings.
     """
-    pass
+    # segement the source sequence
+    curr_time = start_offset
+    slices = []
+    while curr_time <= seq.duration:
+        slices.append(seq.time_slice(
+            curr_time, curr_time +  window_size_beats))
+        curr_time = curr_time + window_size_beats
+    found_chords = []
+
+    # find candidate pcs that intersect each seq
+    for slice in slices:
+        pcs = slice.to_pitch_class_set()
+        candidate_chords = []
+        for chord in chord_lexicon:
+            diff = chord.difference(pcs)
+            if len(diff) <= overlap_threshold:
+                candidate_chords.append(chord)
+        candidate_chords = sorted(candidate_chords,
+                key = lambda c: len(c), reverse=True)
+        found_chords.append(candidate_chords)
+
+    # choose the most likely candidate for each segment
+    for i, candidate_chords in enumerate(found_chords):
+        if len(candidate_chords) == 0:
+            if i == 0:
+                found_chords[i] = []
+            else: 
+                found_chords[i] = found_chords[i-1]
+            continue
+        if i == 0:
+            found_chords[0] = candidate_chords[0]
+            continue
+        weighted_options = []
+        previous = found_chords[i-1]
+        cost = 0
+        for chord in candidate_chords:
+            cost = Event(list(previous)).movement_cost_to(Event(chord))
+            weighted_options.append((cost, chord))
+
+        weighted_options = sorted(weighted_options, key=lambda c: c[0])
+        found_chords[i] = weighted_options[0][1]
+    return found_chords

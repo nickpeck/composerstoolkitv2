@@ -16,15 +16,57 @@ sequence = FiniteSequence.from_graph(graph)
 
 common_vectors = common_subsequences(sequence.to_vectors())
 common_rhythms = common_subsequences(sequence.durations)
-
-def seq_chunked(seq: FiniteSequence, n: int):
-    chunks = []
-    for i in range(0, len(seq), n):
-        chunks.append(seq[i:i + n])
-    return chunks
-
 chunked = seq_chunked(sequence.pitches, 16)
+
 hidden_pitch_patterns = hidden_subsequences(chunked, 100)
+
+# library of basic triads through all keys
+maj_triads_pcs = [chord.to_pitch_class_set() for chord in chord_cycle(scale = scales.chromatic,
+    start=Event(pitches=[0,4,7]),
+    cycle_of=1,
+    voice_lead=False,
+    max_len=12)]
+
+min_triads_pcs = [chord.to_pitch_class_set() for chord in chord_cycle(scale = scales.chromatic,
+    start=Event(pitches=[0,3,7]),
+    cycle_of=1,
+    voice_lead=False,
+    max_len=12)]
+
+dom_7th_pcs = [chord.to_pitch_class_set() for chord in chord_cycle(scale = scales.chromatic,
+    start=Event(pitches=[0,4,7,10]),
+    cycle_of=1,
+    voice_lead=False,
+    max_len=12)]
+
+dom_min_7th_pcs = [chord.to_pitch_class_set() for chord in chord_cycle(scale = scales.chromatic,
+    start=Event(pitches=[0,3,7,10]),
+    cycle_of=1,
+    voice_lead=False,
+    max_len=12)]
+
+maj_7th_pcs = [chord.to_pitch_class_set() for chord in chord_cycle(scale = scales.chromatic,
+    start=Event(pitches=[0,4,7,11]),
+    cycle_of=1,
+    voice_lead=False,
+    max_len=12)]
+
+dim_7th_pcs = [chord.to_pitch_class_set() for chord in chord_cycle(scale = scales.chromatic,
+    start=Event(pitches=[0,3,6,9]),
+    cycle_of=1,
+    voice_lead=False,
+    max_len=3)]
+
+chord_lexicon = maj_triads_pcs + min_triads_pcs + dom_7th_pcs + dom_min_7th_pcs + maj_7th_pcs + dim_7th_pcs
+
+found_chords = chordal_analysis(sequence, 2, chord_lexicon, start_offset=0.125)
+
+pprint(found_chords, indent=4)
+
+found_chords = [Event(list(pitches), 2) for pitches in found_chords]
+found_chords = Sequence(found_chords)
+
+exit(0)
 
 for i, vectors in common_vectors:
     print("===============================", i)
