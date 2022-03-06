@@ -48,13 +48,13 @@ class Evolutionary():
 
     def _breed(self, p1, p2=None):
         def f(seq):
+            if not isinstance(seq.events, list):
+                seq.events = list(seq.events)
             x = p1(seq)
-            print(">>>>>>>>>>>>>>>>>>>>>>>", x, p1)
             if p2 is None:
                 return x
-            print("<<<<<<<<<<<<<<<<<<<<<<<", x, p2)
             y = p2(Sequence(x))
-            return y
+            return list(y)
         return f
         
     def _choose_parents(self, parents, weights):
@@ -96,10 +96,10 @@ class Evolutionary():
             self.print_debug("will breed:", base_seq)
             child = self._breed(trans1, trans2)
             new_seq = child(base_seq)
-            if not isinstance(new_seq, Sequence):
-                new_seq = Sequence(new_seq)
+            if not isinstance(new_seq, FiniteSequence):
+                new_seq = FiniteSequence(new_seq)
             self.print_debug("new_seq", str(result), str(new_seq))
-            keep = self._fitness_func(Sequence(result) + new_seq)
+            keep = self._fitness_func(result + new_seq)
             if keep:
                 self.print_debug("OK, keeping")
                 result = result + new_seq

@@ -229,14 +229,14 @@ def explode_intervals(seq: Sequence,
     each event in the source Sequence by a given factor.
     mode is either 'exponential' or 'linear'
     """
-    events = list(seq.events)[:]
-    if len(events) == 1:
-        return events
+    seq.events = list(seq.events)
+    if len(seq.events) == 1:
+        return seq.events[0]
 
     def _vectors(seq):
         vectors = []
         left = seq.events[0]
-        for right in seq.events[-1]:
+        for right in seq.events[1:]:
             # if any event is a chord, then select the uppermost voice
             vectors.append(right.pitches[0]-left.pitches[0])
             left = right

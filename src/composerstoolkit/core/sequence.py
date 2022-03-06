@@ -215,6 +215,9 @@ class FiniteSequence:
 
         return self.__class__(events=sliced_events)
 
+    def __add__(self, other: FiniteSequence) -> FiniteSequence:
+        return FiniteSequence(self.events +  other.events)
+
 @dataclass(frozen=True)
 class Context:
     event: Event

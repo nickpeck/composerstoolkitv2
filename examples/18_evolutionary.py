@@ -1,24 +1,9 @@
+import dis
 import pprint
 
 from composerstoolkit import *
 
 pf = pitches.PitchFactory()
-
-starting_fragment = FiniteSequence(
-    events = [
-        Event(pitches=[pf("C4")], duration=QUARTER_NOTE),
-        Event(pitches=[pf("Gb4")], duration=QUARTER_NOTE),
-        Event(pitches=[pf("G4")], duration=QUARTER_NOTE)
-    ]
-)
-
-# initial 'pool' (transformation, weighting)
-starting_transformations = [
-    (transpose(1), 0.5),
-    (retrograde(n_pitches=3), 0.5),
-    (invert(), 0.5),
-    (rotate(n_pitches=2), 0.5),
-    (explode_intervals(2), 0.5)]
 
 def playback(seq):
     Container(bpm=250, playback_rate=1)\
@@ -41,6 +26,31 @@ def get_feedback(seq) -> bool:
     playback(seq)
     response = input("Press Y to keep, any key to reject: ")
     return response.strip().upper() == "Y"
+
+
+pulse = Sequence.from_generator(random_slice(
+    Sequence.from_generator(collision_pattern(4,5,9))))
+
+starting_fragment = FiniteSequence(
+    events = [
+        Event(pitches=[pf("C4")], duration=QUARTER_NOTE),
+        Event(pitches=[pf("Gb4")], duration=QUARTER_NOTE),
+        Event(pitches=[pf("G4")], duration=QUARTER_NOTE)
+    ]
+)
+
+# initial 'pool' (transformation, weighting)
+starting_transformations = [
+        (transpose(3), 0.5),
+        (transpose(-4), 0.5),
+        (retrograde(n_pitches=3), 0.5),
+        (aggregate(n_voices=3), 0.5),
+        (monody(), 0.5),
+        # (invert(), 0.5),
+        (rotate(n_pitches=2), 0.5),
+        (map_to_pulses(pulse), 0.5),
+        (explode_intervals(2), 0.5)
+    ]
 
 evo = Evolutionary(
     transformations=starting_transformations,
@@ -65,9 +75,8 @@ while True:
         present_results(result,transformations)
     else:
         break
-        
-pulse_pattern = steady_pulse(0.2, len(result.events))
-seq = result |chain| map_to_pulses(pulse_pattern)
-container = Container(bpm=160)
-container.add_sequence(0, seq)
-container.save_as_midi_file("3_human_directed_evolutionary.mid")
+
+transformations = sorted(transformations, key=lambda t: t[1])
+pprint.pprint(transformations, indent=4)
+best = transformations[-1]
+print("The leading transformation is:", best)
