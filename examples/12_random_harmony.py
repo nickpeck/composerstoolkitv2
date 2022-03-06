@@ -20,18 +20,20 @@ pf = pitches.PitchFactory()
 # arbitary selection of scales
 modes = [set(m) for m in [
     scales.D_major,
-    scales.E_major,
+    scales.E_har_minor,
     scales.C_mel_minor,
     scales.B_major,
-    scales.Bb_major
+    scales.Bb_har_minor
 ]]
 
+spacing = 3
+
 # library of 5-note quartal voicings from each scale
-chord_lexicon = list(chords_from_scale(scales.D_major, n_voices=5, spacing=3))\
-    + list(chords_from_scale(scales.E_major, n_voices=5, spacing=3))\
-    + list(chords_from_scale(scales.B_major, n_voices=5, spacing=3))\
-    + list(chords_from_scale(scales.C_mel_minor, n_voices=5, spacing=3))\
-    + list(chords_from_scale(scales.Bb_major, n_voices=5, spacing=3))
+chord_lexicon = list(chords_from_scale(scales.D_major, n_voices=5, spacing=spacing))\
+    + list(chords_from_scale(scales.E_har_minor, n_voices=5, spacing=spacing))\
+    + list(chords_from_scale(scales.B_major, n_voices=5, spacing=spacing))\
+    + list(chords_from_scale(scales.C_mel_minor, n_voices=5, spacing=spacing))\
+    + list(chords_from_scale(scales.Bb_har_minor, n_voices=5, spacing=spacing))
 
 random.shuffle(modes)
 
