@@ -2,13 +2,7 @@
 chords about the cycle of fiths, and then develop a lead line
 from a fragment that fits against these chords.
 """
-from composerstoolkit.core import Event, FiniteSequence, Container, Sequence, Constraint
-from composerstoolkit.composers.solvers import develop
-from composerstoolkit.composers.constraints import *
-from composerstoolkit.builders.generators import *
-from composerstoolkit.builders.transformers import *
-from composerstoolkit.resources.rhythms import *
-from composerstoolkit.composers.heuristics import *
+from composerstoolkit import *
 from composerstoolkit.resources import scales
 
 chords = Sequence.from_generator(

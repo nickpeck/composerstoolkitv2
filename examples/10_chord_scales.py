@@ -1,13 +1,7 @@
 """Use a generator to find all the chords that can be produced from a given scale
 """
 
-from composerstoolkit.core import Event, FiniteSequence, Container, Sequence, Constraint
-from composerstoolkit.composers.solvers import develop
-from composerstoolkit.composers.constraints import *
-from composerstoolkit.builders.generators import *
-from composerstoolkit.builders.transformers import *
-from composerstoolkit.resources.rhythms import *
-from composerstoolkit.composers.heuristics import *
+from composerstoolkit.core import *
 from composerstoolkit.resources import scales
 
 chords = Sequence.from_generator(chords_from_scale(

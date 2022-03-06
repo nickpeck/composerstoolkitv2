@@ -11,11 +11,7 @@ Both of these act as transformers in themselves, so can be
 chained ad infinitum.
 """
 
-from composerstoolkit.core import Event, Sequence, Container
-from composerstoolkit.builders.transformers import (loop, batch,
-    transpose, gated, rhythmic_augmentation, rhythmic_diminution)
-from composerstoolkit.builders.permutators import Permutations
-from composerstoolkit.resources.rhythms import *
+from composerstoolkit import *
 
 def my_gate1(context):
     return context.beat_offset % 5 == 0

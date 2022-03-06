@@ -6,15 +6,8 @@ phrase in C major using by repeatedly applying transpositions and inversions
 to a motive
 """
 
-from composerstoolkit.core import Event, FiniteSequence, Container, Sequence
-from composerstoolkit.composers.solvers import backtracking_solver
-from composerstoolkit.composers.constraints import (
-    constraint_in_set, constraint_no_leaps_more_than)
-from composerstoolkit.builders.generators import *
-from composerstoolkit.builders.transformers import *
-from composerstoolkit.resources.rhythms import *
+from composerstoolkit import *
 from composerstoolkit.resources import scales
-
 
 seq = backtracking_solver(
         Event(pitches=[60], duration=QUARTER_NOTE),

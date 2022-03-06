@@ -6,15 +6,8 @@ import os
 from midiutil.MidiFile import MIDIFile # type: ignore
 from mido import MidiFile
 
-from composerstoolkit.core import Event, FiniteSequence, Container, Sequence, Graph
-from composerstoolkit.composers.solvers import backtracking_markov_solver
-from composerstoolkit.composers.constraints import *
-from composerstoolkit.builders.generators import *
-from composerstoolkit.builders.transformers import *
-from composerstoolkit.resources.rhythms import *
-from composerstoolkit.composers.heuristics import *
+from composerstoolkit import *
 from composerstoolkit.resources import scales
-
 
 filename = os.path.join("tests", "chor001.MID")
 midi_file = MidiFile(filename)

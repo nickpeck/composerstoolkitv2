@@ -2,15 +2,8 @@
 evolving texture from a given cell.
 """
 
-from composerstoolkit.core import Event, FiniteSequence, Container, Sequence, Constraint
-from composerstoolkit.composers.solvers import develop
-from composerstoolkit.composers.constraints import *
-from composerstoolkit.builders.generators import *
-from composerstoolkit.builders.transformers import *
-from composerstoolkit.resources.rhythms import *
-from composerstoolkit.composers.heuristics import *
-from composerstoolkit.resources import scales, pitches, chords
-from composerstoolkit.builders.permutators import Permutations
+from composerstoolkit import *
+from composerstoolkit.resources import scales, pitches
 
 pf = pitches.PitchFactory()
 

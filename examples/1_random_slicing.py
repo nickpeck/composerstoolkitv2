@@ -3,11 +3,7 @@
 permutations of another 4-note group.
 """
 
-from composerstoolkit.core import Event, Sequence, Container
-from composerstoolkit.builders.generators import random_slice
-from composerstoolkit.builders.transformers import loop, map_to_pulses
-from composerstoolkit.builders.permutators import Permutations
-from composerstoolkit.resources.rhythms import *
+from composerstoolkit import *
 
 ostinato = Sequence(
     events=Permutations([
