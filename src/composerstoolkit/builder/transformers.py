@@ -36,8 +36,11 @@ def retrograde(seq: Sequence) -> List[Event]:
     return events
 
 @Transformer
-def invert(seq: Sequence, axis_pitch) -> Iterator[Event]:
-
+def invert(seq: Sequence, axis_pitch=None) -> Iterator[Event]:
+    if axis_pitch is None:
+        evt = next(seq.events)
+        axis_pitch = evt.pitches[0]
+        yield evt
     for evt in seq.events:
         delta = evt.pitches[0]-axis_pitch
         if delta < 0: # note is below axis
