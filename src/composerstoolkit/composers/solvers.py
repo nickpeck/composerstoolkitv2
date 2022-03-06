@@ -116,17 +116,19 @@ def grow_cantus_backtracking(starting_event: Event,
     seq = FixedSequence([starting_event])
     if n_events == 1:
         return FixedSequence(seq)
+
     results = set()
     for constraint in constraints:
         results.update([constraint(seq)])
     if results != {True}:
         raise InputViolatesConstraintsException("Unable to solve!")
+
     choices = list(range(NOTE_MIN, NOTE_MAX))
     dead_paths = []
     while tick < n_events-1:
         # lets use a very basic random choice to begin with and see how far we go
         try:
-            note = Event([random.choice(choices)])
+            note = Event([random.choice(choices)], starting_event.duration)
 
         except IndexError:
             # this was thrown because we ran out of choices (we have reached a dead-end)
@@ -141,6 +143,61 @@ def grow_cantus_backtracking(starting_event: Event,
             else:
                 continue
 
+        context = FixedSequence(seq.events[:])
+        context.events.append(note)
+
+        results = set()
+        for constraint in constraints:
+            results.update([constraint(context)])
+        candidate = seq[:]
+        candidate.events.append(note)
+        if results == {True} and candidate not in dead_paths:
+            seq.events.append(note)
+            tick = tick + 1
+            choices = list(range(NOTE_MIN, NOTE_MAX))
+        else:
+            #this choice was bad, so we must exclude it
+            choices.remove(note.pitches[-1])
+    return seq
+
+def random_walk_backtracking_w_heuristics(
+        starting_event: Event,
+        constraints=[lambda x: True], 
+        heuristics=[lambda context,choices,weights: weights],
+        n_events=8):
+    tick = 0
+    seq = FixedSequence([starting_event])
+    if n_events == 1:
+        return FixedSequence(seq)
+
+    results = set()
+    for constraint in constraints:
+        results.update([constraint(seq)])
+    if results != {True}:
+        raise InputViolatesConstraintsException("Unable to solve!")
+
+    choices = list(range(NOTE_MIN, NOTE_MAX))
+    dead_paths = []
+    while tick < n_events-1:
+
+        weights= [1.0 for i in range(len(choices))]
+        for heuristic in heuristics:
+            weights = heuristic(tick, choices, weights)
+
+        try:
+            note = Event([random.choices(choices, weights)[0]], starting_event.duration)
+        except IndexError:
+            # this was thrown because we ran out of choices (we have reached a dead-end)
+            # so you back-track... do it again....
+            dead_paths.append(seq[:])
+            seq = seq[:-1]
+            tick = tick -1
+            choices = list(range(NOTE_MIN, NOTE_MAX))
+            if tick == 0:
+                raise UnsatisfiableException("Unable to solve!")
+                break
+            else:
+                continue
         context = FixedSequence(seq.events[:])
         context.events.append(note)
 

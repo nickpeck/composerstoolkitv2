@@ -7,21 +7,23 @@ to a motive
 """
 
 from composerstoolkit.core import Event, FixedSequence, Container, Sequence
-from composerstoolkit.composers.solvers import grow_cantus_backtracking
+from composerstoolkit.composers.solvers import random_walk_backtracking_w_heuristics
 from composerstoolkit.composers.constraints import (
     constraint_in_set, constraint_no_leaps_more_than)
 from composerstoolkit.builders.generators import *
 from composerstoolkit.builders.transformers import *
 from composerstoolkit.resources.rhythms import *
+from composerstoolkit.composers.heuristics import *
 from composerstoolkit.resources import scales
 
-
-seq = grow_cantus_backtracking(
+seq = random_walk_backtracking_w_heuristics(
         Event(pitches=[60], duration=QUARTER_NOTE),
-    n_events=16,
-    constraints=[
+    [
         constraint_in_set(scales.C_major),
         constraint_no_leaps_more_than(4)],
+    [heuristic_sine_shape(60, 60, 15, 100)],
+    n_events=15,
+    
 )
 
 Container(bpm=240, playback_rate=1)\
