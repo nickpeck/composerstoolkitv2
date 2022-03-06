@@ -110,9 +110,9 @@ class TestGraph(unittest.TestCase):
 
     def test_graph_is_itterable(self):
         graph = Graph()
-        pitch_c = Edge(pitch=60, start_time=0, end_time=100)
-        pitch_d = Edge(pitch=62, start_time=100, end_time=200)
-        pitch_e = Edge(pitch=64, start_time=200, end_time=300)
+        pitch_c = Edge(pitch=60, start_time=0, end_time=1)
+        pitch_d = Edge(pitch=62, start_time=1, end_time=2)
+        pitch_e = Edge(pitch=64, start_time=3, end_time=3)
         graph.add_edge(pitch_c)
         graph.add_edge(pitch_d)
         graph.add_edge(pitch_e)
@@ -120,21 +120,21 @@ class TestGraph(unittest.TestCase):
 
     def test_we_can_extract_the_chord_at_a_given_offset(self):
         graph = Graph()
-        graph.add_edge(Edge(pitch=65, start_time=0, end_time=100))
-        graph.add_edge(Edge(pitch=59, start_time=0, end_time=100))
-        graph.add_edge(Edge(pitch=64, start_time=100, end_time=200))
-        graph.add_edge(Edge(pitch=60, start_time=100, end_time=200))
+        graph.add_edge(Edge(pitch=65, start_time=0, end_time=1))
+        graph.add_edge(Edge(pitch=59, start_time=0, end_time=1))
+        graph.add_edge(Edge(pitch=64, start_time=1, end_time=2))
+        graph.add_edge(Edge(pitch=60, start_time=1, end_time=2))
 
         assert graph.get_pitches_at(0) == [59, 65]
-        assert graph.get_pitches_at(99) == [59, 65]
-        assert graph.get_pitches_at(100) == [60, 64]
-        assert graph.get_pitches_at(200) == []
+        assert graph.get_pitches_at(.99) == [59, 65]
+        assert graph.get_pitches_at(1) == [60, 64]
+        assert graph.get_pitches_at(2) == []
 
     def test_we_can_derrive_a_markov_table(self):
         graph = Graph()
-        pitch_c = Edge(pitch=60, start_time=0, end_time=200)
-        pitch_f = Edge(pitch=65, start_time=0, end_time=100)
-        pitch_e = Edge(pitch=64, start_time=100, end_time=200)
+        pitch_c = Edge(pitch=60, start_time=0, end_time=2)
+        pitch_f = Edge(pitch=65, start_time=0, end_time=1)
+        pitch_e = Edge(pitch=64, start_time=1, end_time=2)
         graph.add_edge(pitch_c)
         graph.add_edge(pitch_f)
         graph.add_edge(pitch_e)
@@ -150,14 +150,14 @@ class TestGraph(unittest.TestCase):
     def test_that_an_edge_without_end_time_is_considered_open(self):
         graph = Graph()
         graph.add_edge(Edge(pitch=65, start_time=0, end_time=None))
-        assert graph.get_pitches_at(150) == [65]
+        assert graph.get_pitches_at(1.5) == [65]
 
     def test_graph_to_vector_list(self):
         graph = Graph()
         # set up a simple context - just a two voice 4-3 suspension
-        pitch_c = Edge(pitch=60, start_time=0, end_time=200)
-        pitch_f = Edge(pitch=65, start_time=0, end_time=100)
-        pitch_e = Edge(pitch=64, start_time=100, end_time=200)
+        pitch_c = Edge(pitch=60, start_time=0, end_time=2)
+        pitch_f = Edge(pitch=65, start_time=0, end_time=1)
+        pitch_e = Edge(pitch=64, start_time=1, end_time=2)
         graph.add_edge(pitch_c)
         graph.add_edge(pitch_f)
         graph.add_edge(pitch_e)
@@ -168,7 +168,7 @@ class TestGraph(unittest.TestCase):
         assert len(vertex_list) == 2
         assert Vector(
             pitch_delta = -1,
-            time_delta = 100,
+            time_delta = 1,
             origin = pitch_f,
             destination = pitch_e
         ) in vertex_list
@@ -180,41 +180,41 @@ class TestGraph(unittest.TestCase):
         ) in vertex_list
 
     def test_vector_has_equality_with_vectors_of_same_pitch_time_delta(self):
-        pitch_b = Edge(pitch=59, start_time=200, end_time=300)
-        pitch_c = Edge(pitch=60, start_time=300, end_time=400)
-        pitch_f = Edge(pitch=65, start_time=0, end_time=100)
-        pitch_e = Edge(pitch=64, start_time=100, end_time=200)
+        pitch_b = Edge(pitch=59, start_time=2, end_time=3)
+        pitch_c = Edge(pitch=60, start_time=3, end_time=4)
+        pitch_f = Edge(pitch=65, start_time=0, end_time=1)
+        pitch_e = Edge(pitch=64, start_time=1, end_time=2)
 
         assert Vector(
             pitch_delta = -1,
-            time_delta = 100,
+            time_delta = 1,
             origin = pitch_f,
             destination = pitch_e
         ) == Vector(
             pitch_delta = -1,
-            time_delta = 100,
+            time_delta = 1,
             origin = pitch_c,
             destination = pitch_b
         )
 
         assert Vector(
             pitch_delta = -1,
-            time_delta = 100,
+            time_delta = 1,
             origin = pitch_f,
             destination = pitch_e
         ) != Vector(
             pitch_delta = -5,
-            time_delta = 100,
+            time_delta = 1,
             origin = pitch_e,
             destination = pitch_b
         )
 
         assert Vector(
             pitch_delta = -1,
-            time_delta = 100,
+            time_delta = 1,
             origin = pitch_f,
             destination = pitch_e
-        ) != Edge(pitch=59, start_time=200, end_time=300)
+        ) != Edge(pitch=59, start_time=2, end_time=3)
 
 class TestMIDIParser(unittest.TestCase):
 
@@ -264,17 +264,17 @@ class TestMIDIParser(unittest.TestCase):
 class EventTests(unittest.TestCase):
 
     def test_we_can_convert_an_event_to_set_of_edges(self):
-        evt = Event(pitches=[60,64,67], duration=100)
+        evt = Event(pitches=[60,64,67], duration=1)
         assert evt.to_edges() == [
-            Edge(pitch=60, start_time=0, end_time=100),
-            Edge(pitch=64, start_time=0, end_time=100),
-            Edge(pitch=67, start_time=0, end_time=100)
+            Edge(pitch=60, start_time=0, end_time=1),
+            Edge(pitch=64, start_time=0, end_time=1),
+            Edge(pitch=67, start_time=0, end_time=1)
         ]
 
 class SequenceTests(unittest.TestCase):
 
     def test_a_transformer_can_be_applied_to_a_sequence(self):
-        cts = Sequence([Event(pitches=[62], duration=100)])
+        cts = Sequence([Event(pitches=[62], duration=1)])
 
         def test_modifier(sequence):
             for e in sequence.events:
@@ -282,53 +282,53 @@ class SequenceTests(unittest.TestCase):
                 yield Event(new_pitches,  e.duration * 2)
 
         new_seq = cts.transform(test_modifier)
-        assert list(new_seq.events) == [Event(pitches=[124], duration=200)]
+        assert list(new_seq.events) == [Event(pitches=[124], duration=2)]
 
     def test_two_sequences_can_be_added(self):
         seq1 = Sequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100)])
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1)])
 
         seq2 = Sequence([
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
 
         seq3 = seq1 + seq2
         assert list(seq3.events) == [
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)]
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)]
 
     def test_get_pitches(self):
         cts = Sequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
 
         assert list(cts.pitches) == [67,60,62,64,60]
 
     def test_get_durations(self):
         cts = Sequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=200),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=2),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
 
-        assert list(cts.durations) == [100,100,200,100,100]
+        assert list(cts.durations) == [1,1,2,1,1]
 
     def test_we_can_form_a_finite_sequence(self):
         cts = Sequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=200),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)]).bake()
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=2),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)]).bake()
 
         assert isinstance(cts.events, list)
 
@@ -336,57 +336,57 @@ class FiniteSequenceTests(unittest.TestCase):
 
     def test_we_can_get_the_duration(self):
         cts = FiniteSequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
-        assert cts.duration == 500
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
+        assert cts.duration == 5
 
     def test_we_can_get_the_durations(self):
         cts = FiniteSequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
-        assert cts.durations == [100,100,100,100,100]
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
+        assert cts.durations == [1,1,1,1,1]
 
     def test_we_can_make_a_sequence(self):
         cts = FiniteSequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
 
         seq = cts.to_sequence()
-        assert next(seq.events) == Event(pitches=[67], duration=100)
+        assert next(seq.events) == Event(pitches=[67], duration=1)
 
     def test_we_can_get_the_pitch_set(self):
         cts = FiniteSequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
         assert cts.to_pitch_set() == {60,62,64,67}
 
     def test_sequence_to_pitch_class_set(self):
         cts = FiniteSequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
         assert cts.to_pitch_class_set() == {0,2,4,7}
 
     def test_finite_sequence_is_slicable(self):
         events = [
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)]
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)]
         cts = FiniteSequence(events)
 
         sliced = cts[0]
@@ -409,23 +409,23 @@ class FiniteSequenceTests(unittest.TestCase):
 
     def test_we_can_get_the_event_at_an_offset(self):
         cts = FiniteSequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
 
-        assert cts.event_at(0) == Event(pitches=[67], duration=100)
-        assert cts.event_at(250) == Event(pitches=[62], duration=100)
-        assert cts.event_at(1000) == None
+        assert cts.event_at(0) == Event(pitches=[67], duration=1)
+        assert cts.event_at(2.5) == Event(pitches=[62], duration=1)
+        assert cts.event_at(10) == None
 
     def test_we_can_create_a_graph(self):
         g = FiniteSequence([
-            Event(pitches=[67], duration=100),
-            Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
-            Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)]).to_graph()
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)]).to_graph()
 
         assert len(g.edges) == 5
 
@@ -446,14 +446,14 @@ class ContainerTests(unittest.TestCase):
     def test_can_add_a_sequence(self):
         c = Container(bpm=300, playback_rate=2)
         cts = FiniteSequence([
-            Event(pitches=[67], duration=100)])
+            Event(pitches=[67], duration=1)])
         c.add_sequence(cts)
         assert c.sequences[0] == (0, 0, cts)
 
     def test_can_add_a_sequence_on_a_given_channel_and_offset(self):
         c = Container(bpm=300, playback_rate=2)
         cts = FiniteSequence([
-            Event(pitches=[67], duration=100)])
+            Event(pitches=[67], duration=1)])
         c.add_sequence(cts, channel_no=3, offset=100)
         assert c.sequences[0] == (3, 100, cts)
 
@@ -470,10 +470,10 @@ class ContainerTests(unittest.TestCase):
         graph = Graph.from_midi_track(midi_file.tracks[1])
         assert graph.edges[0].pitch == 60
         assert graph.edges[0].start_time == 0
-        assert graph.edges[0].end_time == 960
+        assert graph.edges[0].end_time == 1
         assert graph.edges[1].pitch == 62
-        assert graph.edges[1].start_time == 960
-        assert graph.edges[1].end_time == 1920
+        assert graph.edges[1].start_time == 1
+        assert graph.edges[1].end_time == 2
 
 
 if __name__ == "__main__":

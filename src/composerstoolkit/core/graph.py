@@ -37,7 +37,10 @@ class MidiTrackParser:
     ie there should be no space or overlap between chords that are
     intended to be connected in a legato manner.
     """
-    def __init__(self, track: MidiTrack, graph: Graph):
+    def __init__(self, 
+            track: MidiTrack,
+            graph: Graph,
+            ticks_per_beat = 960):
         """Constructor for MidiTrackParser:
         track - a mido MidiTrack
         graph - the Graph to the data into.
@@ -47,6 +50,7 @@ class MidiTrackParser:
         self._open_notes: List[Edge] = []
         self._closed_notes: List[Edge] = []
         self._cummulative_time: int = 0
+        self.ticks_per_beat = ticks_per_beat
 
     def parse(self):
         """Parse the track and return the resulting graph.
@@ -57,7 +61,8 @@ class MidiTrackParser:
             if evt.time > 0:
                 self._join_verticals()
                 self._join_horizontals()
-                self._cummulative_time = self._cummulative_time + evt.time
+                self._cummulative_time = self._cummulative_time +\
+                    (evt.time/self.ticks_per_beat)
             if evt.type == "note_on":
                 self._on_note_start(evt)
             if evt.type == "note_off":
