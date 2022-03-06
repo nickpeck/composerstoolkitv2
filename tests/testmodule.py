@@ -461,14 +461,19 @@ class ContainerTests(unittest.TestCase):
         filename = "test.MID"
         c = Container(bpm=100, playback_rate=1)
         cts = FiniteSequence([
-            Event(pitches=[60], duration=100)])
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1)])
+        c.add_sequence(cts)
         c.save_as_midi_file(filename)
         # test we can parse it back in:
         midi_file = MidiFile(filename)
-        graph = Graph.from_midi_track(midi_file.tracks[0])
+        graph = Graph.from_midi_track(midi_file.tracks[1])
         assert graph.edges[0].pitch == 60
         assert graph.edges[0].start_time == 0
-        assert graph.edges[0].end_time == 100
+        assert graph.edges[0].end_time == 960
+        assert graph.edges[1].pitch == 62
+        assert graph.edges[1].start_time == 960
+        assert graph.edges[1].end_time == 1920
 
 
 if __name__ == "__main__":

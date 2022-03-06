@@ -107,7 +107,7 @@ class Container:
     def save_as_midi_file(self, filename):
         """Save the contents of the container as a MIDI file
         """
-        midifile = MIDIFile(len(self.sequences), eventtime_is_ticks=True)
+        midifile = MIDIFile(len(self.sequences))
         midifile.addTempo(0, 0, self.options["bpm"])
         for (channel_no, offset, seq) in self.sequences:
             midifile.addTrackName(channel_no, offset, "Channel {}".format(channel_no))
@@ -117,7 +117,7 @@ class Container:
                     try:
                         dynamic = event.meta["dynamic"]
                     except KeyError:
-                        dynamic = 60
+                        dynamic = 100
                     midifile.addNote(channel_no, 0, pitch, count, event.duration, dynamic)
                 count = count + event.duration
         with open(filename, 'wb') as outf:
