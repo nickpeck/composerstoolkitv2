@@ -16,15 +16,16 @@ def loop(seq: Sequence, n_times: Optional[int]=None) -> Iterator[Event]:
     if n_times is None:
         for item in itertools.cycle(seq.events):
             yield item
+        return
     if n_times < 0:
         raise ValueError("n_times cannot be less than 0")
     saved = []
     for element in seq.events:
         yield element
         saved.append(element)
-    for i in range(n_times):
+    for _i in range(n_times):
         for element in saved:
-              yield element
+            yield element
 
 @Transformer
 def transpose(seq: Sequence, interval: int) -> Iterator[Event]:
@@ -37,13 +38,13 @@ def transpose(seq: Sequence, interval: int) -> Iterator[Event]:
                 duration=evt.duration)
 
 @Transformer
-def retrograde(seq: Sequence) -> List[Event]:
-    """Reverse a sequence.
-    (Note this forces the sequence to be evaluated).
+def retrograde(seq: Sequence, n_pitches: int) -> Iterator[Event]:
+    """Cut a section up to n_pitches from the start of the
+    sequence and return the pitches in reverse order
     """
-    events = list(seq.events)[:]
-    events.reverse()
-    return events
+    _slice = list(itertools.islice(seq.events, 0, n_pitches))
+    _slice.reverse()
+    return _slice
 
 @Transformer
 def invert(seq: Sequence, axis_pitch=None) -> Iterator[Event]:
@@ -68,14 +69,12 @@ def invert(seq: Sequence, axis_pitch=None) -> Iterator[Event]:
             yield Event([evt.pitches[0]], evt.duration)
 
 @Transformer
-def rotate(seq: Sequence, no_times=1) -> List[Event]:
-    """Return a new list of events in which the order has
-    been rotated by n_voices
-    (Note this forces the sequence to be evaluated).
+def rotate(seq: Sequence, n_pitches: int, no_times=1) -> Iterator[Event]:
+    """Cut a section up to n_pitches from the start of the
+    sequence and return the events with their order of pitches
+    rotated up to no_times
     """
-    if seq.events == []:
-        return []
-    rotated = list(seq.events)[:]
+    rotated = list(itertools.islice(seq, 0, n_pitches))
     for _i in range(no_times):
         rotated = rotated[1:] + [rotated[0]]
     return rotated

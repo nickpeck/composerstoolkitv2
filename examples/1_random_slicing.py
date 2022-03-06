@@ -1,3 +1,8 @@
+"""Presents an infinate-length texture composed of random slices of a
+4-note sequence in the upper voice, over an ostinato composed out of
+permutations of another 4-note group.
+"""
+
 from composerstoolkit.core import Event, Sequence, Container
 from composerstoolkit.builders.generators import random_slice
 from composerstoolkit.builders.transformers import loop
@@ -16,11 +21,12 @@ seq_upper = Sequence.from_generator(random_slice(
         Event(pitches=[62], duration=2),
         Event(pitches=[64], duration=3),
         Event(pitches=[59], duration=4),
-    ]),
-    None
+    ])
 ))
 
 Container(bpm=240, playback_rate=1)\
     .add_sequence(seq_upper)\
     .add_sequence(ostinato)\
     .playback()
+
+# this idea would also work well when applied to percussion/drum fragment

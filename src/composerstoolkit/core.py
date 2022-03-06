@@ -7,7 +7,8 @@ import os
 from time import sleep
 import signal
 import sys
-from typing import Any, Dict, List, Optional, Callable, Iterator, Set, Tuple
+from typing import Any, Dict, List, Optional, Callable, Iterator, Set
+from threading import Thread
 
 import itertools
 import functools
@@ -269,26 +270,6 @@ class Sequence:
             events = generator
         )
 
-    def to_midi_events(self, time_offset=0) -> Tuple[int, str, int]:
-        events = list(self.events)
-        results = []
-        for e in events:
-            for pitch in e.pitches:
-                results.append((
-                    pitch,
-                    "note_on",
-                    time_offset
-                ))
-                results.append((
-                    pitch,
-                    "note_off",
-                    time_offset + e.duration
-                ))
-            time_offset = time_offset + e.duration
-        # sort by time
-        results.sort(key=lambda x: x[2], reverse=False)
-        return results
-
     def to_pitch_set(self) -> Set[int]:
         """Return a set of unique MIDI pitch numbers that comprise the sequence.
         """
@@ -431,22 +412,24 @@ class Container():
         self.sequences.append((channel_no, offset, seq))
         return self
 
-    def _play_channel(self, no, seq, synth):
-        counter = 0
+    def _play_channel(self, channel_no, offset, seq, synth):
         playback_rate = self.options["playback_rate"]
         bpm = self.options["bpm"]
         time_scale_factor = (1/(bpm/60)) * (1/playback_rate)
-        print("Channel {} playback starting".format(no))
+        print("Channel {} playback starting".format(channel_no))
+        sleep(offset)
         for event in seq.events:
             for pitch in event.pitches:
                 synth.noteon(0, pitch, 60)
             sleep(event.duration * time_scale_factor)
             for pitch in event.pitches:
                 synth.noteoff(0, pitch)
-        print("Channel {} playback ended".format(no))
+        print("Channel {} playback ended".format(channel_no))
 
     def playback(self):
-        def signal_handler(sig, frame):
+        """Playback all midi channels
+        """
+        def signal_handler(_sig, _frame):
             print('Bye')
             sys.exit(0)
         signal.signal(signal.SIGINT, signal_handler)
@@ -454,12 +437,14 @@ class Container():
         if os.name != 'nt':
             # pylint: disable=no-member
             signal.pause()
-        from threading import Thread
+
         synth = self.options["synth"]
         for channel_no, offset, seq in self.sequences:
-            t = Thread(target=self._play_channel, args=(channel_no, seq,synth))
-            t.daemon = True
-            t.start()
+            player_thread = Thread(
+                target=self._play_channel,
+                args=(channel_no, offset, seq,synth))
+            player_thread.daemon = True
+            player_thread.start()
         while True:
             sleep(1)
 
