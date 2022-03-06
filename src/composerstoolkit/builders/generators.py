@@ -85,19 +85,28 @@ def resultant_pitches(counters = List[int],
     resultant = [0 for i in range(0, n_ticks)]
     for i in range(len(resultant)):
         for counter in counters:
-            if i % counter == 1:
+            if i % counter == 0:
                 resultant[i] = 1
                 continue
 
-    for i in range(n_ticks -1):
-
+    cur_pitch = start_at
+    resultant_summed = []
+    for i in range(len(resultant)):
         if resultant[i] == 1:
-            yield Event([start_at + i])
+            resultant_summed.append(1)
+        elif resultant[i] == 0:
+            resultant_summed[-1] = resultant_summed[-1] + 1
+
+    yield Event([cur_pitch])
+    for pitch_delta in resultant_summed:
+        cur_pitch = cur_pitch + pitch_delta
+        yield Event([cur_pitch])
+
 
 
 def axis_melody(axis_pitch: int,
     scale: List[int],
-    steps: int=0,
+    max_steps: int=0,
     direction="contract") -> Iterator[Event]:
     """Return a sequence of single pitch events, where each event
     alternates +/- n steps about axis, within the given scale context.
@@ -105,29 +114,39 @@ def axis_melody(axis_pitch: int,
     towards the axis, otherwise, if "expand"
     move outwards until interval is reached.
     """
+    if not isinstance(scale, list):
+        scale = list(scale)
     if axis_pitch not in scale:
         raise Exception("pitch {} is not in the given scale".format(axis_pitch))
     if direction not in ["expand", "contract"]:
         raise Exception("direction should be 'expand' or 'contract'")
 
     axis_index = scale.index(axis_pitch)
-    def should_continue(steps, max):
+    def should_continue(n_steps, max_steps):
         if direction == "contract":
-            return steps >= 0
+            return n_steps >= 0
         if direction == "expand":
-            return steps <= max
+            return n_steps < max_steps
 
-    max = steps
-    while should_continue(steps, max):
-        upper = scale[axis_index + steps]
-        yield Event(pitches=[upper])
-        lower = scale[axis_index - steps]
-        yield Event(pitches=[lower])
+    step_counter = 0
+    if direction == "contract":
+        step_counter = max_steps
+    if direction == "expand":
+        yield Event(pitches=[axis_index])
+
+    while should_continue(step_counter, max_steps):
         if direction == "contract":
-            steps = steps -1
-        if should_continue(steps, max):
-            if direction == "expand":
-                steps = steps +1
+            upper = scale[axis_index + step_counter]
+            yield Event(pitches=[upper])
+            lower = scale[axis_index - step_counter]
+            yield Event(pitches=[lower])
+            step_counter = step_counter - 1
+        if direction == "expand":
+            step_counter = step_counter + 1
+            upper = scale[axis_index + step_counter]
+            yield Event(pitches=[upper])
+            lower = scale[axis_index - step_counter]
+            yield Event(pitches=[lower])
 
 def random_noise(max_len: Optional[int] = None,
     min_notes_per_chord: int = 0,
@@ -146,7 +165,7 @@ def random_noise(max_len: Optional[int] = None,
     def is_not_terminal():
         if max_len is None:
             return True
-        return i <= max_len
+        return i < max_len
     while is_not_terminal():
         i = i + 1
         duration = random.random()
@@ -156,23 +175,25 @@ def random_noise(max_len: Optional[int] = None,
         yield Event(pitches, duration)
 
 def random_choice(choices: Iterator[Event],
-    max_length: Optional[int]=None) -> Iterator[Event]:
+    max_len: Optional[int]=None) -> Iterator[Event]:
     """Return a series of randomly chosen Events from
     the list of choices up to max_len.
     If max_len is None, the sequence is infinate.
     """
     def _chooser(choices, max_len):
+        i = 0
         if max_len is None:
             while True:
                 yield random.choice(choices)
         cummulative_len = 0
-        while True:
+        while i < max_len:
+            i = i + 1
             next_choice = random.choice(choices)
             cummulative_len = cummulative_len + next_choice.duration
             if cummulative_len >= max_len:
                 return
             yield next_choice
-    return _chooser(choices, max_length)
+    return _chooser(choices, max_len)
 
 def using_markov_table(starting_event: Event,
     markov_table: Dict[int, Dict[int, int]],
@@ -184,21 +205,22 @@ def using_markov_table(starting_event: Event,
     without any backtracking.
     """
     i=0
+    yield starting_event
     previous_note = starting_event.pitches[-1]
     previous_note_pc = previous_note % 12
     choices = list(range(12))
     def is_not_terminal():
         if max_len is None:
             return True
-        return i <= max_len
+        return i < max_len - 1
     while is_not_terminal():
         i = i + 1
         weights = list(markov_table[previous_note_pc].values())
         pitch = random.choices(choices, weights)[0]
         original_8va = math.floor(previous_note / 12)
         _pitch = (original_8va * 12) + pitch
-        if abs(_pitch - previous_note) > 12:
-            _pitch = _pitch - 12
+        if abs(_pitch - previous_note) >= 11:
+            _pitch = _pitch - 11
         yield Event([_pitch], starting_event.duration)
         previous_note = _pitch
 

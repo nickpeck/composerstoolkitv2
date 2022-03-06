@@ -429,13 +429,12 @@ class ContainerTests(unittest.TestCase):
 
     @patch('fluidsynth.Synth', autospec=True)
     def test_can_playback(self, synth):
-        c = Container(synth=synth)
+        c = Container(synth=synth, debug=False)
         seq = FiniteSequence([
             Event(pitches=[60], duration=1),
             Event(pitches=[62], duration=1)])
         c.add_sequence(seq)
         c.playback()
-
 
 if __name__ == "__main__":
     unittest.main()
