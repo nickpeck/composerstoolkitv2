@@ -1,21 +1,15 @@
 """Presents an infinate-length series of chords derived from
-the 6th mode of limited transposition
+an aritifical scale constructed from the resultant pattern
+of 3 different integers.
 """
-
 from composerstoolkit import *
-from composerstoolkit.resources.scales import MODE_6_PITCH_CLASSES
 
-even_pulse = Sequence.from_generator(
-    pulses([WHOLE_NOTE]))\
-    .transform(loop())
+artificial_scale = Sequence.from_generator(
+    resultant_pitches(counters=[3,4,9], start_at=40)).bake()
 
-chords = Sequence.from_generator(
-    cantus(
-        Permutations(MODE_6_PITCH_CLASSES).flatten()))\
-    .transform(transpose(48))\
+chords = Sequence.from_generator(artificial_scale)\
     .transform(loop())\
-    .transform(map_to_pulses(even_pulse))\
-    .transform(aggregate(3, WHOLE_NOTE))
+    .transform(aggregate(4, HALF_NOTE))
 
 Container(bpm=100, playback_rate=1)\
     .add_sequence(chords)\

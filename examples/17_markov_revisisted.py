@@ -16,13 +16,15 @@ table = graph.to_markov_table()
 
 pf = pitches.PitchFactory()
 
+pulse = Sequence.from_generator(collision_pattern(4,5,9))
+
 melody = Sequence.from_generator(using_markov_table(
     Event(pitches=[pf("G4")], duration=1),
     table
 )).transform(
-    modal_quantize(scales.G_major)
+    map_to_pulses(pulse)
 )
 
-Container(bpm=150, playback_rate=1)\
+Container(bpm=250, playback_rate=1)\
     .add_sequence(melody)\
     .playback()

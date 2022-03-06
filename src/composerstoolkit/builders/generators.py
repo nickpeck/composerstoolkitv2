@@ -23,7 +23,7 @@ def pulses(pulse_values: Iterator[int]) -> Iterator[Event]:
     """
     return (Event(duration=d) for d in pulse_values)
 
-def collision_pattern(clock1: int, clock2: int) -> Iterator[Event]:
+def collision_pattern(*clocks) -> Iterator[Event]:
     """given clocks in the ratio x:y ,
     generate the sequence of attack points
     that results from the collision of their pulses.
@@ -32,14 +32,21 @@ def collision_pattern(clock1: int, clock2: int) -> Iterator[Event]:
     [200, 100, 100, 200]
     [(None, 200),(None, 100),(None, 100),(None, 200)]
     """
-    if clock1 == clock2:
-        yield Event(duration=clock1)
+    if len(set(clocks)) == 1:
+        yield Event(duration=clocks[0])
         return
-    n_ticks = clock1 * clock2
+    # n_ticks = math.lcm(*clocks) # python 3.9 +
+    # earlier python, it only accepts two ints:
+    lcm = 1
+    for clock in clocks:
+        lcm = lcm*clock//math.gcd(lcm, clock)
+    n_ticks = lcm
     pulse_pattern = [0 for i in range(0, n_ticks)]
     for i in range(0, n_ticks):
-        if i % clock1 == 0 or i % clock2 == 0:
-            pulse_pattern[i] = 1
+        for clock in clocks:
+            if i % clock == 0:
+                pulse_pattern[i] = 1
+                continue
 
     cur_duration = None
 
@@ -59,22 +66,28 @@ def collision_pattern(clock1: int, clock2: int) -> Iterator[Event]:
         cur_duration = 0
     yield Event(duration=cur_duration + 1)
 
-def resultant_pitches(counter1: int,
-    counter2: int,
+def resultant_pitches(counters = List[int],
     start_at: int = 0) -> Iterator[Event]:
     """Similar to the above, but yields a
     symetrical scale using the intervals
     derrived from the resultant pattern of
     counter1 and counter2
     """
-    if counter1 == counter2:
-        yield Event(duration=counter1)
+    if len(set(counters)) == 1:
+        yield Event(duration=counters[0])
         return
-    n_ticks = counter1 * counter2
+    # n_ticks = math.lcm(*clocks) # python 3.9 +
+    # earlier python, it only accepts two ints:
+    lcm = 1
+    for counter in counters:
+        lcm = lcm*counter//math.gcd(lcm, counter)
+    n_ticks = lcm
     resultant = [0 for i in range(0, n_ticks)]
     for i in range(len(resultant)):
-        if i % counter1 == 0 or i % counter2 == 0:
-            resultant[i] = 1
+        for counter in counters:
+            if i % counter == 1:
+                resultant[i] = 1
+                continue
 
     for i in range(n_ticks -1):
 
