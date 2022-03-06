@@ -3,8 +3,9 @@ import random
 
 """
 Heuristic functions used to guide random generation
-(see composers.solver.random_walk_backtracking_w_heuristics)
+(see composers.solvers.backtracking_solver)
 """
+# TODO use decimal types here to avoid floating point errors
 
 def heuristic_sine_shape(axis_pitch=60,amplitude=30,length=16, strength=1):
     # this will try and make the music obey the shape of a single sine wave cycle
@@ -21,7 +22,7 @@ def heuristic_sine_shape(axis_pitch=60,amplitude=30,length=16, strength=1):
                 weights[i] = weights[i] + math.pow(compensating_value, strength) * 100
         return weights
     return f
-    
+
 def heuristic_trend_upwards(axis=60, strength=1):
     def f(tick, choices, weights):
         for i in range(len(choices)):
@@ -30,7 +31,7 @@ def heuristic_trend_upwards(axis=60, strength=1):
                 weights[i] = weights[i] + strength
         return weights
     return f
-    
+
 def heuristic_single_pitch(axis_pitch=60, slope=30, strength=1):
     # this will try and make the music obey the shape of a single axis pitch
     def f(tick, choices, weights):

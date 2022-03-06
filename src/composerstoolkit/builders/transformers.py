@@ -221,6 +221,14 @@ def map_to_pitches(seq: Sequence, pitch_sequence: Sequence) -> Iterator[Event]:
             yield Event([], event.duration)
 
 @Transformer
+def tie_repeated(seq: Sequence) -> Iterator[Event]:
+    """Tie events notes with repeated pitches
+    """
+    grouped = itertools.groupby(seq.events, key=lambda e: e.pitches)
+    for pitches, group in grouped:
+        yield Event(pitches, sum([e.duration for e in group]))
+
+@Transformer
 def batch(seq: Sequence,
     transformations: List[Transformer]) -> Iterator[Event]:
     """Apply multiple transformations a sequence, such as

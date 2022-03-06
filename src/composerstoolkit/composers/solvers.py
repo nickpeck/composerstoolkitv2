@@ -31,7 +31,7 @@ class AllRoutesExhaustedException(Exception):
     possibilities under the given condition.
     """
 
-def develop_motive(seed: FixedSequence, **kwargs) -> Sequence:
+def develop(seed: FixedSequence, **kwargs) -> Sequence:
     """Grow a sequence from a given 'seed' (motive).
     The process does not operate in realtime, and may well
     raise DeadEndException if it hits a dead-end

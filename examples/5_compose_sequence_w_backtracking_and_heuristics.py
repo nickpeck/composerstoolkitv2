@@ -22,9 +22,14 @@ seq = backtracking_solver(
         constraint_in_set(scales.C_major),
         constraint_no_leaps_more_than(4)],
     heuristics=[
-        heuristic_sine_shape(60, 60, 15, 100)],
+        heuristic_trend_upwards(60, 10)],
     n_events=15,
 )
+
+# we didn't use a constraint to prevent repeated notes,
+# but we can use the tie_repeated transformer here to 
+# make some interesting rhythms out of this repetition
+seq = Sequence(seq.events).transform(tie_repeated())
 
 Container(bpm=240, playback_rate=1)\
     .add_sequence(seq)\
