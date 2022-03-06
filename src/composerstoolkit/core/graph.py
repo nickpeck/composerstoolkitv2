@@ -23,9 +23,13 @@ class Edge:
     start_time: int
     end_time: Optional[int] = None
     vertices: List[Edge] = field(
+        repr = False,
         default_factory = lambda: []
     )
-    src_event: Optional[Message] = None
+    src_event: Optional[Message] = field(
+        repr = False,
+        default_factory = lambda: None
+    )
 
 class MidiTrackParser:
     """Parse a Midi track into a pitch graph
@@ -65,6 +69,9 @@ class MidiTrackParser:
                 self._cummulative_time = self._cummulative_time +\
                     (evt.time/self.ticks_per_beat)
             if evt.type == "note_on":
+                if evt.velocity == 0:
+                    self._on_note_end(evt)
+                    continue
                 self._on_note_start(evt)
             if evt.type == "note_off":
                 self._on_note_end(evt)

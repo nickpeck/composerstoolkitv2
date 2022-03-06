@@ -1,4 +1,5 @@
 from composerstoolkit.core import *
+from composerstoolkit.analysis import *
 from composerstoolkit.composers import *
 from composerstoolkit.builders import *
 from composerstoolkit.resources.rhythms import *

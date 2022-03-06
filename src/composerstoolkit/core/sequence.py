@@ -153,6 +153,11 @@ class FiniteSequence:
                 left.duration))
         return vectors
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self.to_vectors() == other.to_vectors()
+
     def to_pitch_class_set(self):
         """Return the set of unique pitch classes (0..11) that comprise the sequence.
         """
@@ -166,6 +171,19 @@ class FiniteSequence:
         for event in self.events:
             edges = edges + event.to_edges(offset)
         return Graph(edges)
+
+    @classmethod
+    def from_graph(cls, graph: Graph):
+        edges = list(graph) # already sorted by time
+        events = []
+        key_func = lambda e: e.start_time
+        for start_time, group in itertools.groupby(edges, key_func):
+            edges = list(group)
+            pitches = [e.pitch for e in edges]
+            pitches = sorted(pitches)
+            duration = edges[-1].end_time - edges[-1].start_time
+            events.append(Event(pitches, duration))
+        return cls(events)
 
     def event_at(self, beat_offset: int) -> Optional[Event]:
         if beat_offset > self.duration:
