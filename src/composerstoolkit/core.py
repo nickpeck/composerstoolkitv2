@@ -385,14 +385,19 @@ class FiniteSequence:
             _events = self.events[:]
 
             while is_terminal():
-                cloned = FiniteSequence(_events)
-                new_seq = transformer(Sequence(cloned.events))
-                _events = []
-                for event in new_seq:
-                    _events.append(event)
-                for _i in range(repeats_per_var):
-                    for event in _events:
-                        yield event
+                if i == 0:
+                    for _i in range(repeats_per_var):
+                        for event in self.events:
+                            yield event
+                else:
+                    cloned = FiniteSequence(_events)
+                    new_seq = transformer(Sequence(cloned.events))
+                    _events = []
+                    for event in new_seq:
+                        _events.append(event)
+                    for _i in range(repeats_per_var):
+                        for event in _events:
+                            yield event
                 i = i + 1
         return Sequence(events=compose_vars())
 
