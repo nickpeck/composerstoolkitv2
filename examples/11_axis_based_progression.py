@@ -8,7 +8,7 @@ There are three elements to the texture:
 from decimal import Decimal
 
 from composerstoolkit import *
-from composerstoolkit.resources import scales
+from composerstoolkit.resources import scales, pitches
 
 pf = pitches.PitchFactory()
 
