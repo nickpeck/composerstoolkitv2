@@ -13,7 +13,8 @@ from ..core import Event, Sequence, Transformer, Context, Constraint
 from ..resources import NOTE_MIN, NOTE_MAX
 
 @Transformer
-def loop(seq: Sequence, n_times: Optional[int]=None) -> Iterator[Event]:
+def loop(seq: Sequence,
+    n_times: Optional[int]=None) -> Iterator[Event]:
     """Loop a sequence.
     If n_times is None, loop repeatedly.
     """
@@ -30,6 +31,36 @@ def loop(seq: Sequence, n_times: Optional[int]=None) -> Iterator[Event]:
     for _i in range(n_times):
         for element in saved:
             yield element
+
+@Transformer
+def slice_looper(seq: Sequence,
+    n_events: int,
+    n_repeats: int = 1) -> Iterator[Event]:
+    buffer = []
+    for event in seq.events:
+        if len(buffer) <= n_events:
+            buffer.append(event)
+        else:
+            for _i in range(n_repeats):
+                for event in buffer:
+                    yield event
+            buffer = []
+    for event in buffer:
+        yield event
+
+@Transformer
+def feedback(seq: Sequence,
+    n_events: int) -> Iterator[Event]:
+    buffer = []
+    for event in seq.events:
+        buffer.insert(0, event)
+        if len(buffer) < n_events:
+            yield event
+            continue
+        event2 = buffer.pop()
+        event.pitches = {* event.pitches + event2.pitches}
+        event.pitches = sorted(list(event.pitches))
+        yield event
 
 @Transformer
 def transpose(seq: Sequence, interval: int) -> Iterator[Event]:
@@ -131,6 +162,8 @@ def aggregate(seq: Sequence,
     for group in more_itertools.grouper(seq.events, n_voices):
         pitches = []
         for event in group:
+            if event is None:
+                continue
             pitches = pitches + list(
                 filter(lambda p: p is not None, event.pitches))
         yield Event(
@@ -226,7 +259,7 @@ def map_to_pulses(seq: Sequence, pulse_sequence: Sequence) -> Iterator[Event]:
     """Return a new stream of events which has the durations of
     pitch_sequence mapped to the events of seq.
     """
-    iter_pulses = iter(pulse_sequence.events)
+    iter_pulses = itertools.cycle(iter(pulse_sequence.events))
     for event in seq.events:
         try:
             next_pulse = next(iter_pulses)
@@ -239,7 +272,7 @@ def map_to_pitches(seq: Sequence, pitch_sequence: Sequence) -> Iterator[Event]:
     """Return a new stream of events which has the pitches of
     pitch_sequence mapped to the events of seq.
     """
-    iter_pitches = iter(pitch_sequence.events)
+    iter_pitches = itertools.cycle(iter(pitch_sequence.events))
     for event in seq.events:
         try:
             next_pitch = next(iter_pitches)
@@ -376,6 +409,21 @@ def arpeggiate(seq: Sequence,
             individual_note_len = event.duration / n_pitches
         for note in event.pitches:
             yield Event(pitches=[note], duration=individual_note_len)
+
+@Transformer
+def displacement(seq: Sequence,
+    interval: int=0) -> Iterator[Event]:
+    yield Event([], duration=interval)
+    for event in seq.events:
+        yield event
+
+@Transformer
+def monody(seq: Sequence) -> Iterator[Event]:
+    for event in seq.events:
+        if len(event.pitches) == 0:
+            yield event
+            continue
+        yield Event([event.pitches[-1]], event.duration)
 
 @Transformer
 def modal_quantize(seq: Sequence,

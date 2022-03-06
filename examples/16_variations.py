@@ -32,7 +32,9 @@ melodic_variations1 = base_seq.variations(
         rotate(7),
         invert(axis_pitch=pf("C6")),
         map_to_pitches(base_seq),
-        map_to_pulses(base_seq)
+        map_to_pulses(base_seq),
+        slice_looper(n_events=2, n_repeats=4),
+        feedback(n_events=4)
     ]),
     repeats_per_var=2
 ).transform(
@@ -42,7 +44,7 @@ melodic_variations1 = base_seq.variations(
 chords = Sequence.from_generator(
     chord_cycle(
         scale=scales.Bb_major,
-        start=Event(pitches=[pf("F2"),pf("G3"), pf("Bb3"), pf("D4")], duration=12),
+        start=Event(pitches=[pf("F2"),pf("Eb3"),pf("G3"), pf("Bb3"), pf("D4")], duration=12),
         cycle_of=-3)
 ).transform(
     loop()

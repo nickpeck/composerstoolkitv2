@@ -12,9 +12,11 @@ from threading import Thread
 
 import itertools
 import functools
+
 import fluidsynth # type: ignore
 from midiutil.MidiFile import MIDIFile # type: ignore
 from mido import MidiTrack, Message # type: ignore
+import more_itertools
 
 @dataclass
 class Edge:
@@ -308,6 +310,13 @@ class Sequence:
         """
         return FiniteSequence(list(self.events))
 
+    def tap(self) -> Sequence:
+        """Returns a copy of the sequence.
+        This can be advanced through without affecting the iteration
+        state of the current sequence.
+        """
+        return Sequence(events=more_itertools.seekable(self.events))
+
     def __add__(self, other):
         """Allows sequences to be added together.
         """
@@ -513,7 +522,8 @@ class Container():
         self.options = {
             "bpm": 120,
             "playback_rate": 1,
-            "synth": None
+            "synth": None,
+            "debug": True
         }
         self.sequences = []
         self.options.update(kwargs)
@@ -542,7 +552,8 @@ class Container():
         print("Channel {} playback starting".format(channel_no))
         sleep(offset)
         for event in seq.events:
-            print(event)
+            if self.options["debug"]:
+                print(event)
             for pitch in event.pitches:
                 synth.noteon(0, pitch, 60)
             sleep(event.duration * time_scale_factor)
