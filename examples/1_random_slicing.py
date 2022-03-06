@@ -5,22 +5,25 @@ permutations of another 4-note group.
 
 from composerstoolkit.core import Event, Sequence, Container
 from composerstoolkit.builders.generators import random_slice
-from composerstoolkit.builders.transformers import loop
+from composerstoolkit.builders.transformers import loop, map_to_pulses
 from composerstoolkit.builders.permutators import Permutations
+from composerstoolkit.resources.rhythms import *
 
-ostinato = Sequence(events=Permutations([
-            Event(pitches=[48], duration=1),
-            Event(pitches=[43], duration=1),
-            Event(pitches=[45], duration=1),
-            Event(pitches=[41], duration=1)]).flatten()
-        ).transform(loop())
+ostinato = Sequence(
+    events=Permutations([
+        Event(pitches=[48], duration=QUARTER_NOTE),
+        Event(pitches=[43], duration=QUARTER_NOTE),
+        Event(pitches=[45], duration=QUARTER_NOTE),
+        Event(pitches=[41], duration=QUARTER_NOTE)]).flatten()
+    )\
+    .transform(loop())
 
 seq_upper = Sequence.from_generator(random_slice(
     Sequence(events=[
-        Event(pitches=[60], duration=1),
-        Event(pitches=[62], duration=2),
-        Event(pitches=[64], duration=3),
-        Event(pitches=[59], duration=4),
+        Event(pitches=[60], duration=QUARTER_NOTE),
+        Event(pitches=[62], duration=HALF_NOTE),
+        Event(pitches=[64], duration=DOTTED(HALF_NOTE)),
+        Event(pitches=[59], duration=WHOLE_NOTE),
     ])
 ))
 

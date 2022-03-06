@@ -273,7 +273,7 @@ class Sequence:
     def to_pitch_set(self) -> Set[int]:
         """Return a set of unique MIDI pitch numbers that comprise the sequence.
         """
-        return {* (itertools.chain(self.pitches))}
+        return {* self.pitches}
 
     def to_pitch_class_set(self):
         """Return the set of unique pitch classes (0..11) that comprise the sequence.
@@ -299,8 +299,11 @@ class Sequence:
             edges = edges + event.to_edges(offset)
         return Graph(edges)
 
+    def bake(self):
+        self.events = list(self.events)
+
     def __add__(self, other):
-        events = self.events[:] + other.events[:]
+        events = itertools.chain.from_iterable([self.events, other.events])
         return self.__class__(events=events)
 
     def __getitem__(self, slice_index):

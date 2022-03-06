@@ -1,6 +1,10 @@
-"""Library functions for given relative note values
+"""Library constants for specifying relative note values.
 """
-WHOLE_NOTE = lambda x : x
-QUARTER_NOTE = lambda x : x * 4
-EIGTH_NOTE = lambda x : x * 8
-SIXTEENTH_NOTE = lambda x : x * 16
+WHOLE_NOTE = 4
+HALF_NOTE = 2
+QUARTER_NOTE = 1
+EIGHTH_NOTE = 0.5
+SIXTEENTH_NOTE = 0.25
+DOTTED = lambda x : x + (x/2)
+TIED = lambda *x : sum(x)
+TICKS_PER_BEAT = 960
