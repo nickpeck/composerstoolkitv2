@@ -14,6 +14,8 @@ import fluidsynth # type: ignore
 from midiutil.MidiFile import MIDIFile # type: ignore
 from mido import MidiTrack, Message # type: ignore
 
+from . graph import Edge, Graph
+
 @dataclass
 class Event:
     """Represents a discrete musical event, which might be a single note,

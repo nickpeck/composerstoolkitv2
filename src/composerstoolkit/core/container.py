@@ -97,7 +97,12 @@ class Container:
         for player_thread in channels:
             player_thread.start()
         while True:
-            sleep(1)
+            running_count = 0
+            for player_thread in channels:
+                if player_thread.is_alive():
+                    running_count = running_count + 1
+            if running_count == 0:
+                return
 
     def save_as_midi_file(self, filename):
         """Save the contents of the container as a MIDI file
