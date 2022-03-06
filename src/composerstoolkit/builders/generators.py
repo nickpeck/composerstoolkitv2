@@ -3,7 +3,7 @@ All generators return a list or Iterator of Event objects
 """
 import itertools
 import more_itertools
-from typing import Iterator, Optional, Set
+from typing import Iterator, Optional, Set, List
 import random
 
 from ..core import Event, Sequence
@@ -55,6 +55,40 @@ def collision_pattern(clock1: int, clock2: int) -> Iterator[Event]:
     if cur_duration is None:
         cur_duration = 0
     yield Event(duration=cur_duration + 1)
+
+def axis_melody(axis_pitch: int,
+    scale: List[int],
+    steps: int=0,
+    direction="contract") -> Iterator[Event]:
+    """Return a sequence of single pitch events, where each event
+    alternates +/- n steps about axis, within the given scale context.
+    If direction is "contract", adjust interval so as to move
+    towards the axis, otherwise, if "expand"
+    move outwards until interval is reached.
+    """
+    if axis_pitch not in scale:
+        raise Exception("pitch {} is not in the given scale".format(axis_pitch))
+    if direction not in ["expand", "contract"]:
+        raise Exception("direction should be 'expand' or 'contract'")
+
+    axis_index = scale.index(axis_pitch)
+    def should_continue(steps, max):
+        if direction == "contract":
+            return steps >= 0
+        if direction == "expand":
+            return steps <= max
+
+    max = steps
+    while should_continue(steps, max):
+        upper = scale[axis_index + steps]
+        yield Event(pitches=[upper])
+        lower = scale[axis_index - steps]
+        yield Event(pitches=[lower])
+        if direction == "contract":
+            steps = steps -1
+        if should_continue(steps, max):
+            if direction == "expand":
+                steps = steps +1
 
 def random_choice(choices: Iterator[Event],
     max_length: Optional[int]=None) -> Iterator[Event]:

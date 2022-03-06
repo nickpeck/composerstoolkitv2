@@ -9,6 +9,7 @@ from typing import List, Optional, Iterator, Union, Callable
 import more_itertools
 
 from ..core import Event, Sequence, Transformer, Context
+from ..resources import NOTE_MIN, NOTE_MAX
 
 @Transformer
 def loop(seq: Sequence, n_times: Optional[int]=None) -> Iterator[Event]:
@@ -264,6 +265,49 @@ def tie_repeated(seq: Sequence) -> Iterator[Event]:
     grouped = itertools.groupby(seq.events, key=lambda e: e.pitches)
     for pitches, group in grouped:
         yield Event(pitches, sum([e.duration for e in group]))
+
+@Transformer
+def fit_to_range(seq: Sequence,
+    min_pitch=NOTE_MIN,
+    max_pitch=NOTE_MAX) -> Iterator[Event]:
+    """Given a series of events, use octave displacement
+    to adjust the pitches within the range(min_pitch, max_pitch).
+    Raise an excpetion if max_pitch - min_pitch < 12
+    """
+    if max_pitch < min_pitch:
+        raise Exception("max_pitch cannot be less than min_pitch")
+    if max_pitch - min_pitch < 12:
+        raise Exception("fit_to_range range must be >= 12")
+    for event in seq.events:
+        pitches = []
+        for pitch in event.pitches:
+            while pitch > max_pitch:
+                pitch = pitch - 12
+            while pitch < min_pitch:
+                pitch = pitch + 12
+            pitches.append(pitch)
+        pitches = sorted(pitches)
+        yield Event(pitches, event.duration)
+
+@Transformer
+def concertize(seq: Sequence,
+        scale: List[int],
+        voicing: List[int] = [0],
+        direction="up") -> Iterator[Event]:
+    """Given a sequence of single pitch events,
+    build a chord "up" (or "down") using the series of intervals
+    in voicing and the given scale context
+    """
+    for event in seq.events:
+        base_index = scale.index(event.pitches[-1])
+        if direction == "up":
+            event.pitches = event.pitches +\
+                [scale[base_index + i] for i in voicing]
+        if direction == "down":
+            event.pitches = event.pitches +\
+                [scale[base_index - i] for i in voicing]
+        event.pitches = sorted(event.pitches)
+        yield event
 
 @Transformer
 def batch(seq: Sequence,
