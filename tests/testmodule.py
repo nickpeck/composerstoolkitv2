@@ -3,7 +3,7 @@ import unittest
 
 from mido import MidiFile
 
-from composerstoolkit.core import Graph, Edge
+from composerstoolkit.core import Graph, Edge, Vector
 
 class TestGraph(unittest.TestCase):
 
@@ -28,6 +28,33 @@ class TestGraph(unittest.TestCase):
         assert graph.get_pitches_at(99) == [59, 65]
         assert graph.get_pitches_at(100) == [60, 64]
         assert graph.get_pitches_at(200) == []
+
+    def test_graph_to_vector_list(self):
+        graph = Graph()
+        # set up a simple context - just a two voice 4-3 suspension
+        pitch_c = Edge(pitch=60, start_time=0, end_time=200)
+        pitch_f = Edge(pitch=65, start_time=0, end_time=100)
+        pitch_e = Edge(pitch=64, start_time=100, end_time=200)
+        graph.add_edge(pitch_c)
+        graph.add_edge(pitch_f)
+        graph.add_edge(pitch_e)
+        graph.add_vertex(pitch_f, pitch_e)
+        graph.add_vertex(pitch_f, pitch_c)
+
+        vertex_list = graph.get_vector_list()
+        assert len(vertex_list) == 2
+        assert Vector(
+            pitch_delta = -1,
+            time_delta = 100,
+            origin = pitch_f,
+            destination = pitch_e
+        ) in vertex_list
+        assert Vector(
+            pitch_delta = -5,
+            time_delta = 0,
+            origin = pitch_f,
+            destination = pitch_c
+        ) in vertex_list
 
 class TestMIDIParser(unittest.TestCase):
 

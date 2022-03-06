@@ -100,6 +100,17 @@ class MidiTrackParser:
         self._closed_notes = []
 
 @dataclass
+class Vector:
+    time_delta: int
+    pitch_delta: int
+    origin: Edge
+    destination: Edge
+
+    def __eq__(self, other: Vector) -> bool:
+        return other.time_delta == self.time_delta\
+            and other.pitch_delta == self.pitch_delta
+
+@dataclass
 class Graph:
     edges: List[Edge] = field(
         default_factory= lambda: []
@@ -111,6 +122,22 @@ class Graph:
     def add_vertex(self, edge1: Edge, edge2: Edge):
         index = self.edges.index(edge1)
         self.edges[index].vertices.append(edge2)
+
+    def get_vector_list(self):
+        vector_list = []
+        for e in self.edges:
+            vertices = e.vertices
+            for vertex in vertices:
+                vector_list.append(
+                    Vector(
+                        time_delta = vertex.start_time - e.start_time,
+                        pitch_delta = vertex.pitch - e.pitch,
+                        origin = e,
+                        destination = vertex
+                    )
+                )
+        vector_list.sort(key = lambda v : v.origin.start_time)
+        return vector_list
 
     def __iter__(self):
         self.edges.sort(key=lambda e: e.start_time)
