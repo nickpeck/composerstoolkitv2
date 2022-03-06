@@ -363,7 +363,6 @@ class ContainerTests(unittest.TestCase):
         c = Container(bpm=100, playback_rate=1)
         cts = FiniteSequence([
             Event(pitches=[60], duration=100)])
-        c.add_sequence(cts)
         c.save_as_midi_file(filename)
         # test we can parse it back in:
         midi_file = MidiFile(filename)

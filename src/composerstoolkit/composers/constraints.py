@@ -133,3 +133,29 @@ def constraint_no_consecutives(
             if int_left in deny_intervals:
                 return False
     return True
+
+@Constraint
+def constraint_use_chords(
+    sequence: FiniteSequence,
+    chords: List[Set],
+    voices: List[FiniteSequence]) -> bool:
+
+    cur_time = 0
+    it1,it2 = itertools.tee(sequence.events)
+    next(it2, None)
+    for left, right in zip(it1,it2):
+        cur_time = cur_time + left.duration
+        pcs = {*[pitch % 12 for pitch in left.pitches]}
+        for voice in voices:
+            evt = voice.event_at(cur_time)
+            pcs = pcs.union({*[pitch % 12 for pitch in evt.pitches]})
+        found_match= False
+        for _set in chords:
+
+            if pcs.difference(_set) == set():
+                found_match = True
+                break
+        if not found_match:
+
+            return False
+    return True
