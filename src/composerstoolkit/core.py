@@ -166,6 +166,29 @@ class Graph:
         vector_list.sort(key = lambda v : v.origin.start_time)
         return vector_list
 
+    def to_markov_table(self) -> Dict[int, Dict[int, int]]:
+        """Generates a Markov table for the musical structure.
+        The table tells us the overall probability from one pitch class
+        to the next, expressed as a float between 0 - 1.
+        
+        {from_pitch_class: {to_pitch_class: probability...} ...}
+        """
+        result = {i:{i:0 for i in range(11)} for i in range(11)}
+        for edge in self.edges:
+            from_pitch_class = edge.pitch % 12
+            for vertex in edge.vertices:
+                to_pitch_class = vertex.pitch % 12
+                count = result[from_pitch_class][to_pitch_class]
+                result[from_pitch_class][to_pitch_class] = count + 1
+        for from_pitch_class, probabilities in result.items():
+            total = sum(probabilities.values())
+            if total == 0:
+                continue
+            for to_pitch_class, probability in probabilities.items():
+                result[from_pitch_class][to_pitch_class] =\
+                    probability / total
+        return result
+
     def __iter__(self):
         self.edges.sort(key=lambda e: e.start_time)
         for edge in self.edges:

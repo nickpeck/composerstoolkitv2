@@ -31,6 +31,23 @@ class TestGraph(unittest.TestCase):
         assert graph.get_pitches_at(100) == [60, 64]
         assert graph.get_pitches_at(200) == []
 
+    def test_we_can_derrive_a_markov_table(self):
+        graph = Graph()
+        pitch_c = Edge(pitch=60, start_time=0, end_time=200)
+        pitch_f = Edge(pitch=65, start_time=0, end_time=100)
+        pitch_e = Edge(pitch=64, start_time=100, end_time=200)
+        graph.add_edge(pitch_c)
+        graph.add_edge(pitch_f)
+        graph.add_edge(pitch_e)
+        graph.add_vertex(pitch_f, pitch_e)
+        graph.add_vertex(pitch_f, pitch_c)
+
+        expected = {i:{i:0 for i in range(11)} for i in range(11)}
+        expected[5][0] = 0.5
+        expected[5][4] = 0.5
+        markov = graph.to_markov_table()
+        assert markov == expected
+
     def test_that_an_edge_without_end_time_is_considered_open(self):
         graph = Graph()
         graph.add_edge(Edge(pitch=65, start_time=0, end_time=None))
