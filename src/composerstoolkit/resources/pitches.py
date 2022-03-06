@@ -1,5 +1,6 @@
 """Convenience class for specifying pitches
-Allows translation to their MIDI pitch number, and frequency.
+Returns a callable that allows for
+translation to between name, MIDI pitch number, and frequency.
 
 Usage:
 pitch = PitchFactory()
@@ -29,6 +30,14 @@ class PitchFactory:
     }
 
     def __init__(self, **kwargs):
+        """Constructor for PitchFactory
+        summary of optional kwargs:
+        output - either midi_no, hz or name (default midi_no)
+        a4_freq - base frequency to which A4 is tuned
+        schema - the note naming schema, defaults to '{name}{octave}'
+        to_freq - function that converts the midi note number to a freq,
+        defaults to equal temperament.
+        """
         self.opts = {
             "output": "midi_no", # midi_no, hz or name
             "a4_freq": 440,
