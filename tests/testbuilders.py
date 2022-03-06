@@ -188,6 +188,194 @@ class TransformerTests(unittest.TestCase):
             Event(pitches=[67], duration=1)
         ]
 
+    def test_fit_to_range_lower(self):
+        transformed = self.test_seq.transform(
+            fit_to_range(min_pitch=48, max_pitch=60)
+        ).bake()
+        assert transformed.pitches == [60,50,52,53,55]
+
+    def test_fit_to_range_upper(self):
+        transformed = self.test_seq.transform(
+            fit_to_range(min_pitch=72, max_pitch=84)
+        ).bake()
+        assert transformed.pitches == [72,74,76,77,79]
+
+    def test_fit_raises_exc_if_range_less_than_8va(self):
+        with self.assertRaises(Exception) as e:
+            transformed = self.test_seq.transform(
+                fit_to_range(min_pitch=48, max_pitch=55)
+            ).bake()
+
+    def test_fit_raises_exc_if_min_less_than_max(self):
+        with self.assertRaises(Exception) as e:
+            transformed = self.test_seq.transform(
+                fit_to_range(min_pitch=60, max_pitch=48)
+            ).bake()
+
+    def test_concertize_upwards(self):
+        transformed = self.test_seq.transform(
+            concertize(
+                scale=scales.C_major,
+                voicing=[2,4],
+                direction="up")
+        ).bake()
+        chords = [e.pitches for e in transformed.events]
+        assert chords == [
+            [60,64,67],
+            [62,65,69],
+            [64,67,71],
+            [65,69,72],
+            [67,71,74],
+        ]
+
+    def test_concertize_downwards(self):
+        transformed = self.test_seq.transform(
+            concertize(
+                scale=scales.C_major,
+                voicing=[2,4],
+                direction="down")
+        ).bake()
+        chords = [e.pitches for e in transformed.events]
+        assert chords == [
+            [60,57,53],
+            [62,59,55],
+            [64,60,57],
+            [65,62,59],
+            [67,64,60]]
+
+    def test_arpeggiate(self):
+        seq = Sequence([
+            Event(pitches=[60,62,64,65,67], duration=5),
+        ])
+        transformed = seq.transform(
+            arpeggiate()
+        ).bake()
+        assert transformed.events == [
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[65], duration=1),
+            Event(pitches=[67], duration=1)
+        ]
+
+    def test_displacement(self):
+        transformed = self.test_seq.transform(
+            displacement(interval=1)
+        ).bake()
+        assert transformed.events == [
+            Event(pitches=[], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[65], duration=1),
+            Event(pitches=[67], duration=1)
+        ]
+
+    def test_monody(self):
+        seq = Sequence([
+            Event(pitches=[60,62,64,65,67], duration=1),
+        ])
+        transformed = seq.transform(
+            monody()
+        ).bake()
+        assert transformed.events == [
+            Event(pitches=[67], duration=1)
+        ]
+
+    # def test_modal_quantize(self):
+        # transformed = self.test_seq.transform(
+            # modal_quantize(scale=scales.D_major)
+        # ).bake()
+        # assert transformed.pitches == [
+            # 59,62,64,66,67]
+
+    def test_rhythmic_quantize(self):
+        seq = Sequence([
+            Event(pitches=[60], duration=0.98),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1.45)
+        ])
+        transformed = seq.transform(
+            rhythmic_quantize(resolution=1.0)
+        ).bake()
+        assert transformed.events == [
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),]
+
+    def test_filter_events(self):
+        my_filter = lambda e: e.pitches[-1] % 2 == 0
+        transformed = self.test_seq.transform(
+            filter_events(condition=my_filter)
+        ).bake()
+        assert transformed.events == [
+            Event(pitches=[65], duration=1),
+            Event(pitches=[67], duration=1)]
+
+    def test_filter_events_replace_w_rest(self):
+        my_filter = lambda e: e.pitches[-1] % 2 == 0
+        transformed = self.test_seq.transform(
+            filter_events(
+                condition=my_filter,
+                replace_w_rest=True)
+        ).bake()
+        assert transformed.events == [
+            Event(pitches=[], duration=1),
+            Event(pitches=[], duration=1),
+            Event(pitches=[], duration=1),
+            Event(pitches=[65], duration=1),
+            Event(pitches=[67], duration=1)]
+
+    def test_gated_transformer(self):
+        my_gate = lambda c: c.beat_offset % 2 == 0
+        transformed = self.test_seq.transform(
+            gated(
+                transformer=transpose(interval=12),
+                condition=my_gate)
+        ).bake()
+        assert transformed.pitches == [
+            72,62,76,65,79]
+
+    def test_batch_transformer(self):
+        transformed = self.test_seq.transform(
+            batch(
+                transformations=[
+                    transpose(interval=2),
+                    retrograde(n_pitches=5)])
+        ).bake()
+        assert transformed.pitches == [
+            69,67,66,64,62]
+
+    def test_random_transformations(self):
+        transformed = self.test_seq.transform(
+            random_transformation(
+                transformations=[
+                    transpose(interval=1),
+                    retrograde(n_pitches=5)])
+        ).bake()
+        assert transformed.pitches in [
+            [61,63,65,66,68],
+            [67,65,64,62,60]]
+
+    def test_map_to_pulses(self):
+        pulse_seq = Sequence([Event([], d) for d in [1,2,3,4,5,6]])
+        transformed = self.test_seq.transform(
+            map_to_pulses(pulse_sequence=pulse_seq)
+        ).bake()
+        assert transformed.pitches == [60,62,64,65,67]
+        assert transformed.durations == [1,2,3,4,5]
+
+    def test_map_to_pitches(self):
+        pitch_seq = Sequence([Event([p], 1) for p in [1,2,3,4,5]])
+        transformed = self.test_seq.transform(
+            map_to_pitches(pitch_sequence=pitch_seq)
+        ).bake()
+        assert transformed.pitches == [1,2,3,4,5]
+        assert transformed.durations == [1,1,1,1,1]
+
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

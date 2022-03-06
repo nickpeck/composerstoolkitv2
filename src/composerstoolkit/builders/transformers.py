@@ -357,6 +357,8 @@ def concertize(seq: Sequence,
     build a chord "up" (or "down") using the series of intervals
     in voicing and the given scale context
     """
+    if not isinstance(scale, list):
+        scale = list(scale)
     for event in seq.events:
         if len(event.pitches) == 0:
             yield event
