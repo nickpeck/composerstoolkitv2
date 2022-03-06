@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from decimal import Decimal
 import os
 from time import sleep
 import signal
@@ -169,6 +170,20 @@ class Graph:
         vector_list.sort(key = lambda v : v.origin.start_time)
         return vector_list
 
+    def to_vector_indexed_array(self):
+        arr = {}
+        for edge in self.edges:
+            vertices = edge.vertices
+            for vertex in vertices:
+                time_delta = vertex.start_time - edge.start_time
+                pitch_delta = vertex.pitch - edge.pitch
+                index = (pitch_delta, time_delta)
+                try:
+                    arr[index].append([edge, vertex])
+                except KeyError:
+                    arr[index] = [[edge, vertex]]
+        return arr
+
     def to_markov_table(self) -> Dict[int, Dict[int, int]]:
         """Generates a Markov table for the musical structure.
         The table tells us the overall probability from one pitch class
@@ -189,7 +204,7 @@ class Graph:
                 continue
             for to_pitch_class, probability in probabilities.items():
                 result[from_pitch_class][to_pitch_class] =\
-                    probability / total
+                    float(Decimal(str(probability)) / Decimal(str(total)))
         return result
 
     def __iter__(self):

@@ -117,6 +117,26 @@ class TestGraph(unittest.TestCase):
             destination = pitch_e
         ) != Edge(pitch=59, start_time=2, end_time=3)
 
+    def test_to_vector_indexed_dict(self):
+        graph = Graph()
+        pitch1 = Edge(pitch=65, start_time=0, end_time=1)
+        pitch2 = Edge(pitch=59, start_time=0, end_time=1)
+        pitch3 = Edge(pitch=64, start_time=1, end_time=2)
+        pitch4 = Edge(pitch=60, start_time=1, end_time=2)
+        graph.add_edge(pitch1)
+        graph.add_edge(pitch2)
+        graph.add_edge(pitch3)
+        graph.add_edge(pitch4)
+        graph.add_vertex(pitch1, pitch3)
+        graph.add_vertex(pitch2, pitch4)
+        graph.add_vertex(pitch1, pitch2)
+        graph.add_vertex(pitch3, pitch4)
+        arr = graph.to_vector_indexed_array()
+        assert arr[(-1,1)] == [[pitch1, pitch3]]
+        assert arr[(1,1)] == [[pitch2, pitch4]]
+        assert arr[(-4,0)] == [[pitch3, pitch4]]
+        assert arr[(-6,0)] == [[pitch1, pitch2]]
+
 class TestMIDIParser(unittest.TestCase):
 
     def test_vertically_coincident_notes_linked_by_vertices(self):
@@ -380,6 +400,16 @@ class FiniteSequenceTests(unittest.TestCase):
         assert next(variations.events).pitches == [61]
         assert next(variations.events).pitches == [62]
         assert next(variations.events).pitches == [62]
+
+    def test_to_vectors(self):
+        seq = FiniteSequence([
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=2),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=3),
+            Event(pitches=[60], duration=1)])
+        vectors = seq.to_vectors()
+        assert vectors == [(-7, 1), (2, 2), (2, 1), (-4, 3)]
 
 class ContainerTests(unittest.TestCase):
 

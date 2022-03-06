@@ -143,6 +143,16 @@ class FiniteSequence:
         """
         return set(self.pitches)
 
+    def to_vectors(self) -> List[Tuple[int, int]]:
+        vectors = []
+        for i in range(0, len(self.events) -1):
+            left = self.events[i]
+            right = self.events[i+1]
+            vectors.append((
+                right.pitches[-1] - left.pitches[-1],
+                left.duration))
+        return vectors
+
     def to_pitch_class_set(self):
         """Return the set of unique pitch classes (0..11) that comprise the sequence.
         """
