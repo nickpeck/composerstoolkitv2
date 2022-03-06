@@ -9,7 +9,7 @@ class Permutations(Generic[T]):
     def __init__(
         self,
         starting_list: List[T],
-        n_generations: int=1,
+        n_generations: int=1, # TODO make these kwargs
         return_last_gen_only: bool=False):
         """
         return an unordered set of permutations of starting_list
@@ -27,10 +27,8 @@ class Permutations(Generic[T]):
         for i in range(self.n_generations):
             perms = itertools.permutations(self.starting_list)
             if self.return_last_gen_only and i == self.n_generations-1:
-                return perms
+                return itertools.chain([perms])
             generations.append(perms)
-            # if set(perms) == {1}:
-                # break
             if i < len(range(self.n_generations)):
                 starting_list = self._new_generation(self.starting_list)
         return itertools.chain(*generations)
@@ -46,7 +44,7 @@ class Permutations(Generic[T]):
             else:
                 next_gen.append(((i-1)/2) + 1)
                 next_gen.append((i-1)/2)
-            yield int(i)
+            yield i
 
     def flatten(self) -> Iterator[T]:
         for _list in list(self):

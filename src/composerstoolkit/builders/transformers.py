@@ -14,14 +14,17 @@ def loop(seq: Sequence, n_times: Optional[int]=None) -> Iterator[Event]:
     If n_times is None, loop repeatedly.
     """
     if n_times is None:
-        while True:
-            for event in seq.events:
-                yield event
+        for item in itertools.cycle(seq.events):
+            yield item
     if n_times < 0:
         raise ValueError("n_times cannot be less than 0")
-    for _i in range(n_times):
-        for event in seq.events:
-            yield event
+    saved = []
+    for element in seq.events:
+        yield element
+        saved.append(element)
+    for i in range(n_times):
+        for element in saved:
+              yield element
 
 @Transformer
 def transpose(seq: Sequence, interval: int) -> Iterator[Event]:

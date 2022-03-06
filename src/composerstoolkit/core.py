@@ -336,6 +336,7 @@ class Sequence:
 
         return self.__class__(events=sliced_events)
 
+
 class ReprWrapper:
     """helper to override __repr__ for a function for debugging purposes
     see https://stackoverflow.com/questions/10875442/possible-to-change-a-functions-repr-in-python
@@ -427,28 +428,25 @@ class Container():
         self.sequences.append((channel_no, offset, seq))
         return self
 
-    def playback(self):
-        stack = []
+    def _play_channel(self, no, seq, synth):
         counter = 0
-        synth = self.options["synth"]
         playback_rate = self.options["playback_rate"]
-        all_midi_events = []
-        dynamic = 60
-        for (channel_no, offset,seq) in self.sequences:
-            for me in seq.to_midi_events(offset):
-                # (pitch, type, time)
-                all_midi_events.append((me[0], me[1], me[2] / playback_rate))
-        all_midi_events = sorted(all_midi_events, key=lambda x: x[2])
-        count = 0
-        for event in all_midi_events:
-            if event[2] != count:
-                sleep(event[2] - count)
-            count = event[2]
-            if event[1] == "note_on":
-                synth.noteon(0, event[0], dynamic)
-            elif event[1] == "note_off":
-                synth.noteoff(0, event[0])
+        bpm = self.options["bpm"]
+        time_scale_factor = (1/(bpm/60)) * (1/playback_rate)
+        print("Channel {} playback starting".format(no))
+        for event in seq.events:
+            for pitch in event.pitches:
+                synth.noteon(0, pitch, 60)
+            sleep(event.duration * time_scale_factor)
+            for pitch in event.pitches:
+                synth.noteoff(0, pitch)
+        print("Channel {} playback ended".format(no))
 
+    def playback(self):
+        from threading import Thread
+        synth = self.options["synth"]
+        for channel_no, offset, seq in self.sequences:
+            Thread(target=self._play_channel, args=(channel_no, seq,synth)).start()
 
     def save_as_midi_file(self, filename):
         """Save the contents of the container as a MIDI file
