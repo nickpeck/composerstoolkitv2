@@ -177,3 +177,6 @@ class TestGenerators(unittest.TestCase):
         assert {* evt2.pitches}.difference(scales.D_major) == set()
         with self.assertRaises(StopIteration):
             assert next(gen)
+
+if __name__ == "__main__":
+    unittest.main()

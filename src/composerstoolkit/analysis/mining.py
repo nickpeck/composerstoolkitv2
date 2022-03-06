@@ -4,7 +4,8 @@ from typing import List, Any, Tuple, Set
 
 from prefixspan import PrefixSpan
 
-from ..core import Graph, FiniteSequence, Container, Event
+from ..core import Graph, FiniteSequence, Container, Event, Sequence
+from ..builders.transformers import *
 
 def seq_chunked(dataset: List[Any], window: int):
     """Return a list comprising of dataset
@@ -71,7 +72,7 @@ def chordal_analysis(seq: FiniteSequence,
     window_size_beats=4,
     chord_lexicon=List[Set],
     start_offset = 0,
-    overlap_threshold=0):
+    overlap_threshold=1):
     """Break the given seq down into chunks of
     window_size (expressed in beats).
     Analyse the content within to determine the
@@ -87,39 +88,48 @@ def chordal_analysis(seq: FiniteSequence,
         # slices.append(seq.time_slice(
             # curr_time, curr_time +  window_size_beats))
         # curr_time = curr_time + window_size_beats
-    slices = seq_chunked(seq, 16)
+    slices = seq_chunked(seq, window_size_beats)
     found_chords = []
 
-    # find candidate pcs that intersect each seq
+    # find candidate pcs that best intersects the pcs of each seq
     for i,slice in enumerate(slices):
         pcs = slice.to_pitch_class_set()
         candidate_chords = []
         for chord in chord_lexicon:
             diff = chord.difference(pcs)
-            #print(pcs, chord, diff)
-            if len(diff) <= 1:#overlap_threshold:
-                metric = len(chord)-len(diff)
-                
+
+            if len(diff) <= overlap_threshold:
+                # provide an arbitary weighting, based on
+                # the size of the chord and the degree
+                # of abmiguity
+                metric = len(chord) - len(diff)
                 candidate_chords.append((metric, chord))
-                #print(">>>>>>>>", chord)
-        candidate_chords = sorted(candidate_chords, key=lambda c: c[0], reverse=True)
+        # sorted, most likely first
+        candidate_chords = sorted(
+            candidate_chords, key=lambda c: c[0], reverse=True)
+
         if len(candidate_chords) == 0:
+            # could not find a match
             candidate_chords = [(0, set())]
         if i == 0:
             found_chords.append(candidate_chords[0][1])
             continue
+        # Now select the best candidate based on lowest
+        # cost voice-leading
         weighted_options = []
-        print("found_chords", i, found_chords)
+
         previous = found_chords[-1]
         cost = 0
-        candidate_chords = [list(j) for i, j in itertools.groupby(candidate_chords)][0]
-        print("candidate_chords", candidate_chords)
+        # selects the highest weighted group
+        candidate_chords = [list(j) for i, j in
+            itertools.groupby(candidate_chords)][0]
+
         for weighting, chord in candidate_chords:
-            #print(weighting, Event(list(previous)), Event(list(chord)))
+
             cost = Event(list(previous))\
                 .movement_cost_to(Event(list(chord)))
             weighted_options.append((cost, chord))
-            found_chords.append(weighted_options[0][1])
+        # the head of the list is the best choice
+        found_chords.append(weighted_options[0][1])
 
-    print("found_chords", found_chords)
     return found_chords

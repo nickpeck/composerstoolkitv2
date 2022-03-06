@@ -101,3 +101,6 @@ class TestChordBuilder(unittest.TestCase):
     def test_slash_notation(self):
         cb = ChordBuilder()
         assert cb("C/G").pitches == [7,12,16,19]
+
+if __name__ == "__main__":
+    unittest.main()
