@@ -1,12 +1,17 @@
+"""Composers toolkit, core classes
+"""
+
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable, Iterator, Set
 
+import itertools
+import functools
 from mido import MidiTrack, Message # type: ignore
 
 @dataclass
 class Edge:
-    """Represents a pitch event
+    """Represents a pitch event in a Pitch graph
     """
     pitch: int
     start_time: int
@@ -16,18 +21,21 @@ class Edge:
     )
     src_event: Optional[Message] = None
 
-# CTGenerator = NewType("CTGenerator",
-    # Callable[..., Iterator[Edge]])
-# CTPermutator = NewType("CTPermutator",
-    # Callable[[Iterator[Edge]], Iterator[Iterator[Edge]]])
-# CTTransformer = NewType("CTTransformer",
-    # Callable[[Iterator[Edge]], [Iterator[Edge]]])
-
 class MidiTrackParser:
     """Parse a Midi track into a pitch graph
+    The data should be arranged into a single track,
+    with all chords aligned (quantized) so that all notes
+    start at the same time point.
+    
+    The music should contain a consistent number of parts (voices)
+    and there should be no space or overlap between chords that are
+    intended to be connected in a legato manner.
     """
     def __init__(self, track: MidiTrack, graph: Graph):
-        """
+        """Constructor for MidiTrackParser
+        
+        track - a mido MidiTrack
+        graph - the Graph to the data into.
         """
         self.graph = graph
         self._midi_track = track
@@ -36,12 +44,12 @@ class MidiTrackParser:
         self._cummulative_time: int = 0
 
     def parse(self):
+        """Parse the track and return the resulting graph.
+        """
         note_events = list(
             filter(lambda x: x.is_meta is False, self._midi_track))
         for evt in note_events:
             if evt.time > 0:
-                print("-"*20)
-                print("time", self._cummulative_time + evt.time)
                 self._join_verticals()
                 self._join_horizontals()
                 self._cummulative_time = self._cummulative_time + evt.time
@@ -74,8 +82,6 @@ class MidiTrackParser:
             self._open_notes))
         to_connect.sort(key=lambda n: n.pitch, reverse=True)
         for i in range(len(to_connect) - 1):
-            print("MADE VERTICAL CONNECTION", to_connect[i].pitch, "->", to_connect[i+1].pitch)
-            #to_connect[i].vertices.append(to_connect[i+1])
             self.graph.add_vertex(to_connect[i], to_connect[i+1])
 
     def _join_horizontals(self):
@@ -86,44 +92,61 @@ class MidiTrackParser:
         left_chord.sort(key=lambda n: n.pitch, reverse=True)
         right_chord.sort(key=lambda n: n.pitch, reverse=True)
         # very basic for now, just using order of notes and assuming same no voices
-        print("LEFT (closed notes)", [n.pitch for n in left_chord])
-        print("RIGHT (open notes)", [n.pitch for n in right_chord])
         for i in range(len(left_chord)):
             left = left_chord[i]
             try:
                 right = right_chord[i]
-                #left.vertices.append(right)
                 self.graph.add_vertex(left, right)
-                print("MADE HORIZONTAL CONNECTION", left.pitch,"->",  right.pitch)
             except IndexError:
                 pass
         self._closed_notes = []
 
 @dataclass
 class Vector:
+    """Used to represent the relative time/pitch motion between
+    two edges in a Pitch Graph
+
+    Vectors have equality with other vectors with the same relative
+    pitch/time deltas.
+    """
     time_delta: int
     pitch_delta: int
     origin: Edge
     destination: Edge
 
-    def __eq__(self, other: Vector) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, self.__class__):
+            return False
         return other.time_delta == self.time_delta\
             and other.pitch_delta == self.pitch_delta
 
 @dataclass
 class Graph:
+    """A representation of a musical structure used for analysis purposes.
+    
+    edges
+    """
     edges: List[Edge] = field(
         default_factory= lambda: []
     )
 
     def add_edge(self, edge: Edge):
+        """Add an edge to the graph
+        """
         self.edges.append(edge)
 
     def add_vertex(self, edge1: Edge, edge2: Edge):
+        """Add a vertex (implied connection) between two 
+        edges already in the graph.
+        """
         index = self.edges.index(edge1)
         self.edges[index].vertices.append(edge2)
 
-    def get_vector_list(self):
+    def get_vector_list(self) -> List[Vector]:
+        """Return a list of (Vectors) that describes all routes
+        between edges in the graph in terms of their relative pitch/time
+        vectors.
+        """
         vector_list = []
         for e in self.edges:
             vertices = e.vertices
@@ -146,32 +169,115 @@ class Graph:
 
     @classmethod
     def from_midi_track(cls, track: MidiTrack) -> Graph:
+        """Parse a mido Miditrack into a pitch graph.
+        """
         return MidiTrackParser(track, cls()).parse()
 
     def intersections(self, other_graph) -> List[Edge]:
+        """Return a list of all possible intersections 
+        between other_graph and this graph.
+        """
         raise NotImplementedError("Graph.intersections")
 
     def get_pitches_at(self, offset: int) -> List[int]:
+        """Return a list of integers that represents all
+        pitches sounding at a given offset, sorted in 
+        ascending numerical order.
+        """
+        def func(e: Edge) -> bool:
+            if e.start_time > offset:
+                return False
+            if e.end_time is None:
+                return True
+            if e.end_time <= offset:
+                return False
+            return True
+
         chord = list(filter(
-            lambda e: e.start_time <= offset and e.end_time > offset,
+            func,
             self.edges
         ))
         pitches = [e.pitch for e in chord]
         pitches.sort()
         return pitches
 
-class CTSequence:
-    @staticmethod
-    def from_generator(generator: Callable) -> CTSequence:
-        raise NotImplementedError("Sequence.from_generator")
+@dataclass
+class Event:
+    """Represents a discrete musical event, which might be a single note,
+    chord or meta event (eg dynamic, or controller change).
+    """
+    pitches: List[int] = field(
+        default_factory = lambda: []
+    )
+    duration: int = 0
+    meta: Dict[str, Any] = field(
+        default_factory = lambda: {}
+    )
 
-    def permutate(self,
-        permutator: Callable) -> CTSequence:
-        raise NotImplementedError("Sequence.permutate")
+    def to_edges(self, offset: int=0) -> List[Edge]:
+        """Return the event as a single edge, or a list 
+        of connected edges, in the case that there are multiple pitches
+        (a chord).
+        """
+        edges = []
+        for p in self.pitches:
+            edges.append(Edge(
+                pitch = p,
+                start_time = offset,
+                end_time = self.duration + offset
+            ))
+        return edges
 
-    def transform(self,
-        transformer: Callable) -> CTSequence:
-        raise NotImplementedError("Sequence.transform")
+@dataclass
+class Sequence:
+    """Represents a linear sequence of events (single notes, chords or 'meta' type
+    events
+    
+    events - the default 
+    """
+    events: List[Event] = field(
+        default_factory = lambda: []
+    )
+    memento: Optional[Sequence] = None
 
-    def to_graph(self) -> Graph:
-        raise NotImplementedError("Sequence.to_graph")
+    @property
+    def pitches(self) -> Iterator[int]:
+        """Return an iterable containing the ordered set of MIDI pitch numbers that
+        comprise the sequence.
+        """
+        return itertools.chain.from_iterable({e.pitches for e in self.events})
+
+    @property
+    def durations(self) -> Set[int]:
+        """Return an iterable containing the ordered set of durations that
+        comprise the sequence.
+        """
+        return {e.duration for e in list(self.events)}
+
+    def to_pitch_set(self) -> Set[int]:
+        """Return a set of unique MIDI pitch numbers that comprise the sequence.
+        """
+        return {* (itertools.chain(self.pitches))}
+
+    def to_pitch_class_set(self):
+        """Return the set of unique pitch classes (1..12) that comprise the sequence.
+        """
+        pitch_set = self.to_pitch_set()
+        return {*[p % 12 for p in pitch_set]}
+
+    def transform(self, transformer: Callable[[Sequence], Sequence]) -> Sequence:
+        """Convenience method for applying a transformation function to the sequence.
+        Return the new sequence, allowing transformations to be chained in a single
+        statement.
+        """
+        new_seq = transformer(self)
+        new_seq.memento = self
+        return new_seq
+
+    def to_graph(self, offset: int=0) -> Graph:
+        """Return a pitch graph representation of the sequence.
+        """
+        edges: List[Edge] = []
+        for event in self.events:
+            edges = edges + event.to_edges(offset)
+        return Graph(edges)

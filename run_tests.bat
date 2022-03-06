@@ -7,3 +7,4 @@ if errorlevel 1 msg "%username%"  "Linting failed. Please review before pushing.
 coverage run -m unittest discover tests
 if errorlevel 1 msg "%username%"  "One or more tests failed. Please review these before pushing."
 coverage html
+pydoctor src\composerstoolkit --html-output docs\
