@@ -75,14 +75,14 @@ def transpose(seq: Sequence, interval: int) -> Iterator[Event]:
 def transpose_diatonic(seq: Sequence,
         steps: int,
         scale: list,
-        pass_on_error = False) -> Iterator[Event]:
+        pass_on_error = True) -> Iterator[Event]:
     """Transpose all pitches by a number of steps
     within the given scale.
     Where scale is the complete range of pitch numbers
     occupied by that scale across the whole MIDI pitch
     range (0...127)
 
-    if pass_on_error is set to True, an exception will
+    if pass_on_error is set to False, an exception will
     be raised if a pitch is not found in the source
     scale. Otherwise the pitch is emitted, unaltered.
     """
