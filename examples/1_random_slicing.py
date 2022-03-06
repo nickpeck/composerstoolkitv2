@@ -8,7 +8,7 @@ ostinato = Sequence(events=Permutations([
             Event(pitches=[43], duration=1),
             Event(pitches=[45], duration=1),
             Event(pitches=[41], duration=1)]).flatten()
-        ).transform(loop(10))
+        ).transform(loop())
 
 seq_upper = Sequence.from_generator(random_slice(
     Sequence(events=[
@@ -20,7 +20,7 @@ seq_upper = Sequence.from_generator(random_slice(
     None
 ))
 
-Container(bpm=3000, playback_rate=1)\
+Container(bpm=240, playback_rate=1)\
     .add_sequence(seq_upper)\
     .add_sequence(ostinato)\
     .playback()

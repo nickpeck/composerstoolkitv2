@@ -3,7 +3,10 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
+import os
 from time import sleep
+import signal
+import sys
 from typing import Any, Dict, List, Optional, Callable, Iterator, Set, Tuple
 
 import itertools
@@ -443,10 +446,22 @@ class Container():
         print("Channel {} playback ended".format(no))
 
     def playback(self):
+        def signal_handler(sig, frame):
+            print('Bye')
+            sys.exit(0)
+        signal.signal(signal.SIGINT, signal_handler)
+        print('Press Ctrl+C to exit')
+        if os.name != 'nt':
+            # pylint: disable=no-member
+            signal.pause()
         from threading import Thread
         synth = self.options["synth"]
         for channel_no, offset, seq in self.sequences:
-            Thread(target=self._play_channel, args=(channel_no, seq,synth)).start()
+            t = Thread(target=self._play_channel, args=(channel_no, seq,synth))
+            t.daemon = True
+            t.start()
+        while True:
+            sleep(1)
 
     def save_as_midi_file(self, filename):
         """Save the contents of the container as a MIDI file
