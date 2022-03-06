@@ -159,7 +159,7 @@ def chord_cycle(scale: Set[int],
     sorted(scale)
     yield start
     i = start.duration
-    if {*start.pitches}.difference({*scale}) != {}:
+    if {*start.pitches}.difference({*scale}) != set():
         raise Exception("Starting chord is not part of the given scale")
     while True:
         if max_length is not None and i > max_length:
