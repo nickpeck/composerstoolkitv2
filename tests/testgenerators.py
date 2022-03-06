@@ -42,6 +42,13 @@ class TestGenerators(unittest.TestCase):
         with self.assertRaises(StopIteration):
             assert next(events)
 
+    def test_resultant_pitches_one_input_only(self):
+        events = resultant_pitches(counters=[2])
+        assert next(events) == Event(pitches=[0], duration=0)
+        assert next(events) == Event(pitches=[2], duration=0)
+        with self.assertRaises(StopIteration):
+            assert next(events)
+
     def test_axis_melody_contract(self):
         pf = pitches.PitchFactory()
         events = axis_melody(
@@ -53,6 +60,25 @@ class TestGenerators(unittest.TestCase):
         assert next(events) == Event(pitches=[pf("Db4")], duration=0)
         assert next(events) == Event(pitches=[pf("B3")], duration=0)
         assert next(events) == Event(pitches=[pf("C4")], duration=0)
+
+    def test_axis_melody_exc_with_unknown_direction(self):
+        pf = pitches.PitchFactory()
+        events = axis_melody(
+            axis_pitch=pf("C4"),
+            scale=range(0,127),
+            max_steps=2,
+            direction="blah")
+        with self.assertRaises(Exception) as e:
+            next(events)
+
+    def test_axis_melody_exc_with_axis_pitch_not_in_scale(self):
+        pf = pitches.PitchFactory()
+        events = axis_melody(
+            axis_pitch=pf("Db4"),
+            scale=scales.C_major,
+            max_steps=2)
+        with self.assertRaises(Exception) as e:
+            next(events)
 
     def test_axis_melody_expand(self):
         pf = pitches.PitchFactory()
@@ -67,7 +93,7 @@ class TestGenerators(unittest.TestCase):
         assert next(events) == Event(pitches=[pf("D4")], duration=0)
         assert next(events) == Event(pitches=[pf("Bb3")], duration=0)
 
-    def test_rangom_noise(self):
+    def test_random_noise(self):
         gen = random_noise(max_len=3)
         next(gen)
         next(gen)
@@ -75,9 +101,14 @@ class TestGenerators(unittest.TestCase):
         with self.assertRaises(StopIteration):
             assert next(gen)
 
+    def test_random_noise_infinate(self):
+        gen = random_noise()
+        events = random_noise()
+        assert isinstance(next(gen), Event)
+
     def test_random_choice(self):
         gen = random_choice(
-            choices=[Event(pitches=[60])],
+            choices=[Event(pitches=[60], duration=1)],
             max_len=3)
         assert next(gen).pitches == [60]
         assert next(gen).pitches == [60]
@@ -101,6 +132,18 @@ class TestGenerators(unittest.TestCase):
         with self.assertRaises(StopIteration):
             assert next(gen)
 
+    def test_using_markov_table_infinate(self):
+        seq = FiniteSequence(events=[
+            Event(pitches=[60], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[60], duration=1)
+        ])
+        gen = using_markov_table(
+            starting_event=Event(pitches=[60]),
+            markov_table=seq.to_graph().to_markov_table())
+        assert next(gen).pitches == [60]
+        assert next(gen).pitches == [60]
+
     def test_random_slice(self):
         seq = FiniteSequence(events=[
             Event(pitches=[60], duration=1),
@@ -117,6 +160,29 @@ class TestGenerators(unittest.TestCase):
         assert next(gen) in seq.events
         with self.assertRaises(StopIteration):
             assert next(gen)
+
+    def test_random_slice_infinate(self):
+        seq = FiniteSequence(events=[
+            Event(pitches=[60], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[60], duration=1)
+        ])
+        gen = random_slice(
+            base_seq = seq
+        )
+        assert next(gen) in seq.events
+
+    def test_random_slice_no_slice_size(self):
+        seq = FiniteSequence(events=[
+            Event(pitches=[60], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[60], duration=1)
+        ])
+        gen = random_slice(
+            base_seq = seq,
+            slice_size = 1
+        )
+        assert next(gen) in seq.events
 
     def test_chord_cycle(self):
         pf = pitches.PitchFactory()
@@ -146,6 +212,19 @@ class TestGenerators(unittest.TestCase):
         assert next(gen).pitches == [pf("D4"),pf("G4"),pf("B4")]
         assert next(gen).pitches == [pf("D4"),pf("F4"),pf("A4")]
         with self.assertRaises(StopIteration):
+            assert next(gen)
+
+    def test_chord_cycle_raises_exc_if_start_not_in_scale(self):
+        pf = pitches.PitchFactory()
+        gen = chord_cycle(
+            start = Event([pf("Db4"),pf("Gb4"),pf("Bb4")]),
+            scale = scales.C_major,
+            cycle_of = -3,
+            voice_lead = False,
+            max_len = 3
+        )
+        assert next(gen).pitches == [pf("Db4"),pf("Gb4"),pf("Bb4")]
+        with self.assertRaises(Exception) as e:
             assert next(gen)
 
     def test_chords_from_scale(self):

@@ -91,6 +91,27 @@ class TestChordalAnalysis(unittest.TestCase):
             chord_lexicon=lexicon)
         assert found_chords == [{0,4,7}, {0,5,9}]
 
+    def test_we_can_identify_repeated_chords(self):
+        lexicon = _build_lexicon(chords=[
+            Event(pitches=[0,4,7]),
+            Event(pitches=[0,3,7]),
+            Event(pitches=[0,3,6])]
+        )
+
+        source = FiniteSequence(events=[
+            Event([pf("C4")], duration=1),
+            Event([pf("E4")], duration=1),
+            Event([pf("G4")], duration=1),
+            Event([pf("G4")], duration=1),
+            Event([pf("C4")], duration=1),
+            Event([pf("E4")], duration=1)
+        ])
+        found_chords = chordal_analysis(
+            source, 
+            window_size_beats=3,
+            chord_lexicon=lexicon)
+        assert found_chords == [{0,4,7}, {0,4,7}]
+
     def test_larger_matches_are_choosen_when_available(self):
         lexicon = _build_lexicon(chords=[
             Event(pitches=[0,4,7]),

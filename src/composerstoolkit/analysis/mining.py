@@ -65,7 +65,7 @@ def chordal_analysis(seq: FiniteSequence,
     window_size (expressed in beats).
     Analyse the content within to determine the
     most likely chordal background.
-    In the case of abmiguity, resort to
+    In the case of ambiguity, resort to
     the best voice-leading solution.
     Return a list of transposed chord voicings.
     """

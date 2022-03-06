@@ -58,12 +58,12 @@ def collision_pattern(*clocks) -> Iterator[Event]:
                 yield Event(duration=cur_duration)
             cur_duration = 1
         elif current == 0:
-            if cur_duration is None:
-                cur_duration = 1
-            else:
-                cur_duration = cur_duration + 1
-    if cur_duration is None:
-        cur_duration = 0
+            # if cur_duration is None:
+                # cur_duration = 1
+            # else:
+            cur_duration = cur_duration + 1
+    # if cur_duration is None:
+        # cur_duration = 0
     yield Event(duration=cur_duration + 1)
 
 def resultant_pitches(counters = List[int],
@@ -74,7 +74,8 @@ def resultant_pitches(counters = List[int],
     counter1 and counter2
     """
     if len(set(counters)) == 1:
-        yield Event(duration=counters[0])
+        yield Event(pitches=[start_at], duration=0)
+        yield Event(pitches=[start_at + counters[0]], duration=0)
         return
     # n_ticks = math.lcm(*clocks) # python 3.9 +
     # earlier python, it only accepts two ints:
@@ -101,8 +102,6 @@ def resultant_pitches(counters = List[int],
     for pitch_delta in resultant_summed:
         cur_pitch = cur_pitch + pitch_delta
         yield Event([cur_pitch])
-
-
 
 def axis_melody(axis_pitch: int,
     scale: List[int],
@@ -181,17 +180,17 @@ def random_choice(choices: Iterator[Event],
     If max_len is None, the sequence is infinate.
     """
     def _chooser(choices, max_len):
-        i = 0
+        # i = 0
         if max_len is None:
             while True:
                 yield random.choice(choices)
         cummulative_len = 0
-        while i < max_len:
-            i = i + 1
+        while cummulative_len < max_len:
+            # i = i + 1
             next_choice = random.choice(choices)
             cummulative_len = cummulative_len + next_choice.duration
-            if cummulative_len >= max_len:
-                return
+            # if cummulative_len >= max_len:
+                # return
             yield next_choice
     return _chooser(choices, max_len)
 
