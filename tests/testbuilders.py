@@ -123,6 +123,14 @@ class TransformerTests(unittest.TestCase):
         ).bake()
         assert transformed.pitches == [60,64,66,65,69]
 
+    def test_transpose_diatonic_pass_on_out_of_bounds(self):
+        transformed = self.test_seq.transform(
+            transpose_diatonic(steps=1,
+                scale=[],
+                pass_on_error=True)
+        ).bake()
+        assert transformed.pitches == [60, 62, 64, 65, 67]
+
     def test_transpose_diatonic_exc_if_source_not_in_scale(self):
         with self.assertRaises(ValueError) as ve:
             transformed = self.test_seq.transform(
@@ -142,6 +150,12 @@ class TransformerTests(unittest.TestCase):
             invert()
         ).bake()
         assert transformed.pitches == [60,58,56,55,53]
+
+    def test_invert_empty_seq(self):
+        transformed = Sequence([]).transform(
+            invert()
+        ).bake()
+        assert transformed.pitches == []
 
     def test_invert_around_upper_axis(self):
         transformed = self.test_seq.transform(
@@ -167,6 +181,15 @@ class TransformerTests(unittest.TestCase):
         ).bake()
         assert transformed.events == [
             Event(pitches=[60,62,64,65,67], duration=1)
+        ]
+
+    def test_aggregate_different_no_voices(self):
+        transformed = self.test_seq.transform(
+            aggregate(n_voices=4, duration=1)
+        ).bake()
+        assert transformed.events == [
+            Event(pitches=[60,62,64,65], duration=1),
+            Event(pitches=[67], duration=1)
         ]
 
     def test_rhythmic_augmentation(self):
@@ -239,6 +262,16 @@ class TransformerTests(unittest.TestCase):
             [67,71,74],
         ]
 
+    def test_concertize_with_rests(self):
+        transformed = Sequence([Event([], 1)]).transform(
+            concertize(
+                scale=scales.C_major,
+                voicing=[2,4],
+                direction="up")
+        ).bake()
+        chords = [e.pitches for e in transformed.events]
+        assert chords == [[]]
+
     def test_concertize_downwards(self):
         transformed = self.test_seq.transform(
             concertize(
@@ -293,6 +326,17 @@ class TransformerTests(unittest.TestCase):
             Event(pitches=[67], duration=1)
         ]
 
+    def test_monody_handles_rests(self):
+        seq = Sequence([
+            Event(pitches=[], duration=1),
+        ])
+        transformed = seq.transform(
+            monody()
+        ).bake()
+        assert transformed.events == [
+            Event(pitches=[], duration=1)
+        ]
+
     def test_modal_quantize(self):
         transformed = self.test_seq.transform(
             modal_quantize(scale=scales.D_major)
@@ -304,7 +348,8 @@ class TransformerTests(unittest.TestCase):
         seq = Sequence([
             Event(pitches=[60], duration=0.98),
             Event(pitches=[62], duration=1),
-            Event(pitches=[64], duration=1.45)
+            Event(pitches=[64], duration=1.45),
+            Event(pitches=[65], duration=1.1)
         ])
         transformed = seq.transform(
             rhythmic_quantize(resolution=1.0)
@@ -312,7 +357,8 @@ class TransformerTests(unittest.TestCase):
         assert transformed.events == [
             Event(pitches=[60], duration=1),
             Event(pitches=[62], duration=1),
-            Event(pitches=[64], duration=1),]
+            Event(pitches=[64], duration=1),
+            Event(pitches=[65], duration=1)]
 
     def test_filter_events(self):
         my_filter = lambda e: e.pitches[-1] % 2 == 0
@@ -376,6 +422,14 @@ class TransformerTests(unittest.TestCase):
         assert transformed.pitches == [60,62,64,65,67]
         assert transformed.durations == [1,2,3,4,5]
 
+    def test_map_to_pulses_empty_pulse_seq(self):
+        pulse_seq = Sequence([])
+        transformed = self.test_seq.transform(
+            map_to_pulses(pulse_sequence=pulse_seq)
+        ).bake()
+        assert transformed.pitches == [60,62,64,65,67]
+        assert transformed.durations == [0,0,0,0,0]
+
     def test_map_to_pitches(self):
         pitch_seq = Sequence([Event([p], 1) for p in [1,2,3,4,5]])
         transformed = self.test_seq.transform(
@@ -384,21 +438,51 @@ class TransformerTests(unittest.TestCase):
         assert transformed.pitches == [1,2,3,4,5]
         assert transformed.durations == [1,1,1,1,1]
 
+    def test_map_to_pitches_empty_pitch_seq(self):
+        pitch_seq = Sequence([])
+        transformed = self.test_seq.transform(
+            map_to_pitches(pitch_sequence=pitch_seq)
+        ).bake()
+        assert transformed.pitches == []
+        assert transformed.durations == [1,1,1,1,1]
+
     def test_explode_intervals_linear(self):
         transformed = self.test_seq.transform(
             explode_intervals(
+                n_events=5,
                 factor=2,
                 mode="linear")
         ).bake()
         assert transformed.pitches == [60,64,68,71,75]
 
+    def test_explode_intervals_single_event_input(self):
+        transformed = Sequence([
+            Event([60], 1)
+        ]).transform(
+            explode_intervals(
+                n_events=1,
+                factor=2,
+                mode="linear")
+        ).bake()
+        assert transformed.pitches == [60]
+
     def test_explode_intervals_exponential(self):
         transformed = self.test_seq.transform(
             explode_intervals(
+                n_events=5,
                 factor=2,
                 mode="exponential")
         ).bake()
         assert transformed.pitches == [60,64,68,70,74]
+
+    def test_explode_intervals_unrecognised_mode(self):
+        with self.assertRaises(Exception) as e:
+            transformed = self.test_seq.transform(
+                explode_intervals(
+                    n_events=5,
+                    factor=2,
+                    mode="blah")
+            ).bake()
 
     def test_linear_interpolate(self):
         seq = Sequence([
@@ -410,6 +494,25 @@ class TransformerTests(unittest.TestCase):
             linear_interpolate(steps=2)
         ).bake()
         assert transformed.pitches == [60,61,62,63,64]
+
+    def test_linear_interpolate_single_event(self):
+        seq = Sequence([
+            Event(pitches=[60], duration=1)
+        ])
+        transformed = seq.transform(
+            linear_interpolate(steps=2)
+        ).bake()
+        assert transformed.pitches == [60]
+
+    def test_linear_interpolate_repeated_pitch(self):
+        seq = Sequence([
+            Event(pitches=[60], duration=1),
+            Event(pitches=[60], duration=1)
+        ])
+        transformed = seq.transform(
+            linear_interpolate(steps=2)
+        ).bake()
+        assert transformed.pitches == [60, 60]
 
     def test_linear_interpolate_constrain_to_scale(self):
         seq = Sequence([
@@ -424,7 +527,7 @@ class TransformerTests(unittest.TestCase):
         ).bake()
         assert transformed.pitches == [60,60,62,62,64]
 
-    def test_linear_interpolate(self):
+    def test_motivic_interpolation(self):
         motive = FiniteSequence([
             Event(pitches=[1], duration=1),
             Event(pitches=[2], duration=1),
@@ -444,6 +547,67 @@ class TransformerTests(unittest.TestCase):
             Event([63], 1),
             Event([64], 1),
             Event([62], 1)]
+
+    def test_motivic_interpolation_exc_if_not_finiteseq(self):
+        motive = Sequence([
+            Event(pitches=[1], duration=1),
+            Event(pitches=[2], duration=1),
+            Event(pitches=[0], duration=1)
+        ])
+        seq = Sequence([
+            Event(pitches=[60], duration=3),
+            Event(pitches=[63], duration=3),
+        ])
+        with self.assertRaises(Exception) as e:
+            transformed = seq.transform(
+                motivic_interpolation(motive=motive)
+            ).bake()
+
+    def test_motivic_interpolation_exc_if_motive_starts_w_rest(self):
+        motive = FiniteSequence([Event([], 1)])
+        seq = Sequence([
+            Event(pitches=[60], duration=3),
+            Event(pitches=[63], duration=3),
+        ])
+        with self.assertRaises(Exception) as e:
+            transformed = seq.transform(
+                motivic_interpolation(motive=motive)
+            ).bake()
+
+    def test_motivic_interpolation_exc_if_seq_contains_rests(self):
+        motive = FiniteSequence([Event([1], 1)])
+        seq = Sequence([
+            Event(pitches=[], duration=3),
+            Event(pitches=[], duration=3),
+        ])
+        transformed = seq.transform(
+            motivic_interpolation(motive=motive)
+        ).bake()
+        assert transformed.events == [
+            Event(pitches=[], duration=3),
+            Event(pitches=[], duration=3),
+        ]
+
+    def test_motivic_interpolation_w_rests(self):
+        motive = FiniteSequence([
+            Event(pitches=[1], duration=1),
+            Event(pitches=[], duration=1),
+            Event(pitches=[], duration=1)
+        ])
+        seq = Sequence([
+            Event(pitches=[60], duration=3),
+            Event(pitches=[63], duration=3),
+        ])
+        transformed = seq.transform(
+            motivic_interpolation(motive=motive)
+        ).bake()
+        assert transformed.events == [
+            Event([60], 1),
+            Event([], 1),
+            Event([], 1),
+            Event([63], 1),
+            Event([], 1),
+            Event([], 1)]
 
     def test_random_mutation(self):
         seq = Sequence([Event([0],1) for i in range(1000)])

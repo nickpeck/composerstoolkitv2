@@ -100,10 +100,10 @@ def transpose_diatonic(seq: Sequence,
                 new_event.pitches.append(pitch)
                 continue
             new_index = cur_index + steps
-            try:
-                new_pitch = scale[new_index]
-            except IndexError:
-                continue
+            # try:
+            new_pitch = scale[new_index]
+            # except IndexError:
+                # continue
             new_event.pitches.append(new_pitch)
         new_event.pitches = sorted(new_event.pitches)
         yield new_event
@@ -181,15 +181,15 @@ def linear_interpolate(seq: Sequence,
     for left, right in more_itertools.windowed(seq.events, 2, fillvalue=None):
         if right is None:
             yield left
-            continue
+            return
         pitch_vector = right.pitches[-1] - left.pitches[-1]
         if pitch_vector == 0:
             yield left
             continue
         pitch_increment = int(pitch_vector/steps)
-        if pitch_increment == 0:
-            yield left
-            continue
+        # if pitch_increment == 0:
+            # yield left
+            # continue
         yield left
         duration_increment = left.duration/steps
         for _i in range(steps-1):
@@ -223,7 +223,7 @@ def motivic_interpolation(seq: Sequence,
         for motive_evt in motive.events:
             relative_dur = motive_evt.duration/motive.duration
             dur = duration * relative_dur
-            if motive.pitches == []:
+            if motive_evt.pitches == []:
                 yield Event([], dur)
                 continue
             new_pitches = [p + pitch_delta for p in motive_evt.pitches]
@@ -231,34 +231,35 @@ def motivic_interpolation(seq: Sequence,
 
 @Transformer
 def explode_intervals(seq: Sequence,
+    n_events: int,
     factor: Union[int, float],
     mode: str="exponential") -> List[Event]:
     """Progressively expand the intervals between
     each event in the source Sequence by a given factor.
     mode is either 'exponential' or 'linear'
     """
-    seq.events = list(seq.events)
-    if len(seq.events) == 1:
-        return seq.events[0]
+    sliced = list(itertools.islice(seq.events, 0, n_events))
+    if len(sliced) == 1:
+        return iter((sliced[0],))
 
-    def _vectors(seq):
+    def _vectors(sliced):
         vectors = []
-        left = seq.events[0]
-        for right in seq.events[1:]:
+        left = sliced[0]
+        for right in sliced[1:]:
             # if any event is a chord, then select the uppermost voice
             vectors.append(right.pitches[0]-left.pitches[0])
             left = right
         return vectors
 
     if mode == "exponential":
-        interval_vectors = [(factor * v)for v in _vectors(seq)]
+        interval_vectors = [(factor * v)for v in _vectors(sliced)]
     elif mode == "linear":
-        interval_vectors = [(factor + v) for v in _vectors(seq)]
+        interval_vectors = [(factor + v) for v in _vectors(sliced)]
     else:
         raise Exception("unrecognised mode "+ mode)
 
     # first item in the seq stays as-is
-    i_events = iter(seq.events)
+    i_events = iter(sliced)
     i_vectors = iter(interval_vectors)
     result = [next(i_events)]
     # apply the interval_vectors to distort the remaining items
@@ -298,7 +299,7 @@ def map_to_pulses(seq: Sequence, pulse_sequence: Sequence) -> Iterator[Event]:
             next_pulse = next(iter_pulses)
             yield Event(event.pitches, next_pulse.duration)
         except StopIteration:
-            return
+            yield Event(event.pitches, 0)
 
 @Transformer
 def map_to_pitches(seq: Sequence, pitch_sequence: Sequence) -> Iterator[Event]:
@@ -482,7 +483,7 @@ def rhythmic_quantize(seq: Sequence,
             div = int(event.duration / resolution)
             yield Event(event.pitches, div * resolution)
             continue
-        yield Event(event.pitches, event.duration + resolution-mod)
+        # yield Event(event.pitches, event.duration + resolution-mod)
 
 @Transformer
 def filter_events(seq: Sequence,
