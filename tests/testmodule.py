@@ -3,7 +3,7 @@ import unittest
 
 from mido import MidiFile
 
-from composerstoolkit.core import Graph, Edge, Vector
+from composerstoolkit.core import Graph, Edge, Vector, Event, Sequence
 
 class TestGraph(unittest.TestCase):
 
@@ -100,6 +100,120 @@ class TestMIDIParser(unittest.TestCase):
         assert graph.edges[0].vertices == [graph.edges[2], graph.edges[1]]
         assert graph.edges[1].vertices == []
         assert graph.edges[2].vertices == []
+
+class SequenceTests(unittest.TestCase):
+
+    def test_a_transformer_can_be_applied_to_a_sequence(self):
+        cts = Sequence([Event(pitches=[62], duration=100)])
+
+        def test_modifier(sequence):
+            for e in sequence.events:
+                new_pitches = [p * 2 for p in e.pitches]
+                yield Event(new_pitches,  e.duration * 2)
+
+        new_seq = cts.transform(test_modifier)
+        assert list(new_seq.events) == [Event(pitches=[124], duration=200)]
+        assert new_seq.memento == cts
+        assert list(new_seq.memento.events) == [
+            Event(pitches=[62], duration=100)]
+
+    def test_sequence_is_slicable(self):
+        events = [
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)]
+        cts = Sequence(events)
+
+        sliced = cts[0]
+        assert sliced.events == [events[0]]
+        sliced_middle = cts[1]
+        assert sliced_middle.events == [events[1]]
+        sliced_end = cts[3]
+        assert sliced_end.events == [events[3]]
+
+        sliced_head = cts[:1]
+        assert sliced_end.events == events[:1]
+        sliced_tail = cts[1:]
+        assert sliced_tail.events == events[1:]
+
+        sliced_portion = cts[0:3]
+        assert sliced_portion.events == events[0:3]
+
+        sliced_with_step = cts[0:3:2]
+        assert sliced_with_step.events == events[0:3:2]
+
+    # def test_to_midi_events(self):
+        # cts = Sequence([
+            # Event(60,100),
+            # Event(62,100),
+            # Event(64,100),
+            # Event(60,100)])
+            
+        # midi = cts.to_midi_events()
+        # assert midi == [
+            # midievent(pitch=60, type="NOTE_ON", time=0),
+            # midievent(pitch=60, type="NOTE_OFF", time=100),
+            # midievent(pitch=62, type="NOTE_ON", time=100),
+            # midievent(pitch=62, type="NOTE_OFF", time=200),
+            # midievent(pitch=64, type="NOTE_ON", time=200),
+            # midievent(pitch=64, type="NOTE_OFF", time=300),
+            # midievent(pitch=60, type="NOTE_ON", time=300),
+            # midievent(pitch=60, type="NOTE_OFF", time=400)]
+            
+    # def test_lookup(self):
+        # cts = Sequence([
+            # Event(60,100),
+            # Event(62,100),
+            # Event(64,100),
+            # Event(60,100)])
+            
+        # assert cts.lookup(-1) == None
+        # assert cts.lookup(0) == Event(60,100)
+        # assert cts.lookup(50) == Event(60,100)
+        # assert cts.lookup(99) == Event(60,100)
+        # assert cts.lookup(100) == Event(60,100)
+        # assert cts.lookup(101) == Event(62,100)
+        # assert cts.lookup(400) == Event(60,100)
+        # assert cts.lookup(401) == None
+
+    def test_get_pitches(self):
+        cts = Sequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+
+        assert list(cts.pitches) == [67,60,62,64,60]
+
+    def test_get_durations(self):
+        cts = Sequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=200),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+
+        assert list(cts.durations) == [100,100,200,100,100]
+
+    def test_sequence_to_pitch_Set(self):
+        cts = Sequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+        assert cts.to_pitch_set() == {60,62,64,67}
+
+    def test_sequence_to_pitch_class_Set(self):
+        cts = Sequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+        assert cts.to_pitch_class_set() == {0,2,4,7}
 
 if __name__ == "__main__":
     unittest.main()

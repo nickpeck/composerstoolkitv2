@@ -235,24 +235,30 @@ class Sequence:
     
     events - the default 
     """
-    events: List[Event] = field(
-        default_factory = lambda: []
+    events: Iterator[Event] = field(
+        default_factory = lambda: iter(())
     )
     memento: Optional[Sequence] = None
 
     @property
     def pitches(self) -> Iterator[int]:
-        """Return an iterable containing the ordered set of MIDI pitch numbers that
-        comprise the sequence.
+        """Return a generator expression yielding the ordered list of MIDI
+        pitch numbers that comprise the sequence.
         """
-        return itertools.chain.from_iterable({e.pitches for e in self.events})
+        return itertools.chain.from_iterable((e.pitches for e in self.events))
 
     @property
-    def durations(self) -> Set[int]:
-        """Return an iterable containing the ordered set of durations that
-        comprise the sequence.
+    def durations(self) -> Iterator[int]:
+        """Return a generator expression yielding the ordered list of durations
+        that comprise the sequence.
         """
-        return {e.duration for e in list(self.events)}
+        return (e.duration for e in list(self.events))
+
+    @classmethod
+    def from_generator(cls, generator: Iterator[Event]) -> Sequence:
+        return cls(
+            events = generator
+        )
 
     def to_pitch_set(self) -> Set[int]:
         """Return a set of unique MIDI pitch numbers that comprise the sequence.
@@ -260,18 +266,19 @@ class Sequence:
         return {* (itertools.chain(self.pitches))}
 
     def to_pitch_class_set(self):
-        """Return the set of unique pitch classes (1..12) that comprise the sequence.
+        """Return the set of unique pitch classes (0..11) that comprise the sequence.
         """
         pitch_set = self.to_pitch_set()
         return {*[p % 12 for p in pitch_set]}
 
-    def transform(self, transformer: Callable[[Sequence], Sequence]) -> Sequence:
+    def transform(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequence:
         """Convenience method for applying a transformation function to the sequence.
         Return the new sequence, allowing transformations to be chained in a single
         statement.
         """
-        new_seq = transformer(self)
-        new_seq.memento = self
+        new_seq = self.__class__(
+            events = transformer(self),
+            memento = self)
         return new_seq
 
     def to_graph(self, offset: int=0) -> Graph:
@@ -281,3 +288,68 @@ class Sequence:
         for event in self.events:
             edges = edges + event.to_edges(offset)
         return Graph(edges)
+
+    def __add__(self, other):
+        events = self.events[:] + other.events[:]
+        return self.__class__(events=events)
+
+    def __getitem__(self, slice):
+        start, stop, step = None, None, None
+        try:
+            start, stop, step = slice
+            sliced_events = self.events[start:stop:step]
+        except TypeError:
+            try:
+                start, stop = slice
+                sliced_events = self.events[start:stop]
+            except TypeError:
+                start = slice
+                sliced_events = self.events[start]
+                if not isinstance(sliced_events , list):
+                    sliced_events = [sliced_events]
+
+        return self.__class__(events=sliced_events)
+
+class reprwrapper(object):
+    """helper to override __repr__ for a function for debugging purposes
+    see https://stackoverflow.com/questions/10875442/possible-to-change-a-functions-repr-in-python
+    """
+    def __init__(self, repr, func):
+        self._repr = repr
+        self._func = func
+        functools.update_wrapper(self, func)
+    def __call__(self, *args, **kw):
+        return self._func(*args, **kw)
+    def __repr__(self):
+        return self._repr(self._func)
+
+def withrepr(reprfun):
+    """decorator for reprwrapper"""
+    def _wrap(func):
+        return reprwrapper(reprfun, func)
+    return _wrap
+
+class Transformer():
+
+    def __init__(self, functor):
+        self._functor = functor
+
+    def __call__(self, *args, **kwargs):
+        @withrepr(
+            lambda x: "<CTTransformer: {}{}>".format(
+                self._functor.__name__, args + tuple(kwargs.items())))
+        def transform(instance):
+            nonlocal args
+            nonlocal kwargs
+            _kwargs = kwargs
+            if "gate" in kwargs.keys():
+                gate = _kwargs["gate"]
+                del _kwargs["gate"]
+                _args = args[:]
+                return gate(self._functor, instance, *_args, **_kwargs)
+            _args = [instance] + list(args)
+            return self._functor(*_args, **_kwargs)
+        return transform
+
+    def __str__(self):
+        return "<CTTransformer : {}>".format(self._functor.__name__)
