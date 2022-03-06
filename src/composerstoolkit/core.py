@@ -517,12 +517,14 @@ class Container():
             signal.pause()
 
         synth = self.options["synth"]
+        channels = []
         for channel_no, offset, seq in self.sequences:
             player_thread = Thread(
                 target=self._play_channel,
                 args=(channel_no, offset, seq,synth))
             player_thread.daemon = True
-            player_thread.start()
+            channels.append(player_thread)
+        [player_thread.start() for player_thread in channels]
         while True:
             sleep(1)
 
@@ -540,3 +542,4 @@ class Container():
         midifile.addTempo(0, 0, self.options["bpm"])
         with open(filename, 'wb') as outf:
             midifile.writeFile(outf)
+        return self

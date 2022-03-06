@@ -21,8 +21,8 @@ DIMINISHED_SCALE_PITCH_CLASSES = MODE_2_PITCH_CLASSES
 
 CHROMATIC_SCALE_PITCH_CLASSES = {*range(0,11)}
 
-C_major = [0] + sorted(filter(lambda x: (x % 12) in \
-    MAJ_SCALE_PITCH_CLASSES, range(1, NOTE_MAX)))
+C_major = set([0] + sorted(filter(lambda x: (x % 12) in \
+    MAJ_SCALE_PITCH_CLASSES, range(1, NOTE_MAX))))
 Db_major = set(map(lambda x: x+1, C_major))
 D_major = set(map(lambda x: x+2, C_major))
 Eb_major = set(map(lambda x: x+3, C_major))
