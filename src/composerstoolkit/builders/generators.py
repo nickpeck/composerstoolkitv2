@@ -3,12 +3,12 @@ All generators return a list or Iterator of Event objects
 """
 import itertools
 import math
-from typing import Iterator, Optional, Set, List, Dict
+from typing import Iterator, Optional, Set, List, Dict, Callable
 import random
 
 import more_itertools
 
-from ..core import Event, Sequence
+from ..core import Event, Sequence, FiniteSequence
 from ..resources import NOTE_MIN, NOTE_MAX
 
 def cantus(pitches: Iterator[int]) -> Iterator[Event]:
@@ -373,3 +373,34 @@ def select_chords(event: Event,
         next_chord = weighted_chords[0][1]
         previous_chord = Event(next_chord.pitches, event.duration)
         yield previous_chord
+
+def variations(base_seq: FiniteSequence,
+    transformer: Callable[[Sequence], Iterator[Event]],
+    n_times: Optional[int] = None,
+    repeats_per_var=1) -> Sequence:
+
+    def compose_vars():
+        i=0
+        def is_not_terminal():
+            if n_times is None:
+                return True
+            return i <= n_times
+
+        _events = base_seq.events[:]
+
+        while is_not_terminal():
+            if i == 0:
+                for _i in range(repeats_per_var):
+                    for event in base_seq.events:
+                        yield event
+            else:
+                cloned = FiniteSequence(_events)
+                new_seq = transformer(Sequence(cloned.events))
+                _events = []
+                for event in new_seq:
+                    _events.append(event)
+                for _i in range(repeats_per_var):
+                    for event in _events:
+                        yield event
+            i = i + 1
+    return compose_vars()

@@ -28,7 +28,7 @@ pf = pitches.PitchFactory()
 source = FiniteSequence(events=[
     Event(pitches=[pf("G2"), pf("C2")], duration=0.125),
     Event(pitches=[pf("F#2")], duration=0.125),
-    Event(pitches=[pf("G2")], duration=0.125)
+    Event(pitches=[pf("G2")], duration=0.25)
 ])
 
 corpus = Corpus(case_base=graphs)
@@ -37,7 +37,12 @@ solver = CaseBasedSolver(source=source,
     corpus = corpus,
     target_duration_beats = 2,
     constraints = [
-        constraint_in_set(scales.G_major),
+        constraint_in_set(
+            scales.G_major,
+            lookback_n_beats=1
+            ) | constraint_in_set(
+            scales.C_major,
+            lookback_n_beats=1),
         constraint_range(minimum=30,maximum=70)
     ])
 

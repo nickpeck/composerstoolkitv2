@@ -7,7 +7,6 @@ from composerstoolkit.resources import scales, pitches
 
 pf = pitches.PitchFactory()
 
-
 base_seq = FiniteSequence(events=[
     Event([pf("C6")], duration=QUARTER_NOTE),
     Event([pf("Eb6")], duration=EIGHTH_NOTE),
@@ -19,25 +18,27 @@ base_seq = FiniteSequence(events=[
     Event([pf("F6")], duration=QUARTER_NOTE)]
 )
 
-melodic_variations1 = base_seq.progressive_variations(
-    n_times = None,
-    transformer = random_transformation([
-        rotate(6),
-        invert(axis_pitch=pf("C6")),
-        map_to_pitches(base_seq),
-        map_to_pulses(base_seq),
-        slice_looper(n_events=2, n_repeats=4),
-        feedback(n_events=4),
-        batch(transformations=[
-            transpose(4),
-            motivic_interpolation(base_seq),
-            rhythmic_augmentation(2),]
-        )
-    ]),
-    repeats_per_var=2
-).transform(
-    modal_quantize(scale=scales.Bb_major)
-)
+melodic_variations1 = Sequence.from_generator(
+    variations(
+        base_seq,
+        n_times = None,
+        transformer = random_transformation([
+            rotate(6),
+            invert(axis_pitch=pf("C6")),
+            map_to_pitches(base_seq),
+            map_to_pulses(base_seq),
+            slice_looper(n_events=2, n_repeats=4),
+            feedback(n_events=4),
+            batch(transformations=[
+                transpose(4),
+                motivic_interpolation(base_seq),
+                rhythmic_augmentation(2),]
+            )
+        ]),
+        repeats_per_var=2
+    )).transform(
+        modal_quantize(scale=scales.Bb_major)
+    )
 
 chords = Sequence.from_generator(
     chord_cycle(

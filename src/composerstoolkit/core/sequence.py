@@ -254,37 +254,6 @@ class FiniteSequence:
 
         return FiniteSequence(events)
 
-    def progressive_variations(self,
-        transformer: Callable[[Sequence], Iterator[Event]],
-        n_times: Optional[int] = None,
-        repeats_per_var=1) -> Sequence:
-
-        def compose_vars():
-            i=0
-            def is_not_terminal():
-                if n_times is None:
-                    return True
-                return i <= n_times
-
-            _events = self.events[:]
-
-            while is_not_terminal():
-                if i == 0:
-                    for _i in range(repeats_per_var):
-                        for event in self.events:
-                            yield event
-                else:
-                    cloned = FiniteSequence(_events)
-                    new_seq = transformer(Sequence(cloned.events))
-                    _events = []
-                    for event in new_seq:
-                        _events.append(event)
-                    for _i in range(repeats_per_var):
-                        for event in _events:
-                            yield event
-                i = i + 1
-        return Sequence(events=compose_vars())
-
     def __getitem__(self, slice_index):
         start, stop, step = None, None, None
         try:

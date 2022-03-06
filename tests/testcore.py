@@ -489,30 +489,6 @@ class FiniteSequenceTests(unittest.TestCase):
             Event(pitches=[60], duration=0.5)
         ]
 
-    def test_we_can_create_progressive_variations(self):
-        seq = FiniteSequence([
-            Event(pitches=[60], duration=1),
-            Event(pitches=[60], duration=1)])
-
-        @Transformer
-        def my_trans(seq):
-            for event in seq.events:
-                yield Event(
-                    [e+1 for e in event.pitches],
-                    event.duration)
-
-        variations = seq.progressive_variations(
-            transformer = my_trans(),
-            repeats_per_var = 1
-        )
-        
-        assert next(variations.events).pitches == [60]
-        assert next(variations.events).pitches == [60]
-        assert next(variations.events).pitches == [61]
-        assert next(variations.events).pitches == [61]
-        assert next(variations.events).pitches == [62]
-        assert next(variations.events).pitches == [62]
-
     def test_to_vectors(self):
         seq = FiniteSequence([
             Event(pitches=[67], duration=1),

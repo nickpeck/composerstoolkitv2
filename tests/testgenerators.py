@@ -257,5 +257,31 @@ class TestGenerators(unittest.TestCase):
         with self.assertRaises(StopIteration):
             assert next(gen)
 
+    def test_we_can_create_variations(self):
+        seq = FiniteSequence([
+            Event(pitches=[60], duration=1),
+            Event(pitches=[60], duration=1)])
+
+        @Transformer
+        def my_trans(seq):
+            for event in seq.events:
+                yield Event(
+                    [e+1 for e in event.pitches],
+                    event.duration)
+
+        my_variations = Sequence.from_generator(
+            variations(
+                seq,
+                transformer = my_trans(),
+                repeats_per_var = 1
+            ))
+
+        assert next(my_variations.events).pitches == [60]
+        assert next(my_variations.events).pitches == [60]
+        assert next(my_variations.events).pitches == [61]
+        assert next(my_variations.events).pitches == [61]
+        assert next(my_variations.events).pitches == [62]
+        assert next(my_variations.events).pitches == [62]
+
 if __name__ == "__main__":
     unittest.main()
