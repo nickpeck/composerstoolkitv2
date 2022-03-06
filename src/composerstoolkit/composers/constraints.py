@@ -95,12 +95,15 @@ def constraint_restrict_to_intervals(
     allow_intervals: Set[int],
     upper_voice: FixedSequence) -> bool:
     """Restrict the intervals between concurrent notes in
-    seq and upper_voice to those in the set of allow_intervals
+    seq and upper_voice to those in the set of allow_intervals.
+    Where allow_intervals are intervals in the range 0...11
+    (Handles compund intervals, so a 10th is considered as a 3rd)
     """
     cur_time = 0
     for lower_event in sequence.events:
         cur_time = cur_time + lower_event.duration
         upper_event = upper_voice.event_at(cur_time)
+        interval = abs(upper_event.pitches[-1] - lower_event.pitches[-1]) % 12
         if abs(upper_event.pitches[-1] - lower_event.pitches[-1]) not in allow_intervals:
             return False
     return True

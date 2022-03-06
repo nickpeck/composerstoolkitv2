@@ -40,6 +40,43 @@ def transpose(seq: Sequence, interval: int) -> Iterator[Event]:
                 duration=evt.duration)
 
 @Transformer
+def transpose_diatonic(seq: Sequence,
+        steps: int,
+        scale: list,
+        pass_on_error = False) -> Iterator[Event]:
+    """Transpose all pitches by a number of steps
+    within the given scale.
+    Where scale is the complete range of pitch numbers
+    occupied by that scale across the whole MIDI pitch
+    range (0...127)
+
+    if pass_on_error is set to True, an exception will
+    be raised if a pitch is not found in the source
+    scale. Otherwise the pitch is emitted, unaltered.
+    """
+    if isinstance(scale, set):
+        scale = list(scale)
+    for evt in seq.events:
+        pitches = evt.pitches
+        new_event = Event([], evt.duration)
+        for pitch in pitches:
+            try:
+                cur_index = scale.index(pitch)
+            except ValueError as ve:
+                if pass_on_error:
+                    raise ve
+                new_event.pitches.append(pitch)
+                continue
+            new_index = cur_index + steps
+            try:
+                new_pitch = scale[new_index]
+            except IndexError:
+                continue
+            new_event.pitches.append(new_pitch)
+        new_event.pitches = sorted(new_event.pitches)
+        yield new_event
+
+@Transformer
 def retrograde(seq: Sequence, n_pitches: int) -> Iterator[Event]:
     """Cut a section up to n_pitches from the start of the
     sequence and return the pitches in reverse order

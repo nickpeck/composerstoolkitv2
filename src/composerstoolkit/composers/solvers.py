@@ -15,17 +15,17 @@ from composerstoolkit.core import (Event, Sequence, FixedSequence, Context, Cons
 from composerstoolkit.builders.generators import cantus
 from composerstoolkit.resources import NOTE_MIN, NOTE_MAX
 
-class DeadEndException(Exception):
+class DeadEndReached(Exception):
     """Indicates that the solver reached a dead-end
     whilst trying to produce a solution.
     """
 
-class InputViolatesConstraintsException(Exception):
+class InputViolatesConstraints(Exception):
     """Indicates that the seed given to a solver violates
     the constraints for the finished solution
     """
 
-class AllRoutesExhaustedException(Exception):
+class AllRoutesExhausted(Exception):
     """Indicates that a solver was unable to produce
     a solution after investigating all recursive
     possibilities under the given condition.
@@ -34,7 +34,7 @@ class AllRoutesExhaustedException(Exception):
 def develop(seed: FixedSequence, **kwargs) -> Sequence:
     """Grow a sequence from a given 'seed' (motive).
     The process does not operate in realtime, and may well
-    raise DeadEndException if it hits a dead-end
+    raise DeadEndReached if it hits a dead-end
     The process is controlled by the following kwargs:
     
     min_beats - controls the length of the sequence. It is
@@ -72,7 +72,8 @@ def develop(seed: FixedSequence, **kwargs) -> Sequence:
         while is_searching:
 
             if set(weights) == {0}:
-                raise DeadEndException("The solver ran into a dead-end.")
+                raise DeadEndReached(
+                    "The solver ran into a dead-end. Please try again, or adjust the parameters.")
             _weights = (float(w) for w in weights)
             mutator = random.choices(mutators, _weights)[0]
 
@@ -139,7 +140,7 @@ def backtracking_solver(
     for constraint in constraints:
         results.update([constraint(seq)])
     if results != {True}:
-        raise InputViolatesConstraintsException("Unable to solve!")
+        raise InputViolatesConstraints("Unable to solve!")
 
     choices = list(range(NOTE_MIN, NOTE_MAX))
     dead_paths = []

@@ -3,27 +3,27 @@ The outcome is guided by a series of user-specified constraints.
 
 In this case, we take the notes C, D, E and try to grow a 16 beat
 phrase in C major using by repeatedly applying transpositions and inversions
-to a motive
+to a motive.
+
+The solver does not employ back-tracking, so it may well reach a dead-end
+and need to be restarted a few times before a solution is reached.
 """
 
 from composerstoolkit.core import Event, FixedSequence, Container
-from composerstoolkit.composers.solvers import develop_motive
+from composerstoolkit.composers.solvers import develop
 from composerstoolkit.composers.constraints import (
     constraint_in_set, constraint_no_leaps_more_than)
 from composerstoolkit.builders.transformers import *
 from composerstoolkit.resources.rhythms import *
 from composerstoolkit.resources import scales
 
-seq = develop_motive(
+seq = develop(
     FixedSequence(events=[
         Event(pitches=[60], duration=QUARTER_NOTE),
         Event(pitches=[62], duration=QUARTER_NOTE),
         Event(pitches=[64], duration=QUARTER_NOTE)]),
     mutators=[
-        transpose(2),
-        transpose(-2),
-        transpose(3),
-        transpose(-3),
+        transpose_diatonic(1, scales.C_major),
         invert(),
         retrograde(3)],
     constraints=[
