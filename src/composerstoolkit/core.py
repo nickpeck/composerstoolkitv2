@@ -352,8 +352,8 @@ class FixedSequence:
 class Context:
     event: Event
     sequence: Sequence
-    beat_offset: int
-    previous: Event
+    beat_offset: int = 0
+    previous: Optional[Event] = None
 
 class ReprWrapper:
     """helper to override __repr__ for a function for debugging purposes

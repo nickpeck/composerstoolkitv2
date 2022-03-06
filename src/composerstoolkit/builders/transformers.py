@@ -2,11 +2,12 @@
 All transformers act upon a given source Sequence to derrive a new List or
 Iterator of Event objects.
 """
+from dataclasses import dataclass
 import itertools
 import math
-from typing import List, Optional, Iterator, Union
+from typing import List, Optional, Iterator, Union, Callable
 
-from ..core import Event, Sequence, Transformer
+from ..core import Event, Sequence, Transformer, Context
 
 @Transformer
 def loop(seq: Sequence, n_times: Optional[int]=None) -> Iterator[Event]:
@@ -211,3 +212,41 @@ def map_to_pitches(seq: Sequence, pitch_sequence: Sequence) -> Iterator[Event]:
             yield Event([next_pitch.pitches[0]], event.duration)
         except StopIteration:
             yield Event([], event.duration)
+
+@Transformer
+def batch(seq: Sequence,
+    transformations: List[Transformer]) -> Iterator[Event]:
+    """Apply multiple transformations a sequence, such as
+    batch(seq, [a,b,c]) == a(b(c(seq)))
+    """
+    for transformer in transformations:
+        seq = Sequence(transformer(seq))
+    print(seq)
+    return seq.events
+
+@Transformer
+def gated(seq: Sequence,
+    transformer: Transformer,
+    condition: Callable[[Context], bool]) -> Iterator[Event]:
+    """Return a new stream of events such as that:
+    whenever condition evaluates to true, we return the next
+    item in the transformed sequence.
+    Otherwise, return the next item in the source sequence
+    """
+    transformed = transformer(seq)
+    i = 0
+    previous: Optional[Event] = None
+    for event in seq.events:
+        i = i + 1
+        context = Context(
+            event = event,
+            sequence = seq,
+            beat_offset = i,
+            previous = previous
+        )
+        if condition(context):
+            previous = next(transformed)
+            yield previous
+        else:
+            previous = event
+            yield previous
