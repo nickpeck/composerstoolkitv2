@@ -21,7 +21,6 @@ def loop(seq: Sequence,
     if n_times is None:
         for item in itertools.cycle(seq.events):
             yield item
-        return
     if n_times < 0:
         raise ValueError("n_times cannot be less than 0")
     saved = []
@@ -96,7 +95,7 @@ def transpose_diatonic(seq: Sequence,
             try:
                 cur_index = scale.index(pitch)
             except ValueError as verr:
-                if pass_on_error:
+                if not pass_on_error:
                     raise verr
                 new_event.pitches.append(pitch)
                 continue
@@ -277,7 +276,7 @@ def rhythmic_diminution(seq: Sequence, factor: Union[int, float]) -> Iterator[Ev
     """Return a new stream of events in which all the durations of
     the source sequence have been reduced by a given factor.
     """
-    return (Event(e.pitches, math.floor(e.duration/factor)) for e in seq.events)
+    return (Event(e.pitches, e.duration/factor) for e in seq.events)
 
 @Transformer
 def map_to_pulses(seq: Sequence, pulse_sequence: Sequence) -> Iterator[Event]:
