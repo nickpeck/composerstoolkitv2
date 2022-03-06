@@ -242,9 +242,9 @@ class Sequence:
     )
     memento: Optional[Sequence] = None
 
-    # def __post_init__(self):
-        # if not isinstance(self.events, Iterator):
-            # self.events = iter(self.events[:])
+    def __post_init__(self):
+        if isinstance(self.events, list):
+            self.events = iter(self.events[:])
 
     @property
     def pitches(self) -> Iterator[int]:
@@ -305,6 +305,10 @@ class FixedSequence:
 
     @property
     def duration(self) -> int:
+        return sum(self.durations)
+
+    @property
+    def duration(self) -> int:
         """Return the total duration of the Sequence
         """
         return sum(self.durations)
@@ -330,6 +334,16 @@ class FixedSequence:
         for event in self.events:
             edges = edges + event.to_edges(offset)
         return Graph(edges)
+
+    def event_at(self, beat_offset: int) -> Optional[Event]:
+        if beat_offset > self.duration:
+            return None
+        offset = 0
+        for event in self.events:
+            offset = offset + event.duration
+            if offset >= beat_offset:
+                return event
+        return None
 
     def __getitem__(self, slice_index):
         start, stop, step = None, None, None
