@@ -32,8 +32,7 @@ class TestChordalAnalysis(unittest.TestCase):
             Event([pf("G4")], duration=1)
         ])
         found_chords = chordal_analysis(
-            source, 
-            window_size_beats=4,
+            source,
             chord_lexicon=lexicon)
         assert found_chords == [{0,4,7}]
 
@@ -52,7 +51,6 @@ class TestChordalAnalysis(unittest.TestCase):
         ])
         found_chords = chordal_analysis(
             source, 
-            window_size_beats=4,
             chord_lexicon=lexicon)
         assert found_chords == [{0,4,7}]
 
@@ -69,7 +67,6 @@ class TestChordalAnalysis(unittest.TestCase):
         ])
         found_chords = chordal_analysis(
             source, 
-            window_size_beats=4,
             chord_lexicon=lexicon)
         assert found_chords == [set()]
 
@@ -112,8 +109,7 @@ class TestChordalAnalysis(unittest.TestCase):
             Event([pf("A4")], duration=1)
         ])
         found_chords = chordal_analysis(
-            source, 
-            window_size_beats=7,
+            source,
             chord_lexicon=lexicon)
         # C maj 7 is the largest match
         assert found_chords == [{0,4,7,11}]

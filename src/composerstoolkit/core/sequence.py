@@ -226,28 +226,30 @@ class FiniteSequence:
         """
         current_time = 0
         events = []
+
         for event in self.events:
-            if current_time > end_beats:
+            if current_time >= end_beats:
                 # we are past the window
                 break
 
             if current_time >= start_beats:
-                if event.duration + current_time < end_beats:
-                    # event is within the window
-                    events.append(event)
-                if event.duration + current_time >= end_beats:
+                if event.duration + current_time > end_beats:
                     # event overlaps the end of the window
                     truncated_duration = event.duration + current_time - end_beats
                     events.append(
                         Event(pitches=event.pitches,
                         duration=truncated_duration))
+                else:
+                    # event is within the window
+                    events.append(event)
             elif current_time < start_beats \
-                and current_time + event.duration >= start_beats:
+                and current_time + event.duration > start_beats:
                 # event overlaps the start of the window
                 truncated_duration = event.duration + current_time - start_beats
                 events.append(
                     Event(pitches=event.pitches,
                     duration=truncated_duration))
+
             current_time = current_time + event.duration
 
         return FiniteSequence(events)

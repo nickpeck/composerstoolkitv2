@@ -68,10 +68,9 @@ def hidden_subsequences(
     return detected
 
 def chordal_analysis(seq: FiniteSequence,
-    window_size_beats=4,
     chord_lexicon=List[Set],
-    start_offset = 0,
-    overlap_threshold=1):
+    overlap_threshold=0,
+    window_size_beats=None):
     """Break the given seq down into chunks of
     window_size (expressed in beats).
     Analyse the content within to determine the
@@ -80,18 +79,24 @@ def chordal_analysis(seq: FiniteSequence,
     the best voice-leading solution.
     Return a list of transposed chord voicings.
     """
-    # segement the source sequence
-    # curr_time = start_offset
-    # slices = []
-    # while curr_time <= seq.duration:
-        # slices.append(seq.time_slice(
-            # curr_time, curr_time +  window_size_beats))
-        # curr_time = curr_time + window_size_beats
-    slices = seq_chunked(seq, window_size_beats)
+    slices = []
+    # segement the source sequence, if required
+    if window_size_beats is None:
+        window_size_beats = len(seq)
+        slices = [seq]
+    else:
+        curr_time = 0
+        while curr_time <= seq.duration:
+            slices.append(seq.time_slice(
+                curr_time, curr_time +  window_size_beats))
+            curr_time = curr_time + window_size_beats
     found_chords = []
 
     # find candidate pcs that best intersects the pcs of each seq
     for i,slice in enumerate(slices):
+        if len(slice) == 0:
+            break
+
         pcs = slice.to_pitch_class_set()
         candidate_chords = []
         for chord in chord_lexicon:
@@ -100,8 +105,8 @@ def chordal_analysis(seq: FiniteSequence,
             if len(diff) <= overlap_threshold:
                 # provide an arbitary weighting, based on
                 # the size of the chord and the degree
-                # of abmiguity
-                metric = len(chord) - len(diff)
+                # of ambiguity
+                metric = len(chord) + len(diff)
                 candidate_chords.append((metric, chord))
         # sorted, most likely first
         candidate_chords = sorted(
@@ -116,19 +121,18 @@ def chordal_analysis(seq: FiniteSequence,
         # Now select the best candidate based on lowest
         # cost voice-leading
         weighted_options = []
-
         previous = found_chords[-1]
-        cost = 0
-        # selects the highest weighted group
-        candidate_chords = [list(j) for i, j in
-            itertools.groupby(candidate_chords)][0]
 
         for weighting, chord in candidate_chords:
-
-            cost = Event(list(previous))\
+            mov_cost = Event(list(previous))\
                 .movement_cost_to(Event(list(chord)))
-            weighted_options.append((cost, chord))
+            if mov_cost > 0:
+                weighted_options.append((weighting * 1/mov_cost, chord))
+            else:
+                weighted_options.append((weighting, chord))
+
         # the head of the list is the best choice
-        found_chords.append(weighted_options[0][1])
+        cost, chord = weighted_options[0]
+        found_chords.append(chord)
 
     return found_chords

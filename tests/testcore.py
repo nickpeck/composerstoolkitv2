@@ -437,6 +437,36 @@ class FiniteSequenceTests(unittest.TestCase):
 
     def test_we_can_make_time_slices(self):
         seq = FiniteSequence([
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)])
+
+        assert seq.time_slice(0, 2).events == [
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1)
+        ]
+        assert seq.time_slice(2, 4).events == [
+            Event(pitches=[62], duration=1),
+            Event(pitches=[64], duration=1)
+        ]
+        assert seq.time_slice(4, 6).events == [
+            Event(pitches=[60], duration=1)
+        ]
+        assert seq.time_slice(0, 3).events == [
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=1)
+        ]
+        assert seq.time_slice(3, 6).events == [
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)
+        ]
+
+
+    def test_time_slices_truncate_slice_to_fit_window(self):
+        seq = FiniteSequence([
             Event(pitches=[67], duration=0.5),
             Event(pitches=[60], duration=1),
             Event(pitches=[62], duration=1),
