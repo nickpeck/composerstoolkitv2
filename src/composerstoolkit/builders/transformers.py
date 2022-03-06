@@ -1,4 +1,6 @@
-"""Library functions for performing transformations on an existing Sequence
+"""Library functions for performing transformations on an existing Sequence.
+All transformers act upon a given source Sequence to derrive a new List or
+Iterator of Event objects.
 """
 import itertools
 import math

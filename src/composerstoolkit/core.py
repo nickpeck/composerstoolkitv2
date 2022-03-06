@@ -249,6 +249,12 @@ class Sequence:
         """
         return (e.duration for e in list(self.events))
 
+    @property
+    def duration(self) -> int:
+        """Return the total duration of the Sequence
+        """
+        return sum(self.durations)
+
     @classmethod
     def from_generator(cls, generator: Iterator[Event]) -> Sequence:
         """Return a new Sequence using the seed of a given generator function.

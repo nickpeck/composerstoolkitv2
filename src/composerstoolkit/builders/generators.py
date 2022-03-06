@@ -1,8 +1,10 @@
-"""Library functions for generating an initial series of Event Objects
+"""Library functions for generating an initial series of Event Objects.
+All generators return a list or Iterator of Event objects
 """
-from typing import Iterator
+from typing import Iterator, Optional
+import random
 
-from ..core import Event
+from ..core import Event, Sequence
 
 def cantus(pitches: Iterator[int]) -> Iterator[Event]:
     """Return a series of pitched events of duration 0, derrived
@@ -51,3 +53,49 @@ def collision_pattern(clock1: int, clock2: int) -> Iterator[Event]:
     if cur_duration is None:
         cur_duration = 0
     yield Event(duration=cur_duration + 1)
+
+def random_choice(choices: Iterator[Event],
+    max_length: Optional[int]=None) -> Iterator[Event]:
+    """Return a series of randomly chosen Events from
+    the list of choices up to max_len.
+    If max_len is None, the sequence is infinate.
+    """
+    def _chooser(choices, max_len):
+        if max_len is None:
+            while True:
+                yield random.choice(choices)
+        cummulative_len = 0
+        while True:
+            next_choice = random.choice(choices)
+            cummulative_len = cummulative_len + next_choice.duration
+            if cummulative_len >= max_len:
+                return
+            yield next_choice
+    return _chooser(choices, max_length)
+
+def random_slice(base_seq: Sequence,
+    slice_size: Optional[int]=None,
+    max_length: Optional[int]=None) -> Iterator[Event]:
+    """Return a series Events by slicing random
+    portions of base_seq up to size max_length
+    If slice_size is None, a slice of randomly chosen
+    length will be used each time.
+    If max_len is None, the sequence is infinate.
+    """
+    src_events = list(base_seq.events)[:]
+    def _get_slice_size() -> int:
+        if slice_size is None:
+            return random.choice(range(len(src_events)))
+        return slice_size
+    def _get_slice(src_events, max_len):
+        cummulative_len = 0
+        while True:
+            start = random.choice(range(len(src_events))-1)
+            size = _get_slice_size()
+            sliced = src_events[start: start+size]
+            cummulative_len = cummulative_len \
+                + [event.duration for event in sliced]
+            if cummulative_len >= max_len:
+                return
+            yield sliced
+    return _get_slice(src_events, max_length)
