@@ -26,14 +26,14 @@ class MidiTrackParser:
     The data should be arranged into a single track,
     with all chords aligned (quantized) so that all notes
     start at the same time point.
-    
+
     The music should contain a consistent number of parts (voices)
-    and there should be no space or overlap between chords that are
+    and should be aligned to the grid,
+    ie there should be no space or overlap between chords that are
     intended to be connected in a legato manner.
     """
     def __init__(self, track: MidiTrack, graph: Graph):
-        """Constructor for MidiTrackParser
-        
+        """Constructor for MidiTrackParser:
         track - a mido MidiTrack
         graph - the Graph to the data into.
         """
@@ -92,8 +92,7 @@ class MidiTrackParser:
         left_chord.sort(key=lambda n: n.pitch, reverse=True)
         right_chord.sort(key=lambda n: n.pitch, reverse=True)
         # very basic for now, just using order of notes and assuming same no voices
-        for i in range(len(left_chord)):
-            left = left_chord[i]
+        for i, left in enumerate(left_chord):
             try:
                 right = right_chord[i]
                 self.graph.add_vertex(left, right)
@@ -123,8 +122,6 @@ class Vector:
 @dataclass
 class Graph:
     """A representation of a musical structure used for analysis purposes.
-    
-    edges
     """
     edges: List[Edge] = field(
         default_factory= lambda: []
@@ -136,7 +133,7 @@ class Graph:
         self.edges.append(edge)
 
     def add_vertex(self, edge1: Edge, edge2: Edge):
-        """Add a vertex (implied connection) between two 
+        """Add a vertex (implied connection) between two
         edges already in the graph.
         """
         index = self.edges.index(edge1)
@@ -148,14 +145,14 @@ class Graph:
         vectors.
         """
         vector_list = []
-        for e in self.edges:
-            vertices = e.vertices
+        for edge in self.edges:
+            vertices = edge.vertices
             for vertex in vertices:
                 vector_list.append(
                     Vector(
-                        time_delta = vertex.start_time - e.start_time,
-                        pitch_delta = vertex.pitch - e.pitch,
-                        origin = e,
+                        time_delta = vertex.start_time - edge.start_time,
+                        pitch_delta = vertex.pitch - edge.pitch,
+                        origin = edge,
                         destination = vertex
                     )
                 )
@@ -174,22 +171,22 @@ class Graph:
         return MidiTrackParser(track, cls()).parse()
 
     def intersections(self, other_graph) -> List[Edge]:
-        """Return a list of all possible intersections 
+        """Return a list of all possible intersections
         between other_graph and this graph.
         """
         raise NotImplementedError("Graph.intersections")
 
     def get_pitches_at(self, offset: int) -> List[int]:
         """Return a list of integers that represents all
-        pitches sounding at a given offset, sorted in 
+        pitches sounding at a given offset, sorted in
         ascending numerical order.
         """
-        def func(e: Edge) -> bool:
-            if e.start_time > offset:
+        def func(edge: Edge) -> bool:
+            if edge.start_time > offset:
                 return False
-            if e.end_time is None:
+            if edge.end_time is None:
                 return True
-            if e.end_time <= offset:
+            if edge.end_time <= offset:
                 return False
             return True
 
@@ -197,7 +194,7 @@ class Graph:
             func,
             self.edges
         ))
-        pitches = [e.pitch for e in chord]
+        pitches = [edge.pitch for edge in chord]
         pitches.sort()
         return pitches
 
@@ -215,14 +212,14 @@ class Event:
     )
 
     def to_edges(self, offset: int=0) -> List[Edge]:
-        """Return the event as a single edge, or a list 
+        """Return the event as a single edge, or a list
         of connected edges, in the case that there are multiple pitches
         (a chord).
         """
         edges = []
-        for p in self.pitches:
+        for pitch in self.pitches:
             edges.append(Edge(
-                pitch = p,
+                pitch = pitch,
                 start_time = offset,
                 end_time = self.duration + offset
             ))
@@ -231,9 +228,7 @@ class Event:
 @dataclass
 class Sequence:
     """Represents a linear sequence of events (single notes, chords or 'meta' type
-    events
-    
-    events - the default 
+    events).
     """
     events: Iterator[Event] = field(
         default_factory = lambda: iter(())
@@ -256,6 +251,8 @@ class Sequence:
 
     @classmethod
     def from_generator(cls, generator: Iterator[Event]) -> Sequence:
+        """Return a new Sequence using the seed of a given generator function.
+        """
         return cls(
             events = generator
         )
@@ -293,29 +290,29 @@ class Sequence:
         events = self.events[:] + other.events[:]
         return self.__class__(events=events)
 
-    def __getitem__(self, slice):
+    def __getitem__(self, slice_index):
         start, stop, step = None, None, None
         try:
-            start, stop, step = slice
+            start, stop, step = slice_index
             sliced_events = self.events[start:stop:step]
         except TypeError:
             try:
-                start, stop = slice
+                start, stop = slice_index
                 sliced_events = self.events[start:stop]
             except TypeError:
-                start = slice
+                start = slice_index
                 sliced_events = self.events[start]
                 if not isinstance(sliced_events , list):
                     sliced_events = [sliced_events]
 
         return self.__class__(events=sliced_events)
 
-class reprwrapper(object):
+class ReprWrapper:
     """helper to override __repr__ for a function for debugging purposes
     see https://stackoverflow.com/questions/10875442/possible-to-change-a-functions-repr-in-python
     """
-    def __init__(self, repr, func):
-        self._repr = repr
+    def __init__(self, rep, func):
+        self._repr = rep
         self._func = func
         functools.update_wrapper(self, func)
     def __call__(self, *args, **kw):
@@ -324,12 +321,16 @@ class reprwrapper(object):
         return self._repr(self._func)
 
 def withrepr(reprfun):
-    """decorator for reprwrapper"""
+    """decorator for ReprWrapper"""
     def _wrap(func):
-        return reprwrapper(reprfun, func)
+        return ReprWrapper(reprfun, func)
     return _wrap
 
 class Transformer():
+    """Wrapper class for transformer functions.
+    Can be used as a decorator, making it easy to
+    re-use a transformation with a given configuration.
+    """
 
     def __init__(self, functor):
         self._functor = functor
@@ -342,7 +343,7 @@ class Transformer():
             nonlocal args
             nonlocal kwargs
             _kwargs = kwargs
-            if "gate" in kwargs.keys():
+            if "gate" in kwargs:
                 gate = _kwargs["gate"]
                 del _kwargs["gate"]
                 _args = args[:]

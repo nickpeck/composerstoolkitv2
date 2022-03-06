@@ -1,3 +1,5 @@
+"""Library functions for performing transformations on an existing Sequence
+"""
 import itertools
 import math
 from typing import List, Optional, Iterator, Union
@@ -15,13 +17,13 @@ def loop(seq: Sequence, n_times: Optional[int]=None) -> Iterator[Event]:
                 yield event
     if n_times < 0:
         raise ValueError("n_times cannot be less than 0")
-    for i in range(n_times):
+    for _i in range(n_times):
         for event in seq.events:
-                yield event
+            yield event
 
 @Transformer
 def transpose(seq: Sequence, interval: int) -> Iterator[Event]:
-    """Transpose all pitches in the 
+    """Transpose all pitches in the
     given sequence by a constant interval.
     """
     for evt in seq.events:
@@ -31,14 +33,24 @@ def transpose(seq: Sequence, interval: int) -> Iterator[Event]:
 
 @Transformer
 def retrograde(seq: Sequence) -> List[Event]:
+    """Reverse a sequence.
+    (Note this forces the sequence to be evaluated).
+    """
     events = list(seq.events)[:]
     events.reverse()
     return events
 
 @Transformer
 def invert(seq: Sequence, axis_pitch=None) -> Iterator[Event]:
+    """Invert the pitches about a given axis (mirror it
+    upside down). If axis_pitch is not given, invert about
+    the first pitch in the sequence.
+    """
     if axis_pitch is None:
-        evt = next(seq.events)
+        try:
+            evt = next(seq.events)
+        except StopIteration:
+            return
         axis_pitch = evt.pitches[0]
         yield evt
     for evt in seq.events:
@@ -52,10 +64,14 @@ def invert(seq: Sequence, axis_pitch=None) -> Iterator[Event]:
 
 @Transformer
 def rotate(seq: Sequence, no_times=1) -> List[Event]:
+    """Return a new list of events in which the order has
+    been rotated by n_voices
+    (Note this forces the sequence to be evaluated).
+    """
     if seq.events == []:
         return []
     rotated = list(seq.events)[:]
-    for i in range(no_times):
+    for _i in range(no_times):
         rotated = rotated[1:] + [rotated[0]]
     return rotated
 
@@ -63,7 +79,10 @@ def rotate(seq: Sequence, no_times=1) -> List[Event]:
 def aggregate_into_chords(seq: Sequence,
     n_voices: int=4,
     duration: int=1) -> Iterator[Event]:
-
+    """Return a new stream of events in which each slice of
+    pitches (up to n_voices) has been aggregated into a chordal
+    structure.
+    """
     for pitches in itertools.islice(seq.events, n_voices):
         yield Event(list(pitches), duration) # type: ignore
 
@@ -72,7 +91,7 @@ def aggregate_into_chords(seq: Sequence,
     # events = seq.events[:]
     # if len(events) is 1:
         # return events
-        
+
     # def _vectors(seq):
         # vectors = []
         # x = seq.events[0]
@@ -80,12 +99,12 @@ def aggregate_into_chords(seq: Sequence,
             # vectors.append(y.pitch-x.pitch)
             # x = y
         # return vectors
-        
+
     ## first item in the seq stays as-is
     # i_events = iter(seq.events)
     # i_vectors = iter(_vectors(seq))
     # result = [next(i_events)]
-    
+
     # pitch = result[0].pitch
     # duration = result[0].duration
     # while True:
@@ -109,18 +128,21 @@ def aggregate_into_chords(seq: Sequence,
 def explode_intervals(seq: Sequence,
     factor: Union[int, float],
     mode: str="exponential") -> List[Event]:
-
+    """Progressively expand the intervals between
+    each event in the source Sequence by a given factor.
+    mode is either 'exponential' or 'linear'
+    """
     events = list(seq.events)[:]
-    if len(events) is 1:
+    if len(events) == 1:
         return events
 
     def _vectors(seq):
         vectors = []
-        x = seq.events[0]
-        for y in seq.events[1:]:
+        left = seq.events[0]
+        for right in seq.events[1:]:
             # if any event is a chord, then select the uppermost voice
-            vectors.append(y.pitches[0]-x.pitches[0])
-            x = y
+            vectors.append(right.pitches[0]-left.pitches[0])
+            left = right
         return vectors
 
     if mode == "exponential":
@@ -148,29 +170,40 @@ def explode_intervals(seq: Sequence,
 
 @Transformer
 def rhythmic_augmentation(seq: Sequence, multiplier: int) -> Iterator[Event]:
+    """Return a new stream of events in which all the durations of
+    the source sequence have been expanded by a given factor.
+    """
     return (Event(e.pitches, multiplier*e.duration) for e in seq.events)
 
 @Transformer
 def rhythmic_diminution(seq: Sequence, factor: Union[int, float]) -> Iterator[Event]:
+    """Return a new stream of events in which all the durations of
+    the source sequence have been reduced by a given factor.
+    """
     return (Event(e.pitches, math.floor(e.duration/factor)) for e in seq.events)
 
 @Transformer
 def map_to_pulses(seq: Sequence, pulse_sequence: Sequence) -> Iterator[Event]:
+    """Return a new stream of events which has the durations of
+    pitch_sequence mapped to the events of seq.
+    """
     iter_pulses = iter(pulse_sequence.events)
-    for e in seq.events:
+    for event in seq.events:
         try:
             next_pulse = next(iter_pulses)
-            yield Event(e.pitches, next_pulse.duration)
+            yield Event(event.pitches, next_pulse.duration)
         except StopIteration:
             return
 
 @Transformer
 def map_to_pitches(seq: Sequence, pitch_sequence: Sequence) -> Iterator[Event]:
+    """Return a new stream of events which has the pitches of
+    pitch_sequence mapped to the events of seq.
+    """
     iter_pitches = iter(pitch_sequence.events)
-    for e in seq.events:
+    for event in seq.events:
         try:
             next_pitch = next(iter_pitches)
-            yield Event([next_pitch.pitches[0]], e.duration)
+            yield Event([next_pitch.pitches[0]], event.duration)
         except StopIteration:
-            yield Event([], e.duration)
-
+            yield Event([], event.duration)

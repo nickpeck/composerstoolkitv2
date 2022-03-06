@@ -1,5 +1,6 @@
-#from ..builder.permutations import permutate
-import math
+"""Library of common chord types
+"""
+from typing import Iterator, Set
 
 from .scales import CHROMATIC_SCALE_PITCH_CLASSES
 
@@ -21,8 +22,14 @@ COMMON_TRETRAD_PITCH_CLASSES  = {
     'dim7' : {0, 3, 6, 9},
 }
 
-def to_pitch_class_set(pitches):
+def to_pitch_class_set(pitches: Iterator[int]):
+    """Return a pitch class set from pitches
+    """
     return {*[i % 12 for i in pitches]}
-    
-def set_compliment(pcs):
+
+def set_compliment(pcs: Set[int]):
+    """Return the chromatic set compliment
+    (ie the notes missing from the given set to
+    provide a full chromatic series).
+    """
     return CHROMATIC_SCALE_PITCH_CLASSES - pcs

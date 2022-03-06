@@ -1,3 +1,5 @@
+"""Library functions for derriving different permutations of a base sequence.
+"""
 import itertools
 from typing import Any, Iterator, List
 
