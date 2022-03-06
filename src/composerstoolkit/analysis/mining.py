@@ -1,8 +1,8 @@
 from collections import Counter
 import itertools
-from typing import List, Any, Tuple
+from typing import List, Any, Tuple, Set
 
-# from prefixspan import PrefixSpan
+from prefixspan import PrefixSpan
 
 from ..core import Graph, FiniteSequence
 
@@ -14,7 +14,8 @@ def common_subsequences(
     (ie, occuring twice or more) that are of length
     min_match_len to max_match_len that occur within
     list dataset.
-    Return a list of (count, subsequence)
+    Return a list of (count, subsequence), most
+    frequent first.
     """
 
     results = []
@@ -43,12 +44,29 @@ def common_subsequences(
         key=lambda m: m[0], reverse=True)
     return results
 
-# def hidden_sequence(
-    # dataset: List[Any],
-    # depth=4):
+def hidden_subsequences(
+    dataset: List[Any],
+    depth=4):
+    """
+    Catalog frequent hidden sequences within
+    dataset. (A wrapper around PrefixSpan).
+    Return a list of (count, subsequence), longest
+    matches first.
+    """
+    ps = PrefixSpan(dataset)
+    detected = ps.topk(depth)
+    detected = sorted(detected, key=lambda x: len(x[1]), reverse=True)
+    return detected
 
-    # dataset = []
-    # for seq in sequences:
-        # dataset.append(seq.to_vectors())
-    # ps = PrefixSpan(dataset)
-    # return ps.topk(depth)
+def chord_analysis(seq: FiniteSequence,
+    window_size=1,
+    chord_lexicon=List[Set]):
+    """Break the given seq down into chunks of
+    window_size (expressed in beats).
+    Analyse the content within to determine the
+    most likely chordal background.
+    In the case of abmiguity, resort to
+    the best voice-leading solution.
+    Return a list of transposed chord voicings.
+    """
+    pass
