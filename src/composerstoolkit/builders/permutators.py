@@ -33,7 +33,7 @@ class Permutations(Generic[T]):
         for i in range(self.n_generations):
             perms = itertools.permutations(self.starting_list)
             if self.return_last_gen_only and i == self.n_generations-1:
-                return itertools.chain([perms])
+                return itertools.chain(list(perms))
             generations.append(perms)
             if i < len(range(self.n_generations)):
                 self.starting_list = self.__class__._new_generation(self.starting_list)

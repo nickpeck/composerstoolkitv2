@@ -1,15 +1,17 @@
 import itertools
-import math
-from typing import List, Optional, Iterator, Union, Set
+from typing import List,Set
 
-from ..core import Context, Constraint, Sequence, FiniteSequence
+from ..core import Constraint, FiniteSequence
 
 @Constraint
-def constraint_range(sequence: FiniteSequence, min: int, max: int) -> bool:
+def constraint_range(sequence: FiniteSequence,
+    minimum: int,
+    maximum: int) -> bool:
+
     if sequence.to_pitch_set() == {}:
         return False
     pitches = sorted(sequence.pitches)
-    return pitches[0] >= min and pitches[-1] <= max
+    return pitches[0] >= minimum and pitches[-1] <= maximum
 
 @Constraint
 def constraint_in_set(sequence: FiniteSequence, _set = range(0,128)) -> bool:
@@ -48,7 +50,7 @@ def constraint_enforce_shared_pitches(sequence: FiniteSequence, min_shared: int=
     next(it2, None)
     for left, right in zip(it1,it2):
         intersection = set(right.pitches).intersection(set(left.pitches))
-        if len(intersection) <= max_shared:
+        if len(intersection) <= min_shared:
             return False
     return True
 
@@ -104,7 +106,7 @@ def constraint_restrict_to_intervals(
         cur_time = cur_time + lower_event.duration
         upper_event = upper_voice.event_at(cur_time)
         interval = abs(upper_event.pitches[-1] - lower_event.pitches[-1]) % 12
-        if abs(upper_event.pitches[-1] - lower_event.pitches[-1]) not in allow_intervals:
+        if interval not in allow_intervals:
             return False
     return True
 

@@ -4,15 +4,9 @@ These are not designed for on-the-fly usage.
 """
 
 from decimal import Decimal
-import itertools
-import math
 import random
-from typing import List
 
-from time import sleep
-
-from composerstoolkit.core import (Event, Sequence, FiniteSequence, Context, Constraint)
-from composerstoolkit.builders.generators import cantus
+from composerstoolkit.core import Event, Sequence, FiniteSequence
 from composerstoolkit.resources import NOTE_MIN, NOTE_MAX
 
 class DeadEndReached(Exception):
@@ -36,7 +30,7 @@ def develop(seed: FiniteSequence, **kwargs) -> Sequence:
     The process does not operate in realtime, and may well
     raise DeadEndReached if it hits a dead-end
     The process is controlled by the following kwargs:
-    
+
     min_beats - controls the length of the sequence. It is
     recommended to keep this figure smaller to start with.
 
@@ -62,7 +56,7 @@ def develop(seed: FiniteSequence, **kwargs) -> Sequence:
     try:
         weights = [y for (x,y) in opts["mutators"]]
         mutators = [x for (x,y) in opts["mutators"]]
-    except:
+    except TypeError:
         weights = [Decimal(1) for i in range(len(opts["mutators"]))]
         mutators = opts["mutators"]
     result = FiniteSequence(seed.events)
@@ -83,15 +77,16 @@ def develop(seed: FiniteSequence, **kwargs) -> Sequence:
            # test that the whole sequence meets the given constraints
             # cycle until we have a sequence that passes checks
             is_searching = False
-            for c in opts["constraints"]:
-                if not c(candidate):
+            for constraint in opts["constraints"]:
+                if not constraint(candidate):
                     is_searching = True
                     break
 
             if is_searching:
                 # adjust weights, negative bias
                 if opts["adjust_weights"] and weights[mutators.index(mutator)] > 0:
-                    weights[mutators.index(mutator)] = weights[mutators.index(mutator)] - Decimal('0.1')
+                    weights[mutators.index(mutator)]\
+                        = weights[mutators.index(mutator)] - Decimal('0.1')
                 continue
 
             result = candidate
@@ -163,11 +158,8 @@ def backtracking_solver(
             tick = tick -1
             choices = list(range(NOTE_MIN, NOTE_MAX))
             if tick == 0:
-                raise UnsatisfiableException("Unable to solve!")
-                break
-            else:
-                # backtrack
-                continue
+                raise AllRoutesExhausted("Unable to solve!")
+            continue
         context = FiniteSequence(seq.events[:])
         context.events.append(note)
 

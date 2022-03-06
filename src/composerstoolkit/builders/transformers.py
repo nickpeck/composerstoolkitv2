@@ -2,11 +2,11 @@
 All transformers act upon a given source Sequence to derrive a new List or
 Iterator of Event objects.
 """
-from dataclasses import dataclass
 import itertools
-import more_itertools
 import math
 from typing import List, Optional, Iterator, Union, Callable
+
+import more_itertools
 
 from ..core import Event, Sequence, Transformer, Context
 
@@ -62,9 +62,9 @@ def transpose_diatonic(seq: Sequence,
         for pitch in pitches:
             try:
                 cur_index = scale.index(pitch)
-            except ValueError as ve:
+            except ValueError as verr:
                 if pass_on_error:
-                    raise ve
+                    raise verr
                 new_event.pitches.append(pitch)
                 continue
             new_index = cur_index + steps
@@ -297,8 +297,11 @@ def gated(seq: Sequence,
             previous = previous
         )
         if condition(context):
-            previous = next(transformed)
-            yield previous
+            try:
+                previous = next(transformed)
+                yield previous
+            except StopIteration:
+                return
         else:
             previous = event
             yield previous

@@ -278,9 +278,13 @@ class Sequence:
         return new_seq
 
     def bake(self) -> FiniteSequence:
+        """Convert a sequence into a FiniteSequence
+        """
         return FiniteSequence(list(self.events))
 
     def __add__(self, other):
+        """Allows sequences to be added together.
+        """
         events = itertools.chain.from_iterable([self.events, other.events])
         return self.__class__(events=events)
 
@@ -301,10 +305,6 @@ class FiniteSequence:
         that comprise the sequence.
         """
         return [e.duration for e in self.events]
-
-    @property
-    def duration(self) -> int:
-        return sum(self.durations)
 
     @property
     def duration(self) -> int:
@@ -329,7 +329,6 @@ class FiniteSequence:
     def to_graph(self, offset: int=0) -> Graph:
         """Return a pitch graph representation of the sequence.
         """
-        print("GOT HERE!!!!")
         edges: List[Edge] = []
         for event in self.events:
             edges = edges + event.to_edges(offset)
@@ -405,11 +404,6 @@ class Transformer():
             nonlocal args
             nonlocal kwargs
             _kwargs = kwargs
-            if "gate" in kwargs:
-                gate = _kwargs["gate"]
-                del _kwargs["gate"]
-                _args = args[:]
-                return gate(self._functor, instance, *_args, **_kwargs)
             _args = [instance] + list(args)
             return self._functor(*_args, **_kwargs)
         return transform
@@ -434,11 +428,6 @@ class Constraint():
             nonlocal args
             nonlocal kwargs
             _kwargs = kwargs
-            if "gate" in kwargs:
-                gate = _kwargs["gate"]
-                del _kwargs["gate"]
-                _args = args[:]
-                return gate(self._functor, context, *_args, **_kwargs)
             _args = [context] + list(args)
             return self._functor(*_args, **_kwargs)
         return check
@@ -524,7 +513,8 @@ class Container():
                 args=(channel_no, offset, seq,synth))
             player_thread.daemon = True
             channels.append(player_thread)
-        [player_thread.start() for player_thread in channels]
+        for player_thread in channels:
+            player_thread.start()
         while True:
             sleep(1)
 
@@ -532,6 +522,7 @@ class Container():
         """Save the contents of the container as a MIDI file
         """
         midifile = MIDIFile(len(self.sequences), eventtime_is_ticks=True)
+        midifile.addTempo(0, 0, self.options["bpm"])
         for (channel_no, offset, seq) in self.sequences:
             midifile.addTrackName(channel_no, offset, "Channel {}".format(channel_no))
             count = offset
@@ -543,7 +534,6 @@ class Container():
                         dynamic = 60
                     midifile.addNote(channel_no, 0, pitch, count, event.duration, dynamic)
                 count = count + event.duration
-        midifile.addTempo(0, 0, self.options["bpm"])
         with open(filename, 'wb') as outf:
             midifile.writeFile(outf)
         return self
