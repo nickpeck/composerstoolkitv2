@@ -101,7 +101,7 @@ class Sequence:
         This can be advanced through without affecting the iteration
         state of the current sequence.
         """
-        a,b = itertools.tee(seq.events)
+        a,b = itertools.tee(self.events)
         self.events = a
         return Sequence(events=b)
 
@@ -165,23 +165,22 @@ class FiniteSequence:
             offset = offset + event.duration
             if offset >= beat_offset:
                 return event
-        return None
 
-    def variations(self,
+    def progressive_variations(self,
         transformer: Callable[[Sequence], Iterator[Event]],
         n_times: Optional[int] = None,
         repeats_per_var=1) -> Sequence:
 
         def compose_vars():
             i=0
-            def is_terminal():
+            def is_not_terminal():
                 if n_times is None:
                     return True
                 return i <= n_times
 
             _events = self.events[:]
 
-            while is_terminal():
+            while is_not_terminal():
                 if i == 0:
                     for _i in range(repeats_per_var):
                         for event in self.events:

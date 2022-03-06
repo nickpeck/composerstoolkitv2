@@ -19,7 +19,7 @@ base_seq = FiniteSequence(events=[
     Event([pf("F6")], duration=QUARTER_NOTE)]
 )
 
-melodic_variations1 = base_seq.variations(
+melodic_variations1 = base_seq.progressive_variations(
     n_times = None,
     transformer = random_transformation([
         rotate(6),
