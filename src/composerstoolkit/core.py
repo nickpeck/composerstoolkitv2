@@ -29,13 +29,13 @@ class MidiTrackParser:
     def __init__(self, track: MidiTrack, graph: Graph):
         """
         """
+        self.graph = graph
         self._midi_track = track
-        self._graph = graph
         self._open_notes: List[Edge] = []
         self._closed_notes: List[Edge] = []
         self._cummulative_time: int = 0
 
-    def parse(self) -> Graph:
+    def parse(self):
         note_events = list(
             filter(lambda x: x.is_meta is False, self._midi_track))
         for evt in note_events:
@@ -49,7 +49,7 @@ class MidiTrackParser:
                 self._on_note_start(evt)
             if evt.type == "note_off":
                 self._on_note_end(evt)
-        return self._graph
+        return self.graph
 
     def _on_note_start(self, msg: Message):
         edge = Edge(
@@ -57,7 +57,7 @@ class MidiTrackParser:
                 start_time = self._cummulative_time,
                 src_event = msg
             )
-        self._graph.edges.append(edge)
+        self.graph.add_edge(edge)
         self._open_notes.append(edge)
 
     def _on_note_end(self, msg: Message):
@@ -75,7 +75,8 @@ class MidiTrackParser:
         to_connect.sort(key=lambda n: n.pitch, reverse=True)
         for i in range(len(to_connect) - 1):
             print("MADE VERTICAL CONNECTION", to_connect[i].pitch, "->", to_connect[i+1].pitch)
-            to_connect[i].vertices.append(to_connect[i+1])
+            #to_connect[i].vertices.append(to_connect[i+1])
+            self.graph.add_vertex(to_connect[i], to_connect[i+1])
 
     def _join_horizontals(self):
         right_chord = list(filter(
@@ -91,7 +92,8 @@ class MidiTrackParser:
             left = left_chord[i]
             try:
                 right = right_chord[i]
-                left.vertices.append(right)
+                #left.vertices.append(right)
+                self.graph.add_vertex(left, right)
                 print("MADE HORIZONTAL CONNECTION", left.pitch,"->",  right.pitch)
             except IndexError:
                 pass
@@ -99,13 +101,16 @@ class MidiTrackParser:
 
 @dataclass
 class Graph:
-    origin: Optional[Edge] = None
     edges: List[Edge] = field(
         default_factory= lambda: []
     )
-    # vertices: List[Edge] = field(
-        # default_factory= lambda: []
-    # )
+
+    def add_edge(self, edge: Edge):
+        self.edges.append(edge)
+
+    def add_vertex(self, edge1: Edge, edge2: Edge):
+        index = self.edges.index(edge1)
+        self.edges[index].vertices.append(edge2)
 
     @classmethod
     def from_midi_track(cls, track: MidiTrack) -> Graph:
