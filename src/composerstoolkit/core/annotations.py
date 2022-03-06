@@ -62,21 +62,26 @@ class Constraint():
     Can be used as a decorator, making it easy to
     re-use a constraint against different contexts
     """
+    class Konstraint:
+        def __init__(self, functor, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+            self.functor = functor
+        def __call__(self, context: Context) -> bool:
+            _kwargs = self.kwargs
+            _args = [context] + list(self.args)
+            return self.functor(*_args, **_kwargs)
+        def __or__(self, other):
+            return lambda c: self(c) | other(c)
+        def __repr__(self):
+            return "<Constraint: {}{}>".format(
+            self.functor.__name__, self.args + tuple(self.kwargs.items()))
 
     def __init__(self, functor):
         self._functor = functor
 
     def __call__(self, *args, **kwargs):
-        @withrepr(
-            lambda x: "<Constraint: {}{}>".format(
-                self._functor.__name__, args + tuple(kwargs.items())))
-        def check(context: Context) -> bool:
-            nonlocal args
-            nonlocal kwargs
-            _kwargs = kwargs
-            _args = [context] + list(args)
-            return self._functor(*_args, **_kwargs)
-        return check
+        return Constraint.Konstraint(self._functor, *args, **kwargs)
 
     def __str__(self):
         return "<Constraint : {}>".format(self._functor.__name__)

@@ -600,6 +600,20 @@ class AnnotationsTests(unittest.TestCase):
         assert c(FiniteSequence([])) == False
         assert c(FiniteSequence([Event([], None)])) == True
 
+    def test_constraint_or(self):
+        @Constraint
+        def length_is_0(
+            seq: FiniteSequence):
+            return len(seq) == 0
+        @Constraint
+        def length_is_1(
+            seq: FiniteSequence):
+            return len(seq) == 1
+
+        c = length_is_0() | length_is_1()
+        assert c(FiniteSequence([])) == True
+        assert c(FiniteSequence([Event([], None)])) == True
+
     def test_transformer_annotation_str_form(self):
         @Transformer
         def as_is(
