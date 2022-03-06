@@ -4,7 +4,8 @@ Iterator of Event objects.
 """
 import itertools
 import math
-from typing import List, Optional, Iterator, Union, Callable, Set
+import random
+from typing import List, Optional, Iterator, Union, Callable, Set, Any
 
 import more_itertools
 
@@ -422,4 +423,25 @@ def filter_events(seq: Sequence,
             if replace_w_rest:
                 yield Event([], event.duration)
             continue
+        yield event
+
+@Transformer
+def random_mutation(seq: Sequence,
+    key_function: Callable[[Event, Any], Event],
+    choices = List[Any],
+    threshold: float = 0.5) -> Iterator[Event]:
+    """Weighed mutation of a given event parameter in a seq.
+    Where key_function is a user-defined function that accepts
+    an event and a randomly chosen value from choices,
+    and returns the modified event.
+    threshold is a float (0.0-1.0) that determines if the mutation should
+    take place. if 0.0, it will always be applied.
+    """
+    for event in seq.events:
+        should_mutate = random.choice(range(0, 10)) / 10
+        if should_mutate < threshold:
+            yield event
+            continue
+        choice = random.choice(choices)
+        event = key_function(event, choice)
         yield event

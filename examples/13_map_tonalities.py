@@ -1,5 +1,17 @@
 """Illustrates using a gated transformer and tonality mapping to toggle
-between two different tonalities
+between three different tonalities
+
+The example uses a sequence based on a C mixolydian tonality
+(notes of F maj). This is mapped to a 60 second cycle, whereby
+the pitches are "quantized" into a different modalities.
+
+0-20 Fmaj
+20-40 Dmaj
+40-60 Dbmaj
+
+Due to the way the mapping works, a different modal colour
+might emerge rather than a straightforward transposition. This
+yields some contrasting harmonic tensions.
 """
 import random
 
