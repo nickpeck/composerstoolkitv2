@@ -255,6 +255,9 @@ class Event:
             ))
         return edges
 
+    def to_pitch_class_set(self):
+        return {*[p % 12 for p in self.pitches]}
+
 @dataclass
 class Sequence:
     """Represents a linear sequence of events (single notes, chords or 'meta' type

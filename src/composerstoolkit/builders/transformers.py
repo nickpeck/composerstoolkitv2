@@ -305,3 +305,18 @@ def gated(seq: Sequence,
         else:
             previous = event
             yield previous
+
+@Transformer
+def arpeggiate(seq: Sequence,
+    individual_note_len=None) -> Iterator[Event]:
+    """Transform a sequence of chords into a series of arpeggios.
+    individual_note_len is the length of each note in the 
+    arpeggio. If not given, it is the length of the source chord
+    divided by the number of notes in the chord.
+    """
+    for event in seq.events:
+        n_pitches = len(event.pitches)
+        if individual_note_len is None:
+            individual_note_len = event.duration / n_pitches
+        for note in event.pitches:
+            yield Event(pitches=[note], duration=individual_note_len)

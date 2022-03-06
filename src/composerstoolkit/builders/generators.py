@@ -1,7 +1,7 @@
 """Library functions for generating an initial series of Event Objects.
 All generators return a list or Iterator of Event objects
 """
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Set
 import random
 
 from ..core import Event, Sequence
@@ -101,3 +101,40 @@ def random_slice(base_seq: Sequence,
             for event in sliced:
                 yield event
     return _get_slice(src_events, max_length)
+
+def progression(scale: Set[int],
+    start: Event,
+    cycle_of=-4,
+    voice_lead=True,
+    max_length: Optional[int]=None) -> Iterator[Event]:
+    scale = list(scale)
+    sorted(scale)
+    yield start
+    i = start.duration
+    while True:
+        if max_length is not None and i > max_length:
+            return
+        next_pitches = []
+        for pitch in start.pitches:
+            current_scale_index = scale.index(pitch)
+            next_pitches.append(scale[current_scale_index + cycle_of])
+        if voice_lead:
+            # To enforce good voice-leading, sort the pitches by their pitch class
+            left = [(i, pitch, pitch % 12) for i,pitch in enumerate(start.pitches)]
+            left = sorted(left, key = lambda x: x[2])
+            right = [(i, pitch, pitch % 12) for i,pitch in enumerate(next_pitches)]
+            right = sorted(right, key = lambda x: x[2])
+            next_pitches = []
+            for l,r in zip(left, right):
+                # common tones, leave as-is
+                if abs(l[1] - r[1]) <= 6:
+                    next_pitches.append(r[1])
+                    continue
+                # voice has moved, adjust octave to allow
+                # for smoothest motion
+                octave = int(l[1] / 12)
+                next_pitches.append((octave * 12) + r[2])
+        next_pitches = sorted(next_pitches)
+        start = Event(pitches=next_pitches, duration=start.duration)
+        yield start
+        i = i + start.duration
