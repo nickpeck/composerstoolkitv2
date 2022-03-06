@@ -123,7 +123,7 @@ class SequenceTests(unittest.TestCase):
             Event(pitches=[62], duration=100),
             Event(pitches=[64], duration=100),
             Event(pitches=[60], duration=100)]
-        cts = Sequence(events)
+        cts = Sequence(events).bake()
 
         sliced = cts[0]
         assert sliced.events == [events[0]]
@@ -204,7 +204,7 @@ class SequenceTests(unittest.TestCase):
             Event(pitches=[62], duration=100),
             Event(pitches=[64], duration=100),
             Event(pitches=[60], duration=100)])
-        assert cts.to_pitch_set() == {60,62,64,67}
+        assert cts.bake().to_pitch_set() == {60,62,64,67}
 
     def test_sequence_to_pitch_class_Set(self):
         cts = Sequence([
@@ -213,7 +213,7 @@ class SequenceTests(unittest.TestCase):
             Event(pitches=[62], duration=100),
             Event(pitches=[64], duration=100),
             Event(pitches=[60], duration=100)])
-        assert cts.to_pitch_class_set() == {0,2,4,7}
+        assert cts.bake().to_pitch_class_set() == {0,2,4,7}
 
 if __name__ == "__main__":
     unittest.main()

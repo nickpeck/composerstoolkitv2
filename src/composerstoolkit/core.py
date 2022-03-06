@@ -242,6 +242,10 @@ class Sequence:
     )
     memento: Optional[Sequence] = None
 
+    # def __post_init__(self):
+        # if not isinstance(self.events, Iterator):
+            # self.events = iter(self.events[:])
+
     @property
     def pitches(self) -> Iterator[int]:
         """Return a generator expression yielding the ordered list of MIDI
@@ -256,12 +260,6 @@ class Sequence:
         """
         return (e.duration for e in list(self.events))
 
-    @property
-    def duration(self) -> int:
-        """Return the total duration of the Sequence
-        """
-        return sum(self.durations)
-
     @classmethod
     def from_generator(cls, generator: Iterator[Event]) -> Sequence:
         """Return a new Sequence using the seed of a given generator function.
@@ -269,17 +267,6 @@ class Sequence:
         return cls(
             events = generator
         )
-
-    def to_pitch_set(self) -> Set[int]:
-        """Return a set of unique MIDI pitch numbers that comprise the sequence.
-        """
-        return {* self.pitches}
-
-    def to_pitch_class_set(self):
-        """Return the set of unique pitch classes (0..11) that comprise the sequence.
-        """
-        pitch_set = self.to_pitch_set()
-        return {*[p % 12 for p in pitch_set]}
 
     def transform(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequence:
         """Convenience method for applying a transformation function to the sequence.
@@ -291,6 +278,51 @@ class Sequence:
             memento = self)
         return new_seq
 
+    def bake(self) -> FixedSequence:
+        return FixedSequence(list(self.events))
+
+    def __add__(self, other):
+        events = itertools.chain.from_iterable([self.events, other.events])
+        return self.__class__(events=events)
+
+@dataclass
+class FixedSequence:
+    events: List[Event]
+
+    @property
+    def pitches(self) -> List[int]:
+        """Return a list of the ordered list of MIDI
+        pitch numbers that comprise the sequence.
+        """
+        return [pitch for event in self.events for pitch in event.pitches]
+
+    @property
+    def durations(self) -> List[int]:
+        """Return a list of the ordered list of durations
+        that comprise the sequence.
+        """
+        return [e.duration for e in self.events]
+
+    @property
+    def duration(self) -> int:
+        """Return the total duration of the Sequence
+        """
+        return sum(self.durations)
+
+    def to_sequence(self) -> Sequence:
+        return Sequence(events=iter(self.events))
+
+    def to_pitch_set(self) -> Set[int]:
+        """Return a set of unique MIDI pitch numbers that comprise the sequence.
+        """
+        return set(self.pitches)
+
+    def to_pitch_class_set(self):
+        """Return the set of unique pitch classes (0..11) that comprise the sequence.
+        """
+        pitch_set = self.to_pitch_set()
+        return {*[p % 12 for p in pitch_set]}
+
     def to_graph(self, offset: int=0) -> Graph:
         """Return a pitch graph representation of the sequence.
         """
@@ -298,13 +330,6 @@ class Sequence:
         for event in self.events:
             edges = edges + event.to_edges(offset)
         return Graph(edges)
-
-    def bake(self):
-        self.events = list(self.events)
-
-    def __add__(self, other):
-        events = itertools.chain.from_iterable([self.events, other.events])
-        return self.__class__(events=events)
 
     def __getitem__(self, slice_index):
         start, stop, step = None, None, None
@@ -323,6 +348,12 @@ class Sequence:
 
         return self.__class__(events=sliced_events)
 
+@dataclass(frozen=True)
+class Context:
+    event: Event
+    sequence: Sequence
+    beat_offset: int
+    previous: Event
 
 class ReprWrapper:
     """helper to override __repr__ for a function for debugging purposes
@@ -356,7 +387,7 @@ class Transformer():
         @withrepr(
             lambda x: "<Transformer: {}{}>".format(
                 self._functor.__name__, args + tuple(kwargs.items())))
-        def transform(instance):
+        def transform(instance: Sequence) -> Sequence:
             nonlocal args
             nonlocal kwargs
             _kwargs = kwargs
@@ -371,6 +402,35 @@ class Transformer():
 
     def __str__(self):
         return "<Transformer : {}>".format(self._functor.__name__)
+
+class Constraint():
+    """Wrapper class for constraint functions.
+    Can be used as a decorator, making it easy to
+    re-use a constraint against different contexts
+    """
+
+    def __init__(self, functor):
+        self._functor = functor
+
+    def __call__(self, *args, **kwargs):
+        @withrepr(
+            lambda x: "<Constraint: {}{}>".format(
+                self._functor.__name__, args + tuple(kwargs.items())))
+        def check(context: Context) -> bool:
+            nonlocal args
+            nonlocal kwargs
+            _kwargs = kwargs
+            if "gate" in kwargs:
+                gate = _kwargs["gate"]
+                del _kwargs["gate"]
+                _args = args[:]
+                return gate(self._functor, context, *_args, **_kwargs)
+            _args = [context] + list(args)
+            return self._functor(*_args, **_kwargs)
+        return check
+
+    def __str__(self):
+        return "<Constraint : {}>".format(self._functor.__name__)
 
 class Container():
     """Provides a context for playing back multiple sequences
