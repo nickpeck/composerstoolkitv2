@@ -136,43 +136,31 @@ def aggregate(seq: Sequence,
             sorted(pitches),
             duration) # type: ignore
 
-# @Transformer
-# def linear_interpolate(seq, resolution=1):
-    # events = seq.events[:]
-    # if len(events) is 1:
-        # return events
-
-    # def _vectors(seq):
-        # vectors = []
-        # x = seq.events[0]
-        # for y in seq.events[1:]:
-            # vectors.append(y.pitch-x.pitch)
-            # x = y
-        # return vectors
-
-    ## first item in the seq stays as-is
-    # i_events = iter(seq.events)
-    # i_vectors = iter(_vectors(seq))
-    # result = [next(i_events)]
-
-    # pitch = result[0].pitch
-    # duration = result[0].duration
-    # while True:
-        # try:
-            # next_event = next(i_events)
-            # next_vector = next(i_vectors)
-            # pitch_increment = next_vector/resolution
-            # dur_increment = duration/resolution
-            # for x in range(resolution):
-                # result.append(Event(
-                    # math.ceil((x * pitch_increment) + pitch),
-                    # dur_increment
-                # ))
-            # pitch = next_event.pitch
-            # duration = next_event.duration
-        # except StopIteration:
-            # break
-    # return result
+@Transformer
+def linear_interpolate(seq: Sequence,
+    steps=0,
+    constrain_to_scale: Optional[List[int]] = None) -> Iterator[Event]:
+    """Return a new sequence with extra events added to fill in the melodic
+    gaps between sucessive events in the source seq.
+    Pitches are choosen from the chromatic set, unless constrain_to_scale
+    is offered.
+    """
+    for left, right in more_itertools.windowed(seq.events, 2, fillvalue=None):
+        if right is None:
+            yield left
+        pitch_vector = right.pitches[-1] - left.pitches[-1]
+        if pitch_vector == 0:
+            yield left
+        pitch_increment = int(pitch_vector/steps)
+        if pitch_increment == 0:
+            yield left
+        duration_increment = left.duration/steps
+        for _i in range(steps):
+            new_pitch = left.pitches[-1] + pitch_increment
+            if constrain_to_scale is not None:
+                new_pitch = min(constrain_to_scale, key=lambda x:abs(x-new_pitch))
+            yield Event([new_pitch], duration_increment)
+            pitch_increment = pitch_increment + pitch_increment
 
 @Transformer
 def explode_intervals(seq: Sequence,

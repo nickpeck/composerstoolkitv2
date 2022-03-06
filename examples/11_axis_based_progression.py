@@ -43,6 +43,12 @@ baseline = melody.transform(loop(
     multiplier = 3
 ))
 
+melody = melody.transform(linear_interpolate(
+    steps = 8,
+    constrain_to_scale = list(scales.C_mel_minor)
+)).transform(tie_repeated(
+))
+
 accompaniment = Sequence.from_generator(
     axis_melody(
         axis_pitch = pf("C3"),

@@ -240,7 +240,7 @@ def voice_lead(event: Event,
         next_chord = []
         previous_pcs =\
             [(pitch, int(pitch/12), pitch % 12) for pitch in event.pitches]
-        next = {(pitch % 12) for pitch in scale}
+        next_pcs = {(pitch % 12) for pitch in scale}
 
         for pitch, octave, p_class in previous_pcs:
             if p_class in [p % 12 for p in next_chord]:
@@ -250,9 +250,9 @@ def voice_lead(event: Event,
 
             while True:
                 # find the next neighbour PC that isn't already taken
-                nearest = min(next, key=lambda x:abs(x-p_class))
+                nearest = min(next_pcs, key=lambda x:abs(x-p_class))
                 if nearest in [p % 12 for p in next_chord]:
-                    nearest = min(next, key=lambda x:abs(x+p_class))
+                    nearest = min(next_pcs, key=lambda x:abs(x+p_class))
                 if nearest in [p % 12 for p in next_chord]:
                     p_class = (p_class + 1) % 12
                 else:
