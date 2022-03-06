@@ -1,6 +1,7 @@
 """Library functions for derriving different permutations of a base sequence.
 """
 import itertools
+import math
 from typing import Iterator, List, TypeVar, Generic
 
 # pylint: disable=invalid-name
@@ -9,7 +10,9 @@ T = TypeVar('T')
 class Permutations(Generic[T]):
     """Generate and manipulate permutations of an iterable
     """
-    def __init__(self, starting_list: List[T], **kwargs):
+    def __init__(self, starting_list: List[T],
+        n_generations=1,
+        return_last_gen_only=False):
         """
         Constructor for Permutations
         starting_list: List[T] - The list from which to seed the permutations
@@ -18,40 +21,32 @@ class Permutations(Generic[T]):
             return_last_gen_only: bool default False
         """
         self.starting_list = starting_list
-        try:
-            self.n_generations = kwargs["n_generations"]
-        except KeyError:
-            self.n_generations = 1
-
-        try:
-            self.return_last_gen_only = kwargs["return_last_gen_only"]
-        except KeyError:
-            self.return_last_gen_only = False
+        self.n_generations = n_generations
+        self.return_last_gen_only = return_last_gen_only
 
     def __iter__(self) -> Iterator[List[T]]:
         generations = []
         for i in range(self.n_generations):
-            perms = itertools.permutations(self.starting_list)
+            a, b = itertools.tee(self.starting_list, 2)
+            perms = set(itertools.permutations(a))
             if self.return_last_gen_only and i == self.n_generations-1:
-                return itertools.chain(list(perms))
+                return itertools.chain(perms)
             generations.append(perms)
             if i < len(range(self.n_generations)):
-                self.starting_list = self.__class__._new_generation(self.starting_list)
+                self.starting_list = self.__class__._new_generation(b)
         return itertools.chain(*generations)
 
     @staticmethod
     def _new_generation(parent_list) -> Iterator[List[T]]:
-        next_gen = []
         for i in parent_list:
             if i <= 1:
-                next_gen.append(i)
+                yield i
             elif i % 2 == 0:
-                next_gen.append(i/2)
-                next_gen.append(i/2)
+                yield round(i/2)
+                yield round(i/2)
             else:
-                next_gen.append(((i-1)/2) + 1)
-                next_gen.append((i-1)/2)
-            yield i
+                yield round(((i-1)/2) + 1)
+                yield round((i-1)/2)
 
     def flatten(self) -> Iterator[T]:
         """Return the list of permutations as a single
