@@ -81,44 +81,45 @@ def chordal_analysis(seq: FiniteSequence,
     Return a list of transposed chord voicings.
     """
     # segement the source sequence
-    curr_time = start_offset
-    slices = []
-    while curr_time <= seq.duration:
-        slices.append(seq.time_slice(
-            curr_time, curr_time +  window_size_beats))
-        curr_time = curr_time + window_size_beats
+    # curr_time = start_offset
+    # slices = []
+    # while curr_time <= seq.duration:
+        # slices.append(seq.time_slice(
+            # curr_time, curr_time +  window_size_beats))
+        # curr_time = curr_time + window_size_beats
+    slices = seq_chunked(seq, 16)
     found_chords = []
 
     # find candidate pcs that intersect each seq
-    for slice in slices:
+    for i,slice in enumerate(slices):
         pcs = slice.to_pitch_class_set()
         candidate_chords = []
         for chord in chord_lexicon:
             diff = chord.difference(pcs)
-            if len(diff) <= overlap_threshold:
-                candidate_chords.append(chord)
-        candidate_chords = sorted(candidate_chords,
-                key = lambda c: len(c), reverse=True)
-        found_chords.append(candidate_chords)
-
-    # choose the most likely candidate for each segment
-    for i, candidate_chords in enumerate(found_chords):
+            #print(pcs, chord, diff)
+            if len(diff) <= 1:#overlap_threshold:
+                metric = len(chord)-len(diff)
+                
+                candidate_chords.append((metric, chord))
+                #print(">>>>>>>>", chord)
+        candidate_chords = sorted(candidate_chords, key=lambda c: c[0], reverse=True)
         if len(candidate_chords) == 0:
-            if i == 0:
-                found_chords[i] = []
-            else: 
-                found_chords[i] = found_chords[i-1]
-            continue
+            candidate_chords = [(0, set())]
         if i == 0:
-            found_chords[0] = candidate_chords[0]
+            found_chords.append(candidate_chords[0][1])
             continue
         weighted_options = []
-        previous = found_chords[i-1]
+        print("found_chords", i, found_chords)
+        previous = found_chords[-1]
         cost = 0
-        for chord in candidate_chords:
-            cost = Event(list(previous)).movement_cost_to(Event(chord))
+        candidate_chords = [list(j) for i, j in itertools.groupby(candidate_chords)][0]
+        print("candidate_chords", candidate_chords)
+        for weighting, chord in candidate_chords:
+            #print(weighting, Event(list(previous)), Event(list(chord)))
+            cost = Event(list(previous))\
+                .movement_cost_to(Event(list(chord)))
             weighted_options.append((cost, chord))
+            found_chords.append(weighted_options[0][1])
 
-        weighted_options = sorted(weighted_options, key=lambda c: c[0])
-        found_chords[i] = weighted_options[0][1]
+    print("found_chords", found_chords)
     return found_chords

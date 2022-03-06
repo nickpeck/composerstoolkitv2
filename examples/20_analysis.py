@@ -14,6 +14,7 @@ full_piece = FiniteSequence.from_graph(graph)
 # we divide into chunks (say, 4 beats) 
 sequence = FiniteSequence.from_graph(graph)
 
+
 common_vectors = common_subsequences(sequence.to_vectors())
 common_rhythms = common_subsequences(sequence.durations)
 chunked = seq_chunked(sequence.pitches, 16)
@@ -57,14 +58,19 @@ dim_7th_pcs = [chord.to_pitch_class_set() for chord in chord_cycle(scale = scale
     voice_lead=False,
     max_len=3)]
 
-chord_lexicon = maj_triads_pcs + min_triads_pcs + dom_7th_pcs + dom_min_7th_pcs + maj_7th_pcs + dim_7th_pcs
+chord_lexicon = maj_triads_pcs + min_triads_pcs + maj_7th_pcs + dom_7th_pcs + dom_min_7th_pcs + maj_7th_pcs + dim_7th_pcs
 
-found_chords = chordal_analysis(sequence, 2, chord_lexicon, start_offset=0.125)
+found_chords = chordal_analysis(sequence, 0, chord_lexicon, start_offset=0.125)
 
-pprint(found_chords, indent=4)
+found_chords = [Event(list(pitches), 2.125) for pitches in found_chords]
+found_chords = Sequence(found_chords).transform(
+    transpose(12 * 4)
+)
 
-found_chords = [Event(list(pitches), 2) for pitches in found_chords]
-found_chords = Sequence(found_chords)
+Container(bpm=50, playback_rate=1)\
+    .add_sequence(found_chords)\
+    .add_sequence(sequence)\
+    .playback()
 
 exit(0)
 
