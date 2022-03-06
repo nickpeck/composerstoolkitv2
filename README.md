@@ -1,13 +1,13 @@
 # Composers Toolkit (V2)
 
-This package contains a suite of tools and experiments to discover how technology might play a role in assisting and enriching the process of musical composition - specifically, what that means to me on an artistic and aesthetic level. As far as possible, they are agnostic towards any one given approach, culture, theory, or style, and it is up to the user to define the parameters specific to their intended outcome (keys, chords, structures, rows, cycles etc.). By and large, it deals with discrete note events (such as represented by MIDI) rather than pure sound synthesis. Some of the techniques may be familiar to Schillinger students, however in many cases I have adopted my own approaches to these transformations.
+This package contains a suite of tools and experiments towards the goal of discovering how technology might play a supporting role in assisting and enriching the process of musical composition - (specifically, in terms of what that means to me on an artistic and aesthetic level). As far as possible, they are agnostic with respect to any one given approach, culture, theory, or style, and it is up to the end-user to define the parameters specific to their intended outcome (keys, chords, structures, rows, cycles etc.). It deals with manipulating discrete note events (such as represented by MIDI) rather than pure sound synthesis. Some of the techniques may be familiar to Schillinger composition students, however in many cases I have adopted my own approaches to these transformations.
 
 A brief overview of the features I am working towards:
-- Ability to freely declare events, sequences of events and playback containers to which multiple sequences can be added, thus enabling polyphonic playback. Examples can be saved or loaded in from MIDI files.
-- Ability to quickly generate raw materials and permutations thereof (i.e., permutations of a row, rhythmic cycle, chords within a given scale or tonal axis).
+- Ability to freely declare events, sequences of events and playback containers to which multiple sequences can be added, thus enabling polyphonic playback using a synth library, DAW or external MIDI device. Examples can be saved or loaded in from MIDI files.
+- Ability to quickly generate raw materials and permutations thereof (i.e., permutations of a note row, rhythmic cycle, pitches or chords within a given scale or tonal axis).
 - Infinite or finite-length sequences of events can be generated using algorithmic techniques. Different transformations and operations can be applied to these sequences. Transformations can be controlled using ‘higher-order’ transformations that enable gating, looping, or batching in response to external logic.
 - Ability to perform statistical analysis of an existing work, to extract key musical motives, patterns and sequences using data-mining techniques.
-- Different algorithmic processes that provide a complete compositional output, based upon user-defined constraints, or constraints and heretics discovered through analysis of an existing corpus of works.
+- Different algorithmic processes that provide a complete compositional output, driven by user-defined constraints, or heuristics discovered through analysis of an existing corpus of works.
 - Investigation of biologically inspired and deep-learning techniques and how these might be trained using the previously mentioned analytical processes, and then guided using interaction with the end-user.
 
 
@@ -37,7 +37,7 @@ pf = pitches.PitchFactory()
 Event(pitches=[pf("C6")], duration=QUARTER_NOTE)
 ~~~
 
-Sequences are chains of events, analogous to a single ‘part’ or ‘voice’ in western musical parlance. There are two forms, Sequence is used for sequences of unknown or infinite length. FiniteSequence. however (which is used for sequences of a fixed length).
+Sequences are chains of events, analogous to a single ‘part’ or ‘voice’ in western musical parlance. There are two forms, Sequence is used for sequences of unknown or infinite length. FiniteSequence, however, is used for sequences of a fixed length.
 
 ~~~
 from composerstoolkit import *
@@ -57,13 +57,13 @@ fin_seq = FiniteSequence(
         Event(pitches=[41], duration=QUARTER_NOTE)])
 
 # you can covert from one to another:
-seq.bake() # evalutes the whole sequence - be careful if using any generators that perform looping!
+seq.bake() # evalutes the whole sequence - be careful you are not trying to evaluate an infinate sequence!
 
 # and vice-versa
 fin_seq.to_sequence()
 ~~~
 
-Implementation-wise, the difference is that Sequence makes use of lazy-evaluated sequences (generators), and are useful for live, algorithmic music generation. FiniteSequence does not, and is useful for operations where we need to perform list-style operations upon it, for example:
+Implementation-wise, the difference is that Sequences makes use of lazy-evaluated sequences (generators), and are useful for live applications & algorithmic music generation. FiniteSequence does not, and is useful for operations where we need to perform list-style operations upon it, for example:
 
 ~~~
 # it behaves like a list:
@@ -75,7 +75,7 @@ fin_seq.time_slice(0, 2)
 ~~~
 
 # Containers
-Containers are analogous to a sequencer, and allow us to cue multiple sequences together for playback on a given engine. In this example, I use fluidsynth, but we could save to MIDI, send to a MIDI device, or write our own playback engine that provides 'noteon' and 'noteoff' handlers.
+Containers are analogous to a MIDI sequencer, and allow us to cue multiple sequences together for playback on a given engine. By default, we use fluidsynth, but we could save to MIDI, send to a MIDI device, or write our own playback engine that provides 'noteon' and 'noteoff' handlers.
 
 ~~~
 Container(bpm=240, playback_rate=1)\
@@ -106,7 +106,7 @@ seq_upper = Sequence.from_generator(random_slice(
 
 ### Transformations
 
-We can chain together multiple transformational operations to a sequence. Skillful application of multiple transformations can be very effect towards creating more complex forms from simple, repetitive source material
+We can chain together multiple transformational operations onto a sequence. Skillful application of multiple transformations can be very effect towards creating more complex, engaging forms from simple, repetitive source material:
 
 ~~~
 melody = Sequence.from_generator(
