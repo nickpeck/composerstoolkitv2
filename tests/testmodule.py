@@ -3,14 +3,33 @@ import unittest
 
 from mido import MidiFile
 
-from composerstoolkit.core import Graph
+from composerstoolkit.core import Graph, Edge
 
-class TestSuite(unittest.TestCase):
+class TestGraph(unittest.TestCase):
 
-    # def test_can_create_graph_from_midi_file(self):
-        # filename = os.path.join("tests", "simple_i-iv.mid")
-        # midi_file = MidiFile(filename)
-        # graph = Graph.from_midi_track(midi_file.tracks[0])
+    def test_graph_is_itterable(self):
+        graph = Graph()
+        pitch_c = Edge(pitch=60, start_time=0, end_time=100)
+        pitch_d = Edge(pitch=62, start_time=100, end_time=200)
+        pitch_e = Edge(pitch=64, start_time=200, end_time=300)
+        graph.add_edge(pitch_c)
+        graph.add_edge(pitch_d)
+        graph.add_edge(pitch_e)
+        assert list(graph) == [pitch_c, pitch_d, pitch_e]
+
+    def test_we_can_extract_the_chord_at_a_given_offset(self):
+        graph = Graph()
+        graph.add_edge(Edge(pitch=65, start_time=0, end_time=100))
+        graph.add_edge(Edge(pitch=59, start_time=0, end_time=100))
+        graph.add_edge(Edge(pitch=64, start_time=100, end_time=200))
+        graph.add_edge(Edge(pitch=60, start_time=100, end_time=200))
+
+        assert graph.get_pitches_at(0) == [59, 65]
+        assert graph.get_pitches_at(99) == [59, 65]
+        assert graph.get_pitches_at(100) == [60, 64]
+        assert graph.get_pitches_at(200) == []
+
+class TestMIDIParser(unittest.TestCase):
 
     def test_vertically_coincident_notes_linked_by_vertices(self):
         filename = os.path.join("tests", "c_major_chord.MID")
@@ -54,7 +73,6 @@ class TestSuite(unittest.TestCase):
         assert graph.edges[0].vertices == [graph.edges[2], graph.edges[1]]
         assert graph.edges[1].vertices == []
         assert graph.edges[2].vertices == []
-
 
 if __name__ == "__main__":
     unittest.main()

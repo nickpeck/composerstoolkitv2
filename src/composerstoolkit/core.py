@@ -112,6 +112,11 @@ class Graph:
         index = self.edges.index(edge1)
         self.edges[index].vertices.append(edge2)
 
+    def __iter__(self):
+        self.edges.sort(key=lambda e: e.start_time)
+        for edge in self.edges:
+            yield edge
+
     @classmethod
     def from_midi_track(cls, track: MidiTrack) -> Graph:
         return MidiTrackParser(track, cls()).parse()
@@ -119,9 +124,14 @@ class Graph:
     def intersections(self, other_graph) -> List[Edge]:
         raise NotImplementedError("Graph.intersections")
 
-    def get_chord_at(self, time: int) -> Graph:
-        raise NotImplementedError("Graph.get_chord_at")
-
+    def get_pitches_at(self, offset: int) -> List[int]:
+        chord = list(filter(
+            lambda e: e.start_time <= offset and e.end_time > offset,
+            self.edges
+        ))
+        pitches = [e.pitch for e in chord]
+        pitches.sort()
+        return pitches
 
 class CTSequence:
     @staticmethod
