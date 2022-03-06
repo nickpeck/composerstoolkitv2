@@ -219,3 +219,46 @@ def chords_from_scale(pitch_classes: Iterator[int],
                 continue
             chord.append(pitch)
         yield Event(pitches=chord)
+
+def voice_lead(event: Event,
+    scales: Iterator[Set[int]]) -> Iterator[Event]:
+    """
+    Given starting chord 'start', and list of
+    sets representing different modal colours,
+    create a progression of chords
+    that moves through the list of scales using
+    nearest-neighbour voice leading.
+
+    All events take the duration and number of voices
+    of the starting event.
+    """
+    yield event
+    previous_chord = event
+    for scale in scales:
+
+        scale = {*scale}
+        next_chord = []
+        previous_pcs =\
+            [(pitch, int(pitch/12), pitch % 12) for pitch in event.pitches]
+        next = {(pitch % 12) for pitch in scale}
+
+        for pitch, octave, p_class in previous_pcs:
+            if p_class in [p % 12 for p in next_chord]:
+                # common tone, carry over:
+                next_chord.append(pitch)
+                continue
+
+            while True:
+                # find the next neighbour PC that isn't already taken
+                nearest = min(next, key=lambda x:abs(x-p_class))
+                if nearest in [p % 12 for p in next_chord]:
+                    nearest = min(next, key=lambda x:abs(x+p_class))
+                if nearest in [p % 12 for p in next_chord]:
+                    p_class = (p_class + 1) % 12
+                else:
+                    break
+
+            next_chord.append((octave * 12) + nearest)
+        next_chord = sorted(next_chord)
+        event =  Event(next_chord, event.duration)
+        yield event

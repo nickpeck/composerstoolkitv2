@@ -290,6 +290,19 @@ def fit_to_range(seq: Sequence,
         yield Event(pitches, event.duration)
 
 @Transformer
+def correct_voicings(seq: Sequence,
+    prevent_intervals: List[int] = [1,2,6]) -> Iterator[Event]:
+    for event in seq.events:
+        pitches = sorted(event.pitches)
+        for i in range(len(pitches)-1):
+            lower = pitches[i]
+            upper = pitches[i+1]
+            if upper-lower in prevent_intervals:
+                pitches[i+1] = upper - 12
+        pitches = sorted(pitches)
+        yield Event(pitches, event.duration)
+
+@Transformer
 def concertize(seq: Sequence,
         scale: List[int],
         voicing: List[int] = [0],
