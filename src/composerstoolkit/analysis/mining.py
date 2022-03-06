@@ -7,16 +7,6 @@ from prefixspan import PrefixSpan
 from ..core import Graph, FiniteSequence, Container, Event, Sequence
 from ..builders.transformers import *
 
-def seq_chunked(dataset: List[Any], window: int):
-    """Return a list comprising of dataset
-    broken down into down into sizes of
-    length window.
-    """
-    chunks = []
-    for i in range(0, len(dataset), window):
-        chunks.append(dataset[i:i + window])
-    return chunks
-
 def common_subsequences(
     dataset: List[Any],
     min_match_len = 3,

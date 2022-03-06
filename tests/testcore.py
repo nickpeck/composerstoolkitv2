@@ -578,5 +578,38 @@ class ContainerTests(unittest.TestCase):
         c.add_sequence(seq)
         c.playback()
 
+class AnnotationsTests(unittest.TestCase):
+    def test_constraint_annotation_str_form(self):
+        @Constraint
+        def length_is(
+            seq: FiniteSequence,
+            l: int):
+            return len(seq) == 1
+
+        c = length_is(4)
+        assert str(c) == "<Constraint: length_is(4,)>"
+
+    def test_constraint_check(self):
+        @Constraint
+        def length_is(
+            seq: FiniteSequence,
+            l: int):
+            return len(seq) == 1
+
+        c = length_is(1)
+        assert c(FiniteSequence([])) == False
+        assert c(FiniteSequence([Event([], None)])) == True
+
+    def test_transformer_annotation_str_form(self):
+        @Transformer
+        def as_is(
+            seq: FiniteSequence,
+            l: int):
+            return seq
+
+        t = as_is(4)
+        assert str(t) == "<Transformer: as_is(4,)>"
+
+
 if __name__ == "__main__":
     unittest.main()
