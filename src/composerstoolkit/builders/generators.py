@@ -2,9 +2,11 @@
 All generators return a list or Iterator of Event objects
 """
 import itertools
-import more_itertools
-from typing import Iterator, Optional, Set, List
+import math
+from typing import Iterator, Optional, Set, List, Dict
 import random
+
+import more_itertools
 
 from ..core import Event, Sequence
 from ..resources import NOTE_MIN, NOTE_MAX
@@ -128,11 +130,12 @@ def random_noise(max_len: Optional[int] = None,
         min_notes_per_chord,
         max_notes_per_chord+1))
     n_pitches = random_choice(n_voices_range)
-    def is_terminal():
+    def is_not_terminal():
         if max_len is None:
             return True
         return i <= max_len
-    while is_terminal():
+    while is_not_terminal():
+        i = i + 1
         duration = random.random()
         pitches = []
         for _i in range(next(n_pitches)):
@@ -157,6 +160,34 @@ def random_choice(choices: Iterator[Event],
                 return
             yield next_choice
     return _chooser(choices, max_length)
+
+def using_markov_table(starting_event: Event,
+    markov_table: Dict[int, Dict[int, int]],
+    max_len: Optional[int]=None):
+    """Generate a stream of single-pitch events
+    from a markov table.
+    This is similar to 
+    composers.solvers.backtracking_markov_solver,
+    without any backtracking.
+    """
+    i=0
+    previous_note = starting_event.pitches[-1]
+    previous_note_pc = previous_note % 12
+    choices = list(range(12))
+    def is_not_terminal():
+        if max_len is None:
+            return True
+        return i <= max_len
+    while is_not_terminal():
+        i = i + 1
+        weights = list(markov_table[previous_note_pc].values())
+        pitch = random.choices(choices, weights)[0]
+        original_8va = math.floor(previous_note / 12)
+        _pitch = (original_8va * 12) + pitch
+        if abs(_pitch - previous_note) > 12:
+            _pitch = _pitch - 12
+        yield Event([_pitch], starting_event.duration)
+        previous_note = _pitch
 
 def random_slice(base_seq: Sequence,
     slice_size: Optional[int]=None,
