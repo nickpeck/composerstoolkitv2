@@ -2,23 +2,23 @@ import itertools
 import math
 from typing import List, Optional, Iterator, Union, Set
 
-from ..core import Context, Constraint, Sequence, FixedSequence
+from ..core import Context, Constraint, Sequence, FiniteSequence
 
 @Constraint
-def constraint_range(sequence: FixedSequence, min: int, max: int) -> bool:
+def constraint_range(sequence: FiniteSequence, min: int, max: int) -> bool:
     if sequence.to_pitch_set() == {}:
         return False
     pitches = sorted(sequence.pitches)
     return pitches[0] >= min and pitches[-1] <= max
 
 @Constraint
-def constraint_in_set(sequence: FixedSequence, _set = range(0,128)) -> bool:
+def constraint_in_set(sequence: FiniteSequence, _set = range(0,128)) -> bool:
     if sequence.to_pitch_set() == {}:
         return True
     return sequence.to_pitch_set().issubset(_set)
 
 @Constraint
-def constraint_no_repeated_adjacent_notes(sequence: FixedSequence) -> bool:
+def constraint_no_repeated_adjacent_notes(sequence: FiniteSequence) -> bool:
     if len(sequence.events) > 2:
         return True
     it1,it2 = itertools.tee(sequence.events)
@@ -29,7 +29,7 @@ def constraint_no_repeated_adjacent_notes(sequence: FixedSequence) -> bool:
     return True
 
 @Constraint
-def constraint_limit_shared_pitches(sequence: FixedSequence, max_shared: int=1) -> bool:
+def constraint_limit_shared_pitches(sequence: FiniteSequence, max_shared: int=1) -> bool:
     if len(sequence.events) > 2:
         return True
     it1,it2 = itertools.tee(sequence.events)
@@ -41,7 +41,7 @@ def constraint_limit_shared_pitches(sequence: FixedSequence, max_shared: int=1) 
     return True
 
 @Constraint
-def constraint_enforce_shared_pitches(sequence: FixedSequence, min_shared: int=1) -> bool:
+def constraint_enforce_shared_pitches(sequence: FiniteSequence, min_shared: int=1) -> bool:
     if len(sequence.events) > 2:
         return True
     it1,it2 = itertools.tee(sequence.events)
@@ -53,7 +53,7 @@ def constraint_enforce_shared_pitches(sequence: FixedSequence, min_shared: int=1
     return True
 
 @Constraint
-def constraint_no_leaps_more_than(sequence: FixedSequence, max_int: int) -> bool:
+def constraint_no_leaps_more_than(sequence: FiniteSequence, max_int: int) -> bool:
     if len(sequence.events) < 2:
         return True
     it1,it2 = itertools.tee(sequence.events)
@@ -67,7 +67,7 @@ def constraint_no_leaps_more_than(sequence: FixedSequence, max_int: int) -> bool
     return True
 
 @Constraint
-def constraint_notes_are(sequence: FixedSequence, beat_offset: int, pitches: List[int]) -> bool:
+def constraint_notes_are(sequence: FiniteSequence, beat_offset: int, pitches: List[int]) -> bool:
     """Tells us if the context note on the given beat_offset
     has the same pitches as the given list of pitches
     """
@@ -77,7 +77,7 @@ def constraint_notes_are(sequence: FixedSequence, beat_offset: int, pitches: Lis
     return sorted(offset_event.pitches) == sorted(pitches)
 
 @Constraint
-def constraint_no_voice_crossing(sequence: FixedSequence, upper_voice: FixedSequence) -> bool:
+def constraint_no_voice_crossing(sequence: FiniteSequence, upper_voice: FiniteSequence) -> bool:
     """Tells us if the top pitch of the context is lower than
     the top pitch of voice1 for the same time offset.
     """
@@ -91,9 +91,9 @@ def constraint_no_voice_crossing(sequence: FixedSequence, upper_voice: FixedSequ
 
 @Constraint
 def constraint_restrict_to_intervals(
-    sequence: FixedSequence,
+    sequence: FiniteSequence,
     allow_intervals: Set[int],
-    upper_voice: FixedSequence) -> bool:
+    upper_voice: FiniteSequence) -> bool:
     """Restrict the intervals between concurrent notes in
     seq and upper_voice to those in the set of allow_intervals.
     Where allow_intervals are intervals in the range 0...11
@@ -110,9 +110,9 @@ def constraint_restrict_to_intervals(
 
 @Constraint
 def constraint_no_consecutives(
-    sequence: FixedSequence,
+    sequence: FiniteSequence,
     deny_intervals: Set[int],
-    upper_voice: FixedSequence) -> bool:
+    upper_voice: FiniteSequence) -> bool:
     """Prevent the intervals in deny_intervals
     from occuring between consecutive notes
     """

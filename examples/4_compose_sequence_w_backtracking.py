@@ -6,7 +6,7 @@ phrase in C major using by repeatedly applying transpositions and inversions
 to a motive
 """
 
-from composerstoolkit.core import Event, FixedSequence, Container, Sequence
+from composerstoolkit.core import Event, FiniteSequence, Container, Sequence
 from composerstoolkit.composers.solvers import backtracking_solver
 from composerstoolkit.composers.constraints import (
     constraint_in_set, constraint_no_leaps_more_than)

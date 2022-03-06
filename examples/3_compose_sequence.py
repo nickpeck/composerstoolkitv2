@@ -9,7 +9,7 @@ The solver does not employ back-tracking, so it may well reach a dead-end
 and need to be restarted a few times before a solution is reached.
 """
 
-from composerstoolkit.core import Event, FixedSequence, Container
+from composerstoolkit.core import Event, FiniteSequence, Container
 from composerstoolkit.composers.solvers import develop
 from composerstoolkit.composers.constraints import (
     constraint_in_set, constraint_no_leaps_more_than)
@@ -18,7 +18,7 @@ from composerstoolkit.resources.rhythms import *
 from composerstoolkit.resources import scales
 
 seq = develop(
-    FixedSequence(events=[
+    FiniteSequence(events=[
         Event(pitches=[60], duration=QUARTER_NOTE),
         Event(pitches=[62], duration=QUARTER_NOTE),
         Event(pitches=[64], duration=QUARTER_NOTE)]),

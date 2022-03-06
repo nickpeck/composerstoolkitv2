@@ -1,9 +1,11 @@
 import os
+import types
 import unittest
 
 from mido import MidiFile
 
-from composerstoolkit.core import Graph, Edge, Vector, Event, Sequence
+from composerstoolkit.core import (Graph, Edge, Vector,
+    Event, Sequence, FiniteSequence, Container)
 
 class TestGraph(unittest.TestCase):
 
@@ -28,6 +30,11 @@ class TestGraph(unittest.TestCase):
         assert graph.get_pitches_at(99) == [59, 65]
         assert graph.get_pitches_at(100) == [60, 64]
         assert graph.get_pitches_at(200) == []
+
+    def test_that_an_edge_without_end_time_is_considered_open(self):
+        graph = Graph()
+        graph.add_edge(Edge(pitch=65, start_time=0, end_time=None))
+        assert graph.get_pitches_at(150) == [65]
 
     def test_graph_to_vector_list(self):
         graph = Graph()
@@ -55,6 +62,43 @@ class TestGraph(unittest.TestCase):
             origin = pitch_f,
             destination = pitch_c
         ) in vertex_list
+
+    def test_vector_has_equality_with_vectors_of_same_pitch_time_delta(self):
+        pitch_b = Edge(pitch=59, start_time=200, end_time=300)
+        pitch_c = Edge(pitch=60, start_time=300, end_time=400)
+        pitch_f = Edge(pitch=65, start_time=0, end_time=100)
+        pitch_e = Edge(pitch=64, start_time=100, end_time=200)
+
+        assert Vector(
+            pitch_delta = -1,
+            time_delta = 100,
+            origin = pitch_f,
+            destination = pitch_e
+        ) == Vector(
+            pitch_delta = -1,
+            time_delta = 100,
+            origin = pitch_c,
+            destination = pitch_b
+        )
+
+        assert Vector(
+            pitch_delta = -1,
+            time_delta = 100,
+            origin = pitch_f,
+            destination = pitch_e
+        ) != Vector(
+            pitch_delta = -5,
+            time_delta = 100,
+            origin = pitch_e,
+            destination = pitch_b
+        )
+
+        assert Vector(
+            pitch_delta = -1,
+            time_delta = 100,
+            origin = pitch_f,
+            destination = pitch_e
+        ) != Edge(pitch=59, start_time=200, end_time=300)
 
 class TestMIDIParser(unittest.TestCase):
 
@@ -101,6 +145,16 @@ class TestMIDIParser(unittest.TestCase):
         assert graph.edges[1].vertices == []
         assert graph.edges[2].vertices == []
 
+class EventTests(unittest.TestCase):
+
+    def test_we_can_convert_an_event_to_set_of_edges(self):
+        evt = Event(pitches=[60,64,67], duration=100)
+        assert evt.to_edges() == [
+            Edge(pitch=60, start_time=0, end_time=100),
+            Edge(pitch=64, start_time=0, end_time=100),
+            Edge(pitch=67, start_time=0, end_time=100)
+        ]
+
 class SequenceTests(unittest.TestCase):
 
     def test_a_transformer_can_be_applied_to_a_sequence(self):
@@ -113,69 +167,24 @@ class SequenceTests(unittest.TestCase):
 
         new_seq = cts.transform(test_modifier)
         assert list(new_seq.events) == [Event(pitches=[124], duration=200)]
-        assert new_seq.memento == cts
-        assert list(new_seq.memento.events) == [
-            Event(pitches=[62], duration=100)]
 
-    def test_sequence_is_slicable(self):
-        events = [
+    def test_two_sequences_can_be_added(self):
+        seq1 = Sequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100)])
+
+        seq2 = Sequence([
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+
+        seq3 = seq1 + seq2
+        assert list(seq3.events) == [
+            Event(pitches=[67], duration=100),
             Event(pitches=[60], duration=100),
             Event(pitches=[62], duration=100),
             Event(pitches=[64], duration=100),
             Event(pitches=[60], duration=100)]
-        cts = Sequence(events).bake()
-
-        sliced = cts[0]
-        assert sliced.events == [events[0]]
-        sliced_middle = cts[1]
-        assert sliced_middle.events == [events[1]]
-        sliced_end = cts[3]
-        assert sliced_end.events == [events[3]]
-
-        sliced_head = cts[:1]
-        assert sliced_end.events == events[:1]
-        sliced_tail = cts[1:]
-        assert sliced_tail.events == events[1:]
-
-        sliced_portion = cts[0:3]
-        assert sliced_portion.events == events[0:3]
-
-        sliced_with_step = cts[0:3:2]
-        assert sliced_with_step.events == events[0:3:2]
-
-    # def test_to_midi_events(self):
-        # cts = Sequence([
-            # Event(60,100),
-            # Event(62,100),
-            # Event(64,100),
-            # Event(60,100)])
-            
-        # midi = cts.to_midi_events()
-        # assert midi == [
-            # midievent(pitch=60, type="NOTE_ON", time=0),
-            # midievent(pitch=60, type="NOTE_OFF", time=100),
-            # midievent(pitch=62, type="NOTE_ON", time=100),
-            # midievent(pitch=62, type="NOTE_OFF", time=200),
-            # midievent(pitch=64, type="NOTE_ON", time=200),
-            # midievent(pitch=64, type="NOTE_OFF", time=300),
-            # midievent(pitch=60, type="NOTE_ON", time=300),
-            # midievent(pitch=60, type="NOTE_OFF", time=400)]
-            
-    # def test_lookup(self):
-        # cts = Sequence([
-            # Event(60,100),
-            # Event(62,100),
-            # Event(64,100),
-            # Event(60,100)])
-            
-        # assert cts.lookup(-1) == None
-        # assert cts.lookup(0) == Event(60,100)
-        # assert cts.lookup(50) == Event(60,100)
-        # assert cts.lookup(99) == Event(60,100)
-        # assert cts.lookup(100) == Event(60,100)
-        # assert cts.lookup(101) == Event(62,100)
-        # assert cts.lookup(400) == Event(60,100)
-        # assert cts.lookup(401) == None
 
     def test_get_pitches(self):
         cts = Sequence([
@@ -197,23 +206,155 @@ class SequenceTests(unittest.TestCase):
 
         assert list(cts.durations) == [100,100,200,100,100]
 
-    def test_sequence_to_pitch_Set(self):
+    def test_we_can_form_a_finite_sequence(self):
         cts = Sequence([
             Event(pitches=[67], duration=100),
             Event(pitches=[60], duration=100),
-            Event(pitches=[62], duration=100),
+            Event(pitches=[62], duration=200),
             Event(pitches=[64], duration=100),
-            Event(pitches=[60], duration=100)])
-        assert cts.bake().to_pitch_set() == {60,62,64,67}
+            Event(pitches=[60], duration=100)]).bake()
 
-    def test_sequence_to_pitch_class_Set(self):
-        cts = Sequence([
+        assert isinstance(cts.events, list)
+
+class FiniteSequenceTests(unittest.TestCase):
+
+    def test_we_can_get_the_duration(self):
+        cts = FiniteSequence([
             Event(pitches=[67], duration=100),
             Event(pitches=[60], duration=100),
             Event(pitches=[62], duration=100),
             Event(pitches=[64], duration=100),
             Event(pitches=[60], duration=100)])
-        assert cts.bake().to_pitch_class_set() == {0,2,4,7}
+        assert cts.duration == 500
+
+    def test_we_can_get_the_durations(self):
+        cts = FiniteSequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+        assert cts.durations == [100,100,100,100,100]
+
+    def test_we_can_make_a_sequence(self):
+        cts = FiniteSequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+
+        seq = cts.to_sequence()
+        assert next(seq.events) == Event(pitches=[67], duration=100)
+
+    def test_we_can_get_the_pitch_set(self):
+        cts = FiniteSequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+        assert cts.to_pitch_set() == {60,62,64,67}
+
+    def test_sequence_to_pitch_class_set(self):
+        cts = FiniteSequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+        assert cts.to_pitch_class_set() == {0,2,4,7}
+
+    def test_finite_sequence_is_slicable(self):
+        events = [
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)]
+        cts = FiniteSequence(events)
+
+        sliced = cts[0]
+        assert sliced.events == [events[0]]
+        sliced_middle = cts[1]
+        assert sliced_middle.events == [events[1]]
+        sliced_end = cts[3]
+        assert sliced_end.events == [events[3]]
+
+        sliced_head = cts[:1]
+        assert sliced_end.events == events[:1]
+        sliced_tail = cts[1:]
+        assert sliced_tail.events == events[1:]
+
+        sliced_portion = cts[0:3]
+        assert sliced_portion.events == events[0:3]
+
+        sliced_with_step = cts[0:3:2]
+        assert sliced_with_step.events == events[0:3:2]
+
+    def test_we_can_get_the_event_at_an_offset(self):
+        cts = FiniteSequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)])
+
+        assert cts.event_at(0) == Event(pitches=[67], duration=100)
+        assert cts.event_at(250) == Event(pitches=[62], duration=100)
+        assert cts.event_at(1000) == None
+
+    def test_we_can_create_a_graph(self):
+        g = FiniteSequence([
+            Event(pitches=[67], duration=100),
+            Event(pitches=[60], duration=100),
+            Event(pitches=[62], duration=100),
+            Event(pitches=[64], duration=100),
+            Event(pitches=[60], duration=100)]).to_graph()
+
+        assert len(g.edges) == 5
+
+class ContainerTests(unittest.TestCase):
+
+    def test_defaults_options(self):
+        c = Container()
+        assert c.options["synth"] != None
+        assert c.options["bpm"] == 120
+        assert c.options["playback_rate"] == 1
+
+    def test_option_overrides(self):
+        c = Container(bpm=300, playback_rate=2)
+        assert c.options["synth"] != None
+        assert c.options["bpm"] == 300
+        assert c.options["playback_rate"] == 2
+
+    def test_can_add_a_sequence(self):
+        c = Container(bpm=300, playback_rate=2)
+        cts = FiniteSequence([
+            Event(pitches=[67], duration=100)])
+        c.add_sequence(cts)
+        assert c.sequences[0] == (0, 0, cts)
+
+    def test_can_add_a_sequence_on_a_given_channel_and_offset(self):
+        c = Container(bpm=300, playback_rate=2)
+        cts = FiniteSequence([
+            Event(pitches=[67], duration=100)])
+        c.add_sequence(cts, channel_no=3, offset=100)
+        assert c.sequences[0] == (3, 100, cts)
+
+    def test_can_save_to_midi_file(self):
+        filename = "test.MID"
+        c = Container(bpm=100, playback_rate=1)
+        cts = FiniteSequence([
+            Event(pitches=[60], duration=100)])
+        c.add_sequence(cts)
+        c.save_as_midi_file(filename)
+        # test we can parse it back in:
+        midi_file = MidiFile(filename)
+        graph = Graph.from_midi_track(midi_file.tracks[0])
+        assert graph.edges[0].pitch == 60
+        assert graph.edges[0].start_time == 0
+        assert graph.edges[0].end_time == 100
+
 
 if __name__ == "__main__":
     unittest.main()

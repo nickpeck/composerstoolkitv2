@@ -3,7 +3,7 @@ and then a lower voice that fits together with this, in
 counterpoint in the style of Fux.
 """
 
-from composerstoolkit.core import Event, FixedSequence, Container, Sequence
+from composerstoolkit.core import Event, FiniteSequence, Container, Sequence
 from composerstoolkit.composers.solvers import backtracking_solver
 from composerstoolkit.composers.constraints import *
 from composerstoolkit.builders.generators import *

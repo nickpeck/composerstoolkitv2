@@ -240,7 +240,7 @@ class Sequence:
     events: Iterator[Event] = field(
         default_factory = lambda: iter(())
     )
-    memento: Optional[Sequence] = None
+    #memento: Optional[Sequence] = None
 
     def __post_init__(self):
         if isinstance(self.events, list):
@@ -274,19 +274,18 @@ class Sequence:
         statement.
         """
         new_seq = self.__class__(
-            events = transformer(self),
-            memento = self)
+            events = transformer(self))
         return new_seq
 
-    def bake(self) -> FixedSequence:
-        return FixedSequence(list(self.events))
+    def bake(self) -> FiniteSequence:
+        return FiniteSequence(list(self.events))
 
     def __add__(self, other):
         events = itertools.chain.from_iterable([self.events, other.events])
         return self.__class__(events=events)
 
 @dataclass
-class FixedSequence:
+class FiniteSequence:
     events: List[Event]
 
     @property
@@ -330,6 +329,7 @@ class FixedSequence:
     def to_graph(self, offset: int=0) -> Graph:
         """Return a pitch graph representation of the sequence.
         """
+        print("GOT HERE!!!!")
         edges: List[Edge] = []
         for event in self.events:
             edges = edges + event.to_edges(offset)
@@ -537,7 +537,11 @@ class Container():
             count = offset
             for event in seq.events:
                 for pitch in event.pitches:
-                    midifile.addNote(channel_no, 0, pitch, count, event.duration, 60)
+                    try:
+                        dynamic = event.meta["dynamic"]
+                    except KeyError:
+                        dynamic = 60
+                    midifile.addNote(channel_no, 0, pitch, count, event.duration, dynamic)
                 count = count + event.duration
         midifile.addTempo(0, 0, self.options["bpm"])
         with open(filename, 'wb') as outf:

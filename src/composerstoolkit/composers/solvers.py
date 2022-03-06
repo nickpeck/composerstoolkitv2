@@ -11,7 +11,7 @@ from typing import List
 
 from time import sleep
 
-from composerstoolkit.core import (Event, Sequence, FixedSequence, Context, Constraint)
+from composerstoolkit.core import (Event, Sequence, FiniteSequence, Context, Constraint)
 from composerstoolkit.builders.generators import cantus
 from composerstoolkit.resources import NOTE_MIN, NOTE_MAX
 
@@ -31,7 +31,7 @@ class AllRoutesExhausted(Exception):
     possibilities under the given condition.
     """
 
-def develop(seed: FixedSequence, **kwargs) -> Sequence:
+def develop(seed: FiniteSequence, **kwargs) -> Sequence:
     """Grow a sequence from a given 'seed' (motive).
     The process does not operate in realtime, and may well
     raise DeadEndReached if it hits a dead-end
@@ -65,7 +65,7 @@ def develop(seed: FixedSequence, **kwargs) -> Sequence:
     except:
         weights = [Decimal(1) for i in range(len(opts["mutators"]))]
         mutators = opts["mutators"]
-    result = FixedSequence(seed.events)
+    result = FiniteSequence(seed.events)
     transformed = result.events
     while sum([evt.duration for evt in result.events]) < opts["min_beats"]:
         is_searching = True
@@ -78,7 +78,7 @@ def develop(seed: FixedSequence, **kwargs) -> Sequence:
             mutator = random.choices(mutators, _weights)[0]
 
             transformed = list(mutator(Sequence(transformed)))
-            candidate = FixedSequence(result.events + transformed)
+            candidate = FiniteSequence(result.events + transformed)
 
            # test that the whole sequence meets the given constraints
             # cycle until we have a sequence that passes checks
@@ -102,7 +102,7 @@ def develop(seed: FixedSequence, **kwargs) -> Sequence:
 
 def backtracking_solver(
         starting_event: Event,
-        **kwargs) -> FixedSequence:
+        **kwargs) -> FiniteSequence:
     """Compose a melodic sequence based upon the
     domain and constraints given.
 
@@ -130,11 +130,11 @@ def backtracking_solver(
     n_events = opts["n_events"]
 
     tick = 0
-    seq = FixedSequence([starting_event])
+    seq = FiniteSequence([starting_event])
     use_weights = len(heuristics) > 0
 
     if n_events == 1:
-        return FixedSequence(seq)
+        return FiniteSequence(seq)
 
     results = set()
     for constraint in constraints:
@@ -168,7 +168,7 @@ def backtracking_solver(
             else:
                 # backtrack
                 continue
-        context = FixedSequence(seq.events[:])
+        context = FiniteSequence(seq.events[:])
         context.events.append(note)
 
         results = set()
