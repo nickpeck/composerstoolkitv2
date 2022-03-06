@@ -1,6 +1,8 @@
 """Using the backtracking solver to generate a melodic line,
 and then a lower voice that fits together with this, in
 counterpoint in the style of Fux.
+Note the use of probability gates to allow a degree
+of felxibility in the application of the constraints.
 """
 from composerstoolkit import *
 from composerstoolkit.resources import scales
@@ -29,12 +31,12 @@ voice2 = backtracking_solver(
         probability_gate(
             constraint_in_set(scales.C_major),
             probability=0.08),
-        probability_gate(
-            constraint_no_leaps_more_than(4),
-            probability=0.2),
+        constraint_no_leaps_more_than(4),
         constraint_no_voice_crossing(voice1),
         # limit the vertical intervals to octaves min/maj 3rds, 5ths and min/maj 6ths
-        constraint_restrict_to_intervals({0,3,4,7,8,9}, voice1),
+        probability_gate(
+            constraint_restrict_to_intervals({0,3,4,7,8,9}, voice1),
+            probability=0.1),
         constraint_no_consecutives({0,5,7}, voice1),
         # enforce a V-I cadence at the end
         constraint_notes_are(15, [55]),

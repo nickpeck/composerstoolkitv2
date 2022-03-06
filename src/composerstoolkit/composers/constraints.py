@@ -13,6 +13,13 @@ def probability_gate(
     more variety to the outcome, by randomly
     ignoring a failed rule by a certain
     probability factor.
+    if the outcome of testing a
+    sequence by constraint returns False,
+    randomly flip the outcome, allowing the
+    'mistake' to pass. The likelyhood of
+    this happening is weighted in favour
+    of probability, on a scale 0..1
+    (where 1 indicates it is always flipped)
     """
     if probability > 1 or probability < 0:
         raise Exception("probability must be in the range 0..1")
