@@ -219,6 +219,9 @@ class EventTests(unittest.TestCase):
         assert evt1.movement_cost_to(evt5) == 0
         # inversional eqivalence
         assert Event([60]).movement_cost_to(Event([69])) == 3
+        evt6 = Event(pitches=[])
+        assert evt1.movement_cost_to(evt6) == 0
+        assert evt6.movement_cost_to(evt1) == 0
 
 class SequenceTests(unittest.TestCase):
 

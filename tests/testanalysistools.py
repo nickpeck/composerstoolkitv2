@@ -139,7 +139,59 @@ class TestCommonSubsequences(unittest.TestCase):
             )
         assert e.exception.args == \
             ("max_match_len cannot be > len(dataset)",)
-        
+
+class TestHiddenSubsequences(unittest.TestCase):
+
+    def test_hidden_subsequences(self):
+        dataset = [[1,0,2,0,3,0,1,0,2,3],
+                   [0,1,2,0,3,1,0,2,3]]
+        results = hidden_subsequences(
+            dataset = dataset,
+            depth = 100
+        )
+        assert [1,2,3,1,2,3] in [r for count,r in results]
+
+class TestStatisticsTools(unittest.TestCase):
+
+    def test_pitch_range(self):
+        seq = FiniteSequence(events=[
+            Event([pf("B3")], duration=1),
+            Event([pf("C4")], duration=1),
+            Event([pf("E4")], duration=1),
+            Event([pf("F4")], duration=1),
+            Event([pf("G4")], duration=1),
+            Event([pf("C4")], duration=1),
+            Event([pf("A4")], duration=1)
+        ])
+        lower, upper = pitch_range(seq)
+        assert lower == pf("B3")
+        assert upper == pf("A4")
+
+    def test_total_durations(self):
+        seq = FiniteSequence(events=[
+            Event([pf("B3")], duration=1),
+            Event([pf("C4")], duration=1),
+            Event([pf("E4")], duration=1),
+            Event([pf("F4")], duration=1),
+            Event([pf("G4")], duration=1),
+            Event([pf("C4")], duration=1),
+            Event([pf("A4")], duration=1)
+        ])
+        dur = total_duration(seq)
+        assert dur == 7
+
+    def test_duration_classes(self):
+        seq = FiniteSequence(events=[
+            Event([pf("B3")], duration=1),
+            Event([pf("C4")], duration=2),
+            Event([pf("E4")], duration=1),
+            Event([pf("F4")], duration=1),
+            Event([pf("G4")], duration=1),
+            Event([pf("C4")], duration=5),
+            Event([pf("A4")], duration=9)
+        ])
+        dcs = duration_classes(seq)
+        assert dcs == {1,2,5,9}
 
 if __name__ == "__main__":
     unittest.main()

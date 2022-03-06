@@ -7,7 +7,7 @@ from composerstoolkit import *
 
 print("Loading case base")
 
-filename = os.path.join("case_base", "cello_suites", "cs1-1pre.mid")
+filename = os.path.join("case_base", "cello_suites", "cs1-2all.mid")
 midi_file = MidiFile(filename)
 graph = Graph.from_midi_track(midi_file.tracks[1])
 full_piece = FiniteSequence.from_graph(graph)
@@ -42,27 +42,16 @@ chord_lexicon = build_chord_lexicon(chords=[
     Event(pitches=[0,3,6,9])]
 )
 
-found_chords = chordal_analysis(sequence, 2, chord_lexicon)
+found_chords = chordal_analysis(sequence,chord_lexicon=chord_lexicon,window_size_beats=2)
 
 found_chords = [Event(list(pitches), 2) for pitches in found_chords]
 found_chords = Sequence(found_chords).transform(
     transpose(12 * 5)
-)
+).bake()
 
-Container(bpm=50, playback_rate=1)\
-    .add_sequence(found_chords)\
-    .playback()
-
-exit(0)
-
-for i, vectors in common_vectors:
-    print("===============================", i)
-    cur_pitch = 60
-    events = []
-    for v in vectors:
-        events.append(Event([cur_pitch], v[1]))
-        cur_pitch = cur_pitch + v[0]
-    seq = FiniteSequence(events)
+common_chords = common_subsequences([e.pitches for e in found_chords.events])
+for count, progression in common_chords:
+    seq = FiniteSequence([Event(sorted(chord), 2) for chord in progression])
     Container(bpm=50, playback_rate=1)\
         .add_sequence(seq)\
         .playback()
