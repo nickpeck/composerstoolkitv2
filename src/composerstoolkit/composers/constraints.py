@@ -1,7 +1,28 @@
 import itertools
 from typing import List,Set
+import random
 
 from ..core import Constraint, FiniteSequence
+
+@Constraint
+def probability_gate(
+    sequence: FiniteSequence,
+    constraint:Constraint,
+    probability: float=1.0):
+    """Meta-constraint - can add a bit
+    more variety to the outcome, by randomly
+    ignoring a failed rule by a certain
+    probability factor.
+    """
+    if probability > 1 or probability < 0:
+        raise Exception("probability must be in the range 0..1")
+    result = constraint(sequence)
+    if result:
+        return True
+    choices = [True, False]
+    weights = [probability, 1-probability]
+    choice = random.choices(choices, weights)[0]
+    return choice
 
 @Constraint
 def constraint_range(sequence: FiniteSequence,

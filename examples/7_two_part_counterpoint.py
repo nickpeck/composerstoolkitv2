@@ -26,8 +26,12 @@ voice2 = backtracking_solver(
         Event(pitches=[52], duration=QUARTER_NOTE),
     constraints=[
         constraint_range(0, 65),
-        constraint_in_set(scales.C_major),
-        constraint_no_leaps_more_than(4),
+        probability_gate(
+            constraint_in_set(scales.C_major),
+            probability=0.08),
+        probability_gate(
+            constraint_no_leaps_more_than(4),
+            probability=0.2),
         constraint_no_voice_crossing(voice1),
         # limit the vertical intervals to octaves min/maj 3rds, 5ths and min/maj 6ths
         constraint_restrict_to_intervals({0,3,4,7,8,9}, voice1),
