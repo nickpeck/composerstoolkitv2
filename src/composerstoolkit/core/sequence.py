@@ -46,6 +46,9 @@ class Event:
     def to_pitch_class_set(self):
         return {*[p % 12 for p in self.pitches]}
 
+    def __hash__(self):
+        return hash(" ".join([str(p) for p in self.pitches])) + hash(self.duration)
+
 @dataclass
 class Sequence:
     """Represents a linear sequence of events (single notes, chords or 'meta' type
@@ -157,6 +160,12 @@ class FiniteSequence:
         if not isinstance(other, self.__class__):
             return False
         return self.to_vectors() == other.to_vectors()
+
+    def __len__(self):
+        return len(self.events)
+
+    def __hash__(self):
+        return sum([hash(e) for e in self.events])
 
     def to_pitch_class_set(self):
         """Return the set of unique pitch classes (0..11) that comprise the sequence.

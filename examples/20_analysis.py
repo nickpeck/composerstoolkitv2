@@ -6,23 +6,25 @@ from mido import MidiFile
 from composerstoolkit import *
 
 print("Loading case base")
-sequences = []
-for file in os.listdir(os.path.join("case_base", "cello_suites")):
-    if file.endswith("mid"):
-        filename = os.path.join("case_base", "cello_suites", file)
-    midi_file = MidiFile(filename)
-    graph = Graph.from_midi_track(midi_file.tracks[1])
-    sequences.append(FiniteSequence.from_graph(graph))
 
+filename = os.path.join("case_base", "cello_suites", "cs1-1pre.mid")
+midi_file = MidiFile(filename)
+graph = Graph.from_midi_track(midi_file.tracks[1])
+full_piece = FiniteSequence.from_graph(graph)
+# we divide into chunks (say, 4 beats) 
+sequences = FiniteSequence.from_graph(graph)
 
-print("common intervalic sequences")
-pprint(frequent_intervallic(sequences, 30), indent=4)
+common_vectors = common_subsequences(sequences.to_vectors())
+common_rhythms = common_subsequences(sequences.durations)
 
-print("common rhythmic sequences")
-pprint(frequent_rhythms(sequences, 30), indent=4)
-
-print("common vectors are")
-pprint(frequent_vectors(sequences, 30), indent=4)
-
-#Todo try this with a single sequence, but cut into bars?
-
+for i, vectors in common_vectors:
+    print("===============================", i)
+    cur_pitch = 60
+    events = []
+    for v in vectors:
+        events.append(Event([cur_pitch], v[1]))
+        cur_pitch = cur_pitch + v[0]
+    seq = FiniteSequence(events)
+    Container(bpm=50, playback_rate=1)\
+        .add_sequence(seq)\
+        .playback()
