@@ -5,4 +5,4 @@ from . randomwalk import *
 from . solvers import *
 from . cbr import *
 from . prediction import *
-#from . clp import *
+from . clp import *

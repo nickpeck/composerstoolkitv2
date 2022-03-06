@@ -2,7 +2,7 @@ import unittest
 
 from . import (testcore, testresources, 
     testgenerators, testanalysistools,
-    testbuilders)
+    testbuilders, testsolvers)
 
 def suite():
     test_suite = unittest.TestSuite()
@@ -16,6 +16,8 @@ def suite():
         unittest.TestLoader().loadTestsFromModule(testanalysistools))
     test_suite.addTests(
         unittest.TestLoader().loadTestsFromModule(testbuilders))
+    test_suite.addTests(
+        unittest.TestLoader().loadTestsFromModule(testsolvers))
     return test_suite
 
 if __name__ == '__main__':

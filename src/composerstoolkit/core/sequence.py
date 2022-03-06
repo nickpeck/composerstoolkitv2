@@ -308,6 +308,10 @@ class FiniteSequence:
 @dataclass(frozen=True)
 class Context:
     event: Event
-    sequence: Sequence
+    sequence: FiniteSequence
     beat_offset: int = 0
     previous: Optional[Event] = None
+    nth_voice: Optional[int] = None
+    silbings: List[FiniteSequence] = field(
+        default_factory = lambda: []
+    )

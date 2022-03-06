@@ -42,10 +42,17 @@ def constraint_range(sequence: FiniteSequence,
     return pitches[0] >= minimum and pitches[-1] <= maximum
 
 @Constraint
-def constraint_in_set(sequence: FiniteSequence, _set = range(0,128)) -> bool:
+def constraint_in_set(sequence: FiniteSequence,
+    _set = range(0,128),
+    lookback_n_beats=None) -> bool:
     if sequence.to_pitch_set() == {}:
         return True
-    return sequence.to_pitch_set().issubset(_set)
+    if lookback_n_beats is None:
+        return sequence.to_pitch_set().issubset(_set)
+    return sequence.time_slice(
+        sequence.duration - lookback_n_beats,
+        sequence.duration
+    ).to_pitch_set().issubset(_set)
 
 @Constraint
 def constraint_no_repeated_adjacent_notes(sequence: FiniteSequence) -> bool:
