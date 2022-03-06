@@ -7,14 +7,14 @@ to a motive
 """
 
 from composerstoolkit.core import Event, FixedSequence, Container
-from composerstoolkit.composers.solvers import grow
+from composerstoolkit.composers.solvers import grow_seed
 from composerstoolkit.composers.constraints import (
     constraint_in_set, constraint_no_leaps_more_than)
 from composerstoolkit.builders.transformers import *
 from composerstoolkit.resources.rhythms import *
 from composerstoolkit.resources import scales
 
-seq = grow(
+seq = grow_seed(
     FixedSequence(events=[
         Event(pitches=[60], duration=QUARTER_NOTE),
         Event(pitches=[62], duration=QUARTER_NOTE),

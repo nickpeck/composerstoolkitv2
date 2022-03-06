@@ -2,6 +2,7 @@ from decimal import Decimal
 import itertools
 import math
 import random
+from typing import List
 
 from time import sleep
 
