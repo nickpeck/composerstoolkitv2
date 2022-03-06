@@ -7,7 +7,7 @@ to a motive
 """
 
 from composerstoolkit.core import Event, FixedSequence, Container, Sequence
-from composerstoolkit.composers.solvers import grow_cantus_backtracking
+from composerstoolkit.composers.solvers import backtracking_solver
 from composerstoolkit.composers.constraints import (
     constraint_in_set, constraint_no_leaps_more_than)
 from composerstoolkit.builders.generators import *
@@ -16,7 +16,7 @@ from composerstoolkit.resources.rhythms import *
 from composerstoolkit.resources import scales
 
 
-seq = grow_cantus_backtracking(
+seq = backtracking_solver(
         Event(pitches=[60], duration=QUARTER_NOTE),
     n_events=16,
     constraints=[

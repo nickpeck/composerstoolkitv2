@@ -1,3 +1,8 @@
+"""Solvers that generate sequences within a domain
+of contraints.
+These are not designed for on-the-fly usage.
+"""
+
 from decimal import Decimal
 import itertools
 import math
@@ -26,7 +31,7 @@ class AllRoutesExhaustedException(Exception):
     possibilities under the given condition.
     """
 
-def grow_seed(seed: FixedSequence, **kwargs) -> Sequence:
+def develop_motive(seed: FixedSequence, **kwargs) -> Sequence:
     """Grow a sequence from a given 'seed' (motive).
     The process does not operate in realtime, and may well
     raise DeadEndException if it hits a dead-end
@@ -94,79 +99,39 @@ def grow_seed(seed: FixedSequence, **kwargs) -> Sequence:
                 weights[mutators.index(mutator)] = weights[mutators.index(mutator)] + Decimal('0.1')
     return result
 
-def grow_cantus_backtracking(starting_event: Event,
-        constraints: List[Constraint],
-        n_events=64) -> FixedSequence:
-    """Extend a given pitch sequence  by up to n_events, using
-    an unweighted random selection process and backtracking solver.
-
-    seed - CTEvent (starting pitch)
-    n_events - how long to make the target sequence
-    constraints - a list of constraints that should be satisfied at each stage. If the 
-        transformation fails to meet the constraints, it will be rejected and the solver
-        will backtrack to select a new path. 'Dead' paths are tracked and rejected.
-        Each constraint recieves a tuple of (note, seq, tick), where tick is the number
-        of the event.
-    
-    returns: CTSequence or UnsatisfiableException if a solution that satisfies the
-        constraints cannot be found.
-        
-    """
-    tick = 0
-    seq = FixedSequence([starting_event])
-    if n_events == 1:
-        return FixedSequence(seq)
-
-    results = set()
-    for constraint in constraints:
-        results.update([constraint(seq)])
-    if results != {True}:
-        raise InputViolatesConstraintsException("Unable to solve!")
-
-    choices = list(range(NOTE_MIN, NOTE_MAX))
-    dead_paths = []
-    while tick < n_events-1:
-        # lets use a very basic random choice to begin with and see how far we go
-        try:
-            note = Event([random.choice(choices)], starting_event.duration)
-
-        except IndexError:
-            # this was thrown because we ran out of choices (we have reached a dead-end)
-            # back track
-            dead_paths.append(seq[:])
-            seq = seq[:-1]
-            tick = tick -1
-            choices = list(range(NOTE_MIN, NOTE_MAX))
-            if tick == 0:
-                raise UnsatisfiableException("Unable to solve!")
-                break
-            else:
-                continue
-
-        context = FixedSequence(seq.events[:])
-        context.events.append(note)
-
-        results = set()
-        for constraint in constraints:
-            results.update([constraint(context)])
-        candidate = seq[:]
-        candidate.events.append(note)
-        if results == {True} and candidate not in dead_paths:
-            seq.events.append(note)
-            tick = tick + 1
-            choices = list(range(NOTE_MIN, NOTE_MAX))
-        else:
-            #this choice was bad, so we must exclude it
-            choices.remove(note.pitches[-1])
-    return seq
-
-def random_walk_backtracking_w_heuristics(
+def backtracking_solver(
         starting_event: Event,
-        constraints=[lambda x: True], 
-        heuristics=[lambda context,choices,weights: weights],
-        n_events=8):
+        **kwargs) -> FixedSequence:
+    """Compose a melodic sequence based upon the
+    domain and constraints given.
+
+    starting_event: Event dictate the starting pitch.
+    All subsequent events will be of similar duration.
+
+    constraints - list of constraint functions
+    (see composerstoolkit.composers.constraints)
+
+    heuristics - list of heuristics (weight maps)
+    that can be used to provide a rough shape to the line
+    (see composerstoolkit.composers.heuristics)
+
+    n_events - the number of notes of the desired target
+    sequence. (Default 1)
+    """
+    opts = {
+        "constraints": [],
+        "heuristics": [],
+        "n_events": 1
+    }
+    opts.update(kwargs)
+    constraints = opts["constraints"]
+    heuristics = opts["heuristics"]
+    n_events = opts["n_events"]
+
     tick = 0
     seq = FixedSequence([starting_event])
+    use_weights = len(heuristics) > 0
+
     if n_events == 1:
         return FixedSequence(seq)
 
@@ -180,15 +145,18 @@ def random_walk_backtracking_w_heuristics(
     dead_paths = []
     while tick < n_events-1:
 
-        weights= [1.0 for i in range(len(choices))]
-        for heuristic in heuristics:
-            weights = heuristic(tick, choices, weights)
+        if use_weights:
+            weights= [1.0 for i in range(len(choices))]
+            for heuristic in heuristics:
+                weights = heuristic(tick, choices, weights)
 
         try:
-            note = Event([random.choices(choices, weights)[0]], starting_event.duration)
+            if use_weights:
+                note = Event([random.choices(choices, weights)[0]], starting_event.duration)
+            else:
+                note = Event([random.choice(choices)], starting_event.duration)
         except IndexError:
             # this was thrown because we ran out of choices (we have reached a dead-end)
-            # so you back-track... do it again....
             dead_paths.append(seq[:])
             seq = seq[:-1]
             tick = tick -1
@@ -197,6 +165,7 @@ def random_walk_backtracking_w_heuristics(
                 raise UnsatisfiableException("Unable to solve!")
                 break
             else:
+                # backtrack
                 continue
         context = FixedSequence(seq.events[:])
         context.events.append(note)
