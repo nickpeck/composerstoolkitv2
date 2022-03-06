@@ -115,7 +115,7 @@ def rotate(seq: Sequence, n_pitches: int, no_times=1) -> Iterator[Event]:
     sequence and return the events with their order of pitches
     rotated up to no_times
     """
-    rotated = list(itertools.islice(seq, 0, n_pitches))
+    rotated = list(itertools.islice(seq.events, 0, n_pitches))
     for _i in range(no_times):
         rotated = rotated[1:] + [rotated[0]]
     return rotated
@@ -178,7 +178,7 @@ def explode_intervals(seq: Sequence,
     def _vectors(seq):
         vectors = []
         left = seq.events[0]
-        for right in seq.events[1:]:
+        for right in seq.events[-1]:
             # if any event is a chord, then select the uppermost voice
             vectors.append(right.pitches[0]-left.pitches[0])
             left = right
@@ -323,6 +323,13 @@ def batch(seq: Sequence,
     """
     for transformer in transformations:
         seq = Sequence(transformer(seq))
+    return seq.events
+
+@Transformer
+def random_transformation(seq: Sequence,
+    transformations: List[Transformer]) -> Iterator[Event]:
+    choice = random.choice(transformations)
+    seq = Sequence(choice(seq))
     return seq.events
 
 @Transformer
