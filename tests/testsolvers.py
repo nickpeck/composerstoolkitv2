@@ -20,36 +20,37 @@ class TestCLPSolver(unittest.TestCase):
         assert solution[0].duration == 16
         assert solution[1].duration == 16
 
-    # def test_w_constraints(self):
-        # solver = CLP(
-            # source_material = [
-                # FiniteSequence([
-                    # Event([60], 1),
-                    # Event([62], 1),
-                    # Event([64], 1),
-                # ])
-            # ],
-            # n_voices = 3,
-            # max_len_beats = 16,
-            # transformations = [
-                # transpose(1),
-                # transpose(-1)
-            # ]
-        # )
+    def test_clp_solver_global_constraints(self):
+        solver = CLP(
+            source_material = [
+                FiniteSequence([
+                    Event([60], 1),
+                    Event([62], 1),
+                    Event([64], 1),
+                ])
+            ],
+            n_voices = 1,
+            max_len_beats = 16,
+            transformations = [
+                transpose(1),
+                transpose(-1),
+                transpose(2),
+                transpose(-2)
+            ]
+        )
 
-        # solver.add_constraint(
-            # solver.voices[0],
-            # constraint=constraint_notes_are(
-                # beat_offset = 15,
-                # pitches=[60]))
+        solver.add_constraint(
+            constraint_range(minimum=55, maximum=65))
+        solver.add_constraint(
+            constraint_in_set(scales.F_major))
 
-        # solver.add_constraint(
-            # constraint=constraint_use_chords(
-                # chords = [{},{}],
-                # voices=solver.voices))
-
-        # solution = next(solver)
-        # print(solution[0].pitches)
+        solution = next(solver)
+        assert len(solution) == 1
+        for part in solution:
+            assert min(part.pitches) >= 55
+            assert max(part.pitches) <= 65
+            assert set(part.pitches).difference(scales.F_major) == set()
+            assert part.duration ==16
 
 if __name__ == "__main__":
     unittest.main()

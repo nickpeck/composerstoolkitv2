@@ -9,18 +9,15 @@ class CLP:
             max_len_beats: int,
             n_voices: int,
             transformations: List[Transformer] = None,
-            constraints: List[Constraint] = None,
             heuristics: List[Callable] = None
         ):
         self._source_material = source_material
         self._max_len_beats = max_len_beats
         self._n_voices = n_voices
+        self._constraints = []
         if transformations is None:
             transformations = []
         self._transformations = transformations
-        if constraints is None:
-            constraints = []
-        self._constraints = constraints
         if heuristics is None:
             heuristics = []
         self._heuristics = heuristics
@@ -42,25 +39,29 @@ class CLP:
         if len(self._transformations) == 0:
             return [voice + motive]
         candidates: List[FiniteSequence] = []
-        motive_as_seq = motive.to_sequence()
-        for transformer in self._transformations:
+        random.shuffle(self._transformations)
+        for trans in self._transformations:
+            motive_as_seq = motive.to_sequence()
             candidate = voice +\
-                FiniteSequence(list(transformer(motive_as_seq)))
+                FiniteSequence(list(trans(motive_as_seq)))
             candidates.append(candidate)
         return candidates
 
     def _check_constraints(self, 
         candidates: List[FiniteSequence]) -> List[FiniteSequence]:
-        # context = Context(
-            # event = a,
-            # sequence = seq,
-            # beat_offset = i,
-            # previous = previous
-        # )
-        # for constraint in constraints:
-            # if 
-        # candidates = filter(lambda: , candidates)
-        return candidates
+        results = []
+        for candidate in candidates:
+            rejected = False
+            for constraint in self._constraints:
+                if not constraint(candidate):
+                    rejected = True
+                    break
+            if not rejected:
+                results.append(candidate)
+        return results
+
+    def add_constraint(self, constraint: Constraint):
+        self._constraints.append(constraint)
 
     def _chose_best_fit(self, 
         candidates: List[FiniteSequence]) -> List[FiniteSequence]:
