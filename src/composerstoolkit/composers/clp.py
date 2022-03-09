@@ -4,6 +4,13 @@ from typing import List, Iterator, Callable
 from .. core import FiniteSequence, Transformer, Constraint
 
 class CLP:
+    class Voice(FiniteSequence):
+        def __init__(self, events):
+            self.constraints = []
+            super().__init__(events)
+        def add_constraint(self, constraint: Constraint):
+            self.constraints.append(constraint)
+
     def __init__(self,
             source_material: List[FiniteSequence],
             max_len_beats: int,
@@ -23,6 +30,13 @@ class CLP:
         self._heuristics = heuristics
         self.solutions: List[List[FiniteSequence]] = []
         # Todo, check not violates input constraints
+        self.voices = []
+        for i in range(self._n_voices):
+            try:
+                events = self._source_material[i].events
+            except IndexError:
+                events = []
+            self.voices.append(CLP.Voice(events))
 
     def _is_within_len(self, solution: List[FiniteSequence]):
         for seq in solution:
@@ -47,12 +61,28 @@ class CLP:
             candidates.append(candidate)
         return candidates
 
-    def _check_constraints(self, 
+    def _check_global_constraints(self, 
         candidates: List[FiniteSequence]) -> List[FiniteSequence]:
         results = []
         for candidate in candidates:
             rejected = False
             for constraint in self._constraints:
+                if not constraint(candidate):
+                    rejected = True
+                    break
+            if not rejected:
+                results.append(candidate)
+        return results
+
+    def _check_local_constraints(self, 
+        candidates: List[FiniteSequence],
+        i_voice: int,
+        solution: List[FiniteSequence]) -> List[FiniteSequence]:
+        results = []
+        constraints = self.voices[i_voice].constraints
+        for candidate in candidates:
+            rejected = False
+            for constraint in constraints:
                 if not constraint(candidate):
                     rejected = True
                     break
@@ -80,7 +110,11 @@ class CLP:
             for i_voice, voice in enumerate(solution): # each voice
                 motive = self._pick_fragment()
                 candidates = self._get_transformations(voice, motive)
-                candidates = self._check_constraints(candidates)
+                candidates = self._check_local_constraints(candidates, i_voice, solution)
+                if len(candidates) == 0:
+                    solution = memento
+                    break
+                candidates = self._check_global_constraints(candidates)
                 if len(candidates) == 0:
                     solution = memento
                     break
