@@ -74,7 +74,7 @@ fin_seq.time_slice(0, 2)
 ... FiniteSequence(events=[Event(pitches=[48], duration=QUARTER_NOTE), Event(pitches=[43], duration=QUARTER_NOTE)])
 ~~~
 
-# Containers
+### Containers
 Containers are analogous to a MIDI sequencer, and allow us to cue multiple sequences together for playback on a given engine. By default, we use fluidsynth, but we could save to MIDI, send to a MIDI device, or write our own playback engine that provides 'noteon' and 'noteoff' handlers.
 
 ~~~
