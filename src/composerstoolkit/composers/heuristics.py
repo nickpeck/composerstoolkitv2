@@ -3,7 +3,7 @@ Heuristic functions used to guide random generation
 (see composers.solvers.backtracking_solver)
 """
 import math
-from typing import Dict
+from typing import Dict, Callable, Tuple, List
 
 # TODO use decimal types here to avoid floating point errors
 
@@ -39,3 +39,8 @@ def heuristic_single_pitch(axis_pitch=60, slope=30, strength=1):
                 weights[i] = weights[i] + math.pow(compensating_value, strength) * 100
         return weights
     return func
+
+# def minimise(metric: Callable[[Tuple[int, FiniteSequence]], int]):
+    # def f(choices: List[FiniteSequence]) -> List[FiniteSequence]:
+        
+    # return f

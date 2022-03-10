@@ -1,7 +1,7 @@
 import random
 from typing import List, Iterator, Callable
 
-from .. core import FiniteSequence, Transformer, Constraint
+from .. core import FiniteSequence, Transformer, Constraint, Container
 
 class CLP:
     class Voice(FiniteSequence):
@@ -31,6 +31,7 @@ class CLP:
         self.solutions: List[List[FiniteSequence]] = []
         # Todo, check not violates input constraints
         self.voices = []
+        self.visited_paths:List[FiniteSequence] = []
         for i in range(self._n_voices):
             try:
                 events = self._source_material[i].events
@@ -60,6 +61,22 @@ class CLP:
                 FiniteSequence(list(trans(motive_as_seq)))
             candidates.append(candidate)
         return candidates
+
+    def _exclude_visited_paths(self,
+        candidates: List[FiniteSequence],
+        i_voice: int) -> List[FiniteSequence]:
+        results = []
+        for candidate in candidates:
+            rejected = False
+            for solution in self.visited_paths:
+                head = candidate
+                if candidate.duration > solution[i_voice].duration:
+                    head = candidate.time_slice(0, solution[i_voice].duration)
+                if solution[i_voice] == head:
+                    rejected = True
+            if not rejected:
+                results.append(candidate)
+        return results
 
     def _check_global_constraints(self, 
         candidates: List[FiniteSequence]) -> List[FiniteSequence]:
@@ -101,7 +118,7 @@ class CLP:
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> Container:
         solution: List[FiniteSequence] = \
                 [FiniteSequence([]) for i in range(self._n_voices)]
 
@@ -110,6 +127,10 @@ class CLP:
             for i_voice, voice in enumerate(solution): # each voice
                 motive = self._pick_fragment()
                 candidates = self._get_transformations(voice, motive)
+                candidates = self._exclude_visited_paths(candidates, i_voice)
+                if len(candidates) == 0:
+                    solution = memento
+                    break
                 candidates = self._check_local_constraints(candidates, i_voice, solution)
                 if len(candidates) == 0:
                     solution = memento
@@ -122,7 +143,11 @@ class CLP:
                 solution[i_voice] = best_candidate
         for i_voice, voice in enumerate(solution):
             solution[i_voice] = voice.time_slice(0, self._max_len_beats)
-        return solution
+        self.visited_paths.append(solution)
+        container = Container()
+        for seq in solution:
+            container.add_sequence(seq)
+        return container
 
 
 """

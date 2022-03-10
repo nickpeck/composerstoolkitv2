@@ -41,6 +41,10 @@ class Container:
         self.sequences = []
         self.options.update(kwargs)
 
+    @property
+    def voices(self):
+        return [seq for (channel_no, offset, seq) in self.sequences]
+
     def add_sequence(self, seq, **kwargs):
         """Add a sequence to the playback container.
         optional args:
