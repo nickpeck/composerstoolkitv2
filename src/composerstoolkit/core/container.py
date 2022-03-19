@@ -10,9 +10,12 @@ from threading import Thread
 import itertools
 import functools
 
+import abjad
 import fluidsynth # type: ignore
 from midiutil.MidiFile import MIDIFile # type: ignore
 from mido import MidiTrack, Message # type: ignore
+from . sequence import FiniteSequence
+from .. resources.pitches import PitchFactory
 
 class Container:
     """Provides a context for playing back multiple sequences
@@ -126,4 +129,33 @@ class Container:
                 count = count + event.duration
         with open(filename, 'wb') as outf:
             midifile.writeFile(outf)
+        return self
+
+    def show_notation(self):
+        pf = PitchFactory(output="lilypond")
+        staves = []
+        for (channel_no, offset, seq) in self.sequences:
+            if not isinstance(seq, FiniteSequence):
+                raise Exception("Only FiniteSequence(s) are supported for notation output")
+            ly_str = []
+            for event in seq.events:
+                note = "r" # rest
+                octave = "'"
+                duration = int(4/event.duration)
+                if len(event.pitches) == 0:
+                    # rest
+                    ly_str.append("r"+str(duration))
+                elif len(event.pitches) == 1:
+                    # single note
+                    ly_str.append(pf(event.pitches[0])+str(duration))
+                else:
+                    # multiple notes in a chord
+                    ly_str.append("<" + \
+                        " ".join([pf(p) for p in event.pitches])\
+                        + ">" +str(duration))
+            voice = abjad.Voice(" ".join(ly_str), name="Voice " + str(channel_no))
+            staff = abjad.Staff([voice], name="Staff " + str(channel_no))
+            staves.append(staff)
+        score = abjad.Score(staves, name="Score")
+        abjad.show(score)
         return self

@@ -28,6 +28,13 @@ class TestPitchFactory(unittest.TestCase):
         assert pitch(127) == "G9"
         assert pitch(0) == "C-1"
 
+    def test_pitch_lilypond_output(self):
+        pitch = PitchFactory(output="lilypond")
+        assert pitch(69) == "A'"
+        assert pitch(70) == "Aes'"
+        assert pitch(127) == "G''''''"
+        assert pitch(0) == "C,,,,,"
+
 ChordBuilder = chords.ChordBuilder
 
 class TestChordBuilder(unittest.TestCase):
