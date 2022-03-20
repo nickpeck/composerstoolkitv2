@@ -39,7 +39,8 @@ class Container:
             "bpm": 120,
             "playback_rate": 1,
             "synth": kwargs["synth"],
-            "debug": True
+            "debug": True,
+            "meter": (4,4)
         }
         self.sequences = []
         self.options.update(kwargs)
