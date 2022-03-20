@@ -84,6 +84,14 @@ Container(bpm=240, playback_rate=1)\
     .playback()
 ~~~
 
+If you have Lilypond installed on your system, you can generate basic notation output from your container. (Note, only FiniteSequences are supported and the system does not currently handle tuplet durations).
+
+~~~
+Container(bpm=240, playback_rate=1)\
+    .add_sequence(fin_seq)\
+    .show_notation()
+~~~
+
 ### Generators
 In Schillinger-parlance, generators are use to produce sequences using simple algorithmic techniques. The following generates a ‘resultant’ scale using the intervals derived form the collision pattern of repeating intervals 3,4,9:
 
