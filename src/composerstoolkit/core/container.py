@@ -132,7 +132,7 @@ class Container:
         return self
 
     def show_notation(self):
-        pf = PitchFactory(output="lilypond")
+        pf = PitchFactory(output="abjad")
         staves = []
         for (channel_no, offset, seq) in self.sequences:
             if not isinstance(seq, FiniteSequence):
@@ -141,7 +141,10 @@ class Container:
             for event in seq.events:
                 note = "r" # rest
                 octave = "'"
-                duration = int(4/event.duration)
+                duration = 4/event.duration
+                if duration % 1 > 0:
+                    raise Exception("Tuplets are not currently supported in Container.show_notation")
+                duration = int(duration)
                 if len(event.pitches) == 0:
                     # rest
                     ly_str.append("r"+str(duration))

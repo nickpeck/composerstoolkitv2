@@ -39,7 +39,7 @@ class PitchFactory:
         defaults to equal temperament.
         """
         self.opts = {
-            "output": "midi_no", # midi_no, hz, lilypond or name
+            "output": "midi_no", # midi_no, hz, abjad or name
             "a4_freq": 440,
             "schema": re.compile("^([A-G])([#b]?)([+-]?[0-9])$"),
             "to_freq": self._midi_no_to_hz
@@ -53,7 +53,7 @@ class PitchFactory:
 
     def _midi_no_to_name(self, i: int):
         octave = int(i / 12) - 1
-        if self.opts["output"] == "lilypond":
+        if self.opts["output"] == "abjad":
             if i >= 60:
                 octave = "'" * (round((i-60) /  12))
             else:
@@ -65,11 +65,11 @@ class PitchFactory:
             note = _notes[remainder]
         except KeyError:
             note = _notes[remainder - 1]
-            if self.opts["output"] == "lilypond":
+            if self.opts["output"] == "abjad":
                 accidental = "s"
             else:
                 accidental = "#"
-        if self.opts["output"] == "lilypond":
+        if self.opts["output"] == "abjad":
             note = note.lower()
         return "{}{}{}".format(note,accidental,octave)
 
@@ -103,5 +103,5 @@ class PitchFactory:
             return midi_note_no
         if self.opts["output"] == "hz":
             return self.opts["to_freq"](midi_note_no)
-        if self.opts["output"] in ["name", "lilypond"]:
+        if self.opts["output"] in ["name", "abjad"]:
             return self._midi_no_to_name(midi_note_no)
