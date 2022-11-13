@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 import logging
+import importlib
 import os
 from time import sleep
 import signal
@@ -22,6 +23,17 @@ class Container:
     """Provides a context for playing back multiple sequences
     or rendering them out to a MIDI file.
     """
+    @staticmethod
+    def get_fallback_synth():
+        path = os.environ.get("DEFAULT_SYNTH", None)
+        if path is None:
+            return DummyPlayback()
+        last_dot = path.rindex(".")
+        class_name = path[last_dot + 1:]
+        module_path = path[:last_dot]
+        cls = getattr(importlib.import_module(module_path), class_name)
+        return cls()
+    
     def __init__(self, **kwargs):
         """Optional args:
         synth - a synthesier function (defaults to DummyPlayback)
@@ -29,7 +41,8 @@ class Container:
         playback_rate - defaults to 1
         """
         if "synth" not in kwargs:
-            kwargs["synth"] = DummyPlayback()
+            kwargs["synth"] = Container.get_fallback_synth()
+            logging.getLogger().info(f'Using fallback synth {kwargs["synth"]}')
 
         self.options = {
             "bpm": 120,

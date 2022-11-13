@@ -84,6 +84,12 @@ Container(bpm=240, playback_rate=1)\
     .playback()
 ~~~
 
+If you want to define a synth engine to be used globally, then set the environment variable DEFAULT_SYNTH to the python import path of your synth class. eg to import class Synth from module MySynth:
+
+~~~
+$export DEFAULT_SYNTH=MySynth.Synth
+~~~
+
 If you have Lilypond installed on your system, you can generate basic notation output from your container. (Note, only FiniteSequences are supported and the system does not currently handle tuplet durations).
 
 ~~~
