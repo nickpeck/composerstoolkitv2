@@ -33,6 +33,16 @@ class Container:
         module_path = path[:last_dot]
         cls = getattr(importlib.import_module(module_path), class_name)
         return cls()
+
+    @staticmethod
+    def _init_logger():
+        root = logging.getLogger()
+        root.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        root.addHandler(handler)
     
     def __init__(self, **kwargs):
         """Optional args:
@@ -40,17 +50,23 @@ class Container:
         bpm - int
         playback_rate - defaults to 1
         """
+        if "debug" not in kwargs:
+            kwargs["debug"] = False
+            
+        if kwargs["debug"]:
+            Container._init_logger()
+
         if "synth" not in kwargs:
             kwargs["synth"] = Container.get_fallback_synth()
-            logging.getLogger().info(f'Using fallback synth {kwargs["synth"]}')
+
+        logging.getLogger().info(f'Using synth {kwargs["synth"]}')
 
         self.options = {
             "bpm": 120,
             "playback_rate": 1,
-            "synth": kwargs["synth"],
-            "debug": True,
             "meter": (4,4)
         }
+        
         self.sequences = []
         self.options.update(kwargs)
 
