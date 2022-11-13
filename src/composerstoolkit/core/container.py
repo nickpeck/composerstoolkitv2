@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-import os
+import logging
 import os
 from time import sleep
 import signal
@@ -66,24 +66,25 @@ class Container:
         playback_rate = self.options["playback_rate"]
         bpm = self.options["bpm"]
         time_scale_factor = (1/(bpm/60)) * (1/playback_rate)
-        print("Channel {} playback starting".format(channel_no))
+        logging.getLogger().info(f"Channel {channel_no} playback starting")
         sleep(offset)
         for event in seq.events:
             if self.options["debug"]:
-                print(event)
+                logging.getLogger().info(event)
             for pitch in event.pitches:
                 synth.noteon(channel_no, pitch, 60)
             sleep(event.duration * time_scale_factor)
             for pitch in event.pitches:
                 synth.noteoff(channel_no, pitch)
-        print("Channel {} playback ended".format(channel_no))
+        logging.getLogger().info("Channel {} playback ended".format(channel_no))
 
     def playback(self):
         """Playback all midi channels
         """
-        synth = self.options["synth"]
+        synth = self.options.get("synth", None)
         with synth:
             def signal_handler(_sig, _frame):
+                logging.getLogger().info("Stop signal recieved")
                 print('Bye')
                 sys.exit(0)
             signal.signal(signal.SIGINT, signal_handler)
@@ -116,7 +117,7 @@ class Container:
         midifile = MIDIFile(len(self.sequences))
         midifile.addTempo(0, 0, self.options["bpm"])
         for (channel_no, offset, seq) in self.sequences:
-            midifile.addTrackName(channel_no, offset, "Channel {}".format(channel_no))
+            midifile.addTrackName(channel_no - 1, offset, "Channel {}".format(channel_no))
             count = offset
             for event in seq.events:
                 for pitch in event.pitches:
@@ -124,7 +125,7 @@ class Container:
                         dynamic = event.meta["dynamic"]
                     except KeyError:
                         dynamic = 100
-                    midifile.addNote(channel_no, 0, pitch, count, event.duration, dynamic)
+                    midifile.addNote(channel_no - 1, 0, pitch, count, event.duration, dynamic)
                 count = count + event.duration
         with open(filename, 'wb') as outf:
             midifile.writeFile(outf)

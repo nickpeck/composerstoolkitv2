@@ -1,4 +1,5 @@
 import itertools
+import logging
 import math
 import random
 
@@ -77,7 +78,7 @@ class Evolutionary():
         
     def print_debug(self, *args):
         if self.debug:
-            print(args)
+            logging.getLogger().info(args)
 
     def __call__(self, base_seq: FiniteSequence, n_events=8, debug=False):
         """Model of an evolutionary algorithm.

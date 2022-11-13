@@ -136,7 +136,6 @@ def backtracking_markov_solver(
 
     for constraint in constraints:
         if not constraint(seq):
-            print(constraint)
             raise InputViolatesConstraints("Unable to solve!")
 
     dead_paths = []
@@ -176,7 +175,7 @@ def backtracking_markov_solver(
             results.update([constraint(context)])
         candidate = seq[:]
         candidate.events.append(note)
-        # print(results)
+
         if results == {True} and candidate not in dead_paths:
             seq.events.append(note)
             tick = tick + 1

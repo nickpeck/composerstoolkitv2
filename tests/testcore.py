@@ -518,7 +518,7 @@ class ContainerTests(unittest.TestCase):
         seq = FiniteSequence([
             Event(pitches=[67], duration=1)])
         c.add_sequence(seq)
-        assert c.sequences[0] == (0, 0, seq)
+        assert c.sequences[0] == (1, 0, seq)
 
     def test_can_add_a_sequence_on_a_given_channel_and_offset(self):
         c = Container(bpm=300, playback_rate=2)
@@ -545,9 +545,8 @@ class ContainerTests(unittest.TestCase):
         assert graph.edges[1].start_time == 1
         assert graph.edges[1].end_time == 2
 
-    @patch('fluidsynth.Synth', autospec=True)
-    def test_can_playback(self, synth):
-        c = Container(synth=synth, debug=False)
+    def test_can_playback(self):
+        c = Container(synth=DummyPlayback(), debug=False)
         seq = FiniteSequence([
             Event(pitches=[60], duration=1),
             Event(pitches=[62], duration=1)])
