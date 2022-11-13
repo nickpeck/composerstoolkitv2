@@ -52,7 +52,7 @@ class RTPMidi(Playback):
     def noteoff(self, channel: int, pitch: int):
         from rtmidi.midiconstants import NOTE_OFF
         status = NOTE_OFF | (channel - 1)
-        self.midiout.send_message([NOTE_OFF, pitch, 0])
+        self.midiout.send_message([status, pitch, 0])
         
     def __enter__(self):
         self.midiout.open_port(self.port_no)
