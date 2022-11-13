@@ -75,7 +75,7 @@ fin_seq.time_slice(0, 2)
 ~~~
 
 ### Containers
-Containers are analogous to a MIDI sequencer, and allow us to cue multiple sequences together for playback on a given engine. By default, we use fluidsynth, but we could save to MIDI, send to a MIDI device, or write our own playback engine that provides 'noteon' and 'noteoff' handlers.
+Containers are analogous to a MIDI sequencer, and allow us to cue multiple sequences together for playback on a given engine. By default, we use composerstoolkit.core.synth.DummyPlayback (which just logs the noteon/noteoff events), but we could save to MIDI, send to a MIDI device, or write our own playback engine that implements composerstoolkit.core.synth.Playback
 
 ~~~
 Container(bpm=240, playback_rate=1)\
