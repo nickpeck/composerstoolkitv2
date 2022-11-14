@@ -28,6 +28,15 @@ class Event:
     meta: Dict[str, Any] = field(
         default_factory = lambda: {}
     )
+    
+    def extend(self, pitches=None, duration=None, meta=None) -> Event:
+        if pitches is None:
+            pitches = self.pitches
+        if duration is None:
+            duration = self.duration
+        if meta is None:
+            meta = self.meta
+        return Event(pitches=pitches, duration=duration, meta=meta)
 
     def to_edges(self, offset: int=0) -> List[Edge]:
         """Return the event as a single edge, or a list
@@ -71,7 +80,19 @@ class Sequence:
     events: Iterator[Event] = field(
         default_factory = lambda: iter(())
     )
+    meta: Dict[str, Any] = field(
+        default_factory = lambda: {}
+    )
     #memento: Optional[Sequence] = None
+    
+    def extend(self, events=None, meta=None) -> Sequence:
+        a,b = itertools.tee(self.events)
+        self.events = a
+        if events is None:    
+            events = b
+        if meta is None:
+            meta = self.meta
+        return Sequence(events=events, meta=meta)
 
     def __post_init__(self):
         if isinstance(self.events, list):
@@ -118,9 +139,7 @@ class Sequence:
         This can be advanced through without affecting the iteration
         state of the current sequence.
         """
-        a,b = itertools.tee(self.events)
-        self.events = a
-        return Sequence(events=b)
+        return self.extend()
 
     def __add__(self, other):
         """Allows sequences to be added together.
@@ -130,7 +149,19 @@ class Sequence:
 
 @dataclass
 class FiniteSequence:
-    events: List[Event]
+    events: List[Event] = field(
+        default_factory = lambda: []
+    )
+    meta: Dict[str, Any] = field(
+        default_factory = lambda: {}
+    )
+    
+    def extend(self, events=None, meta=None) -> FiniteSequence:
+        if events is None:
+            events = self.events
+        if meta is None:
+            meta = self.meta
+        return FiniteSequence(events=events, meta=meta)
 
     @property
     def pitches(self) -> List[int]:
@@ -237,8 +268,7 @@ class FiniteSequence:
                     # event overlaps the end of the window
                     truncated_duration = event.duration + current_time - end_beats
                     events.append(
-                        Event(pitches=event.pitches,
-                        duration=truncated_duration))
+                        event.extend(duration=truncated_duration))
                 else:
                     # event is within the window
                     events.append(event)
@@ -247,12 +277,11 @@ class FiniteSequence:
                 # event overlaps the start of the window
                 truncated_duration = event.duration + current_time - start_beats
                 events.append(
-                    Event(pitches=event.pitches,
-                    duration=truncated_duration))
+                    event.extend(duration=truncated_duration))
 
             current_time = current_time + event.duration
 
-        return FiniteSequence(events)
+        return self.extend(events=events)
 
     def __getitem__(self, slice_index):
         start, stop, step = None, None, None
@@ -272,7 +301,7 @@ class FiniteSequence:
         return self.__class__(events=sliced_events)
 
     def __add__(self, other: FiniteSequence) -> FiniteSequence:
-        return FiniteSequence(self.events +  other.events)
+        return self.extend(events=self.events + other.events)
 
 @dataclass(frozen=True)
 class Context:

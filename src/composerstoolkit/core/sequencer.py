@@ -146,7 +146,7 @@ class Sequencer:
         """
         for i,_seq in enumerate(self.sequences):
             channel_no, offset, seq = self.sequences[i]
-            self.sequences[i] = (channel_no, offset, seq.__class__(
+            self.sequences[i] = (channel_no, offset, seq.extend(
                 events = transformer(seq)))
         return self
 

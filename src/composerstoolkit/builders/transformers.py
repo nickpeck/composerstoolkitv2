@@ -67,7 +67,7 @@ def transpose(seq: Sequence, interval: int) -> Iterator[Event]:
     given sequence by a constant interval.
     """
     for evt in seq.events:
-        yield Event(
+        yield evt.extend(
                 pitches=[p + interval for p in evt.pitches],
                 duration=evt.duration)
 
@@ -90,7 +90,7 @@ def transpose_diatonic(seq: Sequence,
         scale = list(scale)
     for evt in seq.events:
         pitches = evt.pitches
-        new_event = Event([], evt.duration)
+        new_event = evt.extend(pitches=[])
         for pitch in pitches:
             try:
                 cur_index = scale.index(pitch)
@@ -133,11 +133,11 @@ def invert(seq: Sequence, axis_pitch=None) -> Iterator[Event]:
     for evt in seq.events:
         delta = evt.pitches[0]-axis_pitch
         if delta < 0: # note is below axis
-            yield Event([axis_pitch-delta], evt.duration)
+            yield evt.extend(pitches=[axis_pitch-delta])
         elif delta > 0: # note is above axis
-            yield Event([axis_pitch-delta], evt.duration)
+            yield evt.extend(pitches=[axis_pitch-delta])
         else: #its the axis, so stays the same
-            yield Event([evt.pitches[0]], evt.duration)
+            yield evt.extend(pitches=[evt.pitches[0]])
 
 @Transformer
 def rotate(seq: Sequence, n_pitches: int, no_times=1) -> Iterator[Event]:
@@ -224,10 +224,10 @@ def motivic_interpolation(seq: Sequence,
             relative_dur = motive_evt.duration/motive.duration
             dur = duration * relative_dur
             if motive_evt.pitches == []:
-                yield Event([], dur)
+                yield base_evt.extend(pitches=[], duration=dur)
                 continue
             new_pitches = [p + pitch_delta for p in motive_evt.pitches]
-            yield Event(new_pitches, dur)
+            yield base_evt.extend(pitches=new_pitches, duration=dur)
 
 @Transformer
 def explode_intervals(seq: Sequence,
@@ -279,14 +279,14 @@ def rhythmic_augmentation(seq: Sequence, multiplier: int) -> Iterator[Event]:
     """Return a new stream of events in which all the durations of
     the source sequence have been expanded by a given factor.
     """
-    return (Event(e.pitches, multiplier*e.duration) for e in seq.events)
+    return (e.extend(duration=multiplier*e.duration) for e in seq.events)
 
 @Transformer
 def rhythmic_diminution(seq: Sequence, factor: Union[int, float]) -> Iterator[Event]:
     """Return a new stream of events in which all the durations of
     the source sequence have been reduced by a given factor.
     """
-    return (Event(e.pitches, e.duration/factor) for e in seq.events)
+    return (e.extend(duration=e.duration/factor) for e in seq.events)
 
 @Transformer
 def map_to_pulses(seq: Sequence, pulse_sequence: Sequence) -> Iterator[Event]:
@@ -297,9 +297,9 @@ def map_to_pulses(seq: Sequence, pulse_sequence: Sequence) -> Iterator[Event]:
     for event in seq.events:
         try:
             next_pulse = next(iter_pulses)
-            yield Event(event.pitches, next_pulse.duration)
+            yield event.extend(duration=next_pulse.duration)
         except StopIteration:
-            yield Event(event.pitches, 0)
+            yield event.extend(duration=0)
 
 @Transformer
 def map_to_pitches(seq: Sequence, pitch_sequence: Sequence) -> Iterator[Event]:
@@ -310,9 +310,9 @@ def map_to_pitches(seq: Sequence, pitch_sequence: Sequence) -> Iterator[Event]:
     for event in seq.events:
         try:
             next_pitch = next(iter_pitches)
-            yield Event([next_pitch.pitches[0]], event.duration)
+            yield event.extend(pitches=[next_pitch.pitches[0]])
         except StopIteration:
-            yield Event([], event.duration)
+            yield event.extend(pitches=[])
 
 @Transformer
 def tie_repeated(seq: Sequence) -> Iterator[Event]:
@@ -320,7 +320,7 @@ def tie_repeated(seq: Sequence) -> Iterator[Event]:
     """
     grouped = itertools.groupby(seq.events, key=lambda e: e.pitches)
     for pitches, group in grouped:
-        yield Event(pitches, sum([e.duration for e in group]))
+        yield Event(pitches=pitches, duration=sum([e.duration for e in group]))
 
 @Transformer
 def fit_to_range(seq: Sequence,
@@ -343,7 +343,7 @@ def fit_to_range(seq: Sequence,
                 pitch = pitch + 12
             pitches.append(pitch)
         pitches = sorted(pitches)
-        yield Event(pitches, event.duration)
+        yield event.extend(pitches=pitches)
 
 @Transformer
 def concertize(seq: Sequence,
@@ -369,7 +369,7 @@ def concertize(seq: Sequence,
             new_pitches = event.pitches +\
                 [scale[base_index - i] for i in voicing]
         event.pitches = sorted(event.pitches)
-        yield Event(new_pitches, event.duration)
+        yield event.extend(pitches=new_pitches)
 
 @Transformer
 def batch(seq: Sequence,
@@ -378,14 +378,14 @@ def batch(seq: Sequence,
     batch(seq, [a,b,c]) == a(b(c(seq)))
     """
     for transformer in transformations:
-        seq = Sequence(transformer(seq))
+        seq = seq.extend(events=transformer(seq))
     return seq.events
 
 @Transformer
 def random_transformation(seq: Sequence,
     transformations: List[Transformer]) -> Iterator[Event]:
     choice = random.choice(transformations)
-    seq = Sequence(choice(seq))
+    seq = seq.extend(events=choice(seq))
     return seq.events
 
 @Transformer
@@ -431,7 +431,7 @@ def arpeggiate(seq: Sequence,
         if individual_note_len is None:
             individual_note_len = event.duration / n_pitches
         for note in event.pitches:
-            yield Event(pitches=[note], duration=individual_note_len)
+            yield event.extend(pitches=[note], duration=individual_note_len)
 
 @Transformer
 def displacement(seq: Sequence,
@@ -446,7 +446,7 @@ def monody(seq: Sequence) -> Iterator[Event]:
         if len(event.pitches) == 0:
             yield event
             continue
-        yield Event([event.pitches[-1]], event.duration)
+        yield event.extend(pitches=[event.pitches[-1]])
 
 @Transformer
 def modal_quantize(seq: Sequence,
@@ -465,7 +465,7 @@ def modal_quantize(seq: Sequence,
             unused = scale.difference({*new_pitches})
             nearest = min(unused, key=lambda x:abs(x-pitch))
             new_pitches.append(nearest)
-        yield Event(pitches=new_pitches, duration=event.duration)
+        yield event.extend(pitches=new_pitches)
 
 @Transformer
 def rhythmic_quantize(seq: Sequence,
@@ -476,12 +476,12 @@ def rhythmic_quantize(seq: Sequence,
     resolution = float(resolution)
     for event in seq.events:
         if event.duration <= resolution:
-            yield Event(event.pitches, resolution)
+            yield event.extend(duration=resolution)
             continue
         mod = event.duration % resolution
         if mod <= (resolution / 2.0):
             div = int(event.duration / resolution)
-            yield Event(event.pitches, div * resolution)
+            yield event.extend(duration=div * resolution)
             continue
         # yield Event(event.pitches, event.duration + resolution-mod)
 
@@ -499,7 +499,7 @@ def filter_events(seq: Sequence,
     for event in seq.events:
         if condition(event):
             if replace_w_rest:
-                yield Event([], event.duration)
+                yield event.extend(pitches=[])
             continue
         yield event
 

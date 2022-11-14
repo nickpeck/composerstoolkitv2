@@ -222,6 +222,18 @@ class EventTests(unittest.TestCase):
         evt6 = Event(pitches=[])
         assert evt1.movement_cost_to(evt6) == 0
         assert evt6.movement_cost_to(evt1) == 0
+        
+    def test_we_can_extend_it(self):
+        evt1 = Event(pitches=[60,64,67], duration=5, meta={"a":3})
+        evt2 = evt1.extend()
+        assert evt2 == evt2
+        evt3 = evt1.extend(pitches=[40])
+        assert evt3 == Event(pitches=[40], duration=5, meta={"a":3})
+        evt4 = evt1.extend(duration=10)
+        assert evt4 == Event(pitches=[60,64,67], duration=10, meta={"a":3})
+        evt5 = evt1.extend(meta={})
+        assert evt5 == Event(pitches=[60,64,67], duration=5, meta={})
+
 
 class SequenceTests(unittest.TestCase):
 
@@ -305,6 +317,20 @@ class SequenceTests(unittest.TestCase):
         assert next(seq.events).pitches == [67]
         assert next(seq.events).pitches == [60]
         assert next(tapped.events).pitches == [62]
+        
+    def test_we_can_extend_it(self):
+        seq1 = Sequence([
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=2),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)],
+            meta={"a": 3})
+
+        seq2 = seq1.extend()
+        assert list(seq1.events) == list(seq2.events)
+        assert seq1.meta == seq2.meta
+
 
 class FiniteSequenceTests(unittest.TestCase):
 
@@ -499,42 +525,55 @@ class FiniteSequenceTests(unittest.TestCase):
         vectors = seq.to_vectors()
         assert vectors == [(-7, 1), (2, 2), (2, 1), (-4, 3)]
 
+    def test_we_can_extend_it(self):
+        seq1 = FiniteSequence([
+            Event(pitches=[67], duration=1),
+            Event(pitches=[60], duration=1),
+            Event(pitches=[62], duration=2),
+            Event(pitches=[64], duration=1),
+            Event(pitches=[60], duration=1)],
+            meta={"a": 3})
+
+        seq2 = seq1.extend()
+        assert list(seq1.events) == list(seq2.events)
+        assert seq1.meta == seq2.meta
+
 class SequencerTests(unittest.TestCase):
 
     def test_defaults_options(self):
         s = Sequencer()
-        assert c.options["synth"] != None
-        assert c.options["bpm"] == 120
-        assert c.options["playback_rate"] == 1
+        assert s.options["synth"] != None
+        assert s.options["bpm"] == 120
+        assert s.options["playback_rate"] == 1
 
     def test_option_overrides(self):
         s = Sequencer(bpm=300, playback_rate=2)
-        assert c.options["synth"] != None
-        assert c.options["bpm"] == 300
-        assert c.options["playback_rate"] == 2
+        assert s.options["synth"] != None
+        assert s.options["bpm"] == 300
+        assert s.options["playback_rate"] == 2
 
     def test_can_add_a_sequence(self):
         s = Sequencer(bpm=300, playback_rate=2)
         seq = FiniteSequence([
             Event(pitches=[67], duration=1)])
-        c.add_sequence(seq)
-        assert c.sequences[0] == (1, 0, seq)
+        s.add_sequence(seq)
+        assert s.sequences[0] == (1, 0, seq)
         
     def test_can_add_a_global_transformer(self):
         s = Sequencer(bpm=300, playback_rate=2)
         seq = FiniteSequence([
             Event(pitches=[67], duration=1)])
-        c.add_sequence(seq)
-        c.add_transformer(transpose(1))
-        channel_no,offset,seq = c.sequences[0]
+        s.add_sequence(seq)
+        s.add_transformer(transpose(1))
+        channel_no,offset,seq = s.sequences[0]
         assert list(seq.events) == [Event(pitches=[68], duration=1, meta={})]
 
     def test_can_add_a_sequence_on_a_given_channel_and_offset(self):
         s = Sequencer(bpm=300, playback_rate=2)
         seq = FiniteSequence([
             Event(pitches=[67], duration=1)])
-        c.add_sequence(seq, channel_no=3, offset=100)
-        assert c.sequences[0] == (3, 100, seq)
+        s.add_sequence(seq, channel_no=3, offset=100)
+        assert s.sequences[0] == (3, 100, seq)
 
     def test_can_save_to_midi_file(self):
         filename = "test.MID"
@@ -542,8 +581,8 @@ class SequencerTests(unittest.TestCase):
         seq = FiniteSequence([
             Event(pitches=[60], duration=1),
             Event(pitches=[62], duration=1)])
-        c.add_sequence(seq)
-        c.save_as_midi_file(filename)
+        s.add_sequence(seq)
+        s.save_as_midi_file(filename)
         # test we can parse it back in:
         midi_file = MidiFile(filename)
         graph = Graph.from_midi_track(midi_file.tracks[1])
@@ -559,8 +598,8 @@ class SequencerTests(unittest.TestCase):
         seq = FiniteSequence([
             Event(pitches=[60], duration=1),
             Event(pitches=[62], duration=1)])
-        c.add_sequence(seq)
-        c.playback()
+        s.add_sequence(seq)
+        s.playback()
 
 class AnnotationsTests(unittest.TestCase):
     def test_constraint_annotation_str_form(self):
