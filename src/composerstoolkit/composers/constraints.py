@@ -140,6 +140,10 @@ def constraint_restrict_to_intervals(
     for lower_event in sequence.events:
         cur_time = cur_time + lower_event.duration
         upper_event = upper_voice.event_at(cur_time)
+        if upper_event is None or lower_event is None:
+            continue
+        if upper_event.pitches == [] or lower_event.pitches == []:
+            continue
         interval = abs(upper_event.pitches[-1] - lower_event.pitches[-1]) % 12
         if interval not in allow_intervals:
             return False
@@ -157,11 +161,19 @@ def constraint_no_consecutives(
     it1,it2 = itertools.tee(sequence.events)
     next(it2, None)
     for lwr_left, lwr_right in zip(it1,it2):
+        if lwr_left is None or lwr_right is None:
+            continue
         left_time = cur_time + lwr_left.duration
         right_time = cur_time + lwr_left.duration + lwr_right.duration
         cur_time = left_time
         upr_left = upper_voice.event_at(left_time)
         upr_right = upper_voice.event_at(right_time)
+        if lwr_left.pitches == [] or lwr_right.pitches == []:
+            continue
+        if upr_left is None or upr_right is None:
+            continue
+        if upr_left.pitches == [] or upr_right.pitches == []:
+            continue
         int_left = abs(upr_left.pitches[-1] - lwr_left.pitches[-1])
         int_right = abs(upr_right.pitches[-1] - lwr_right.pitches[-1])
         if int_left == int_right:

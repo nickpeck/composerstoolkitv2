@@ -201,6 +201,11 @@ class FiniteSequence:
                 left.duration))
         return vectors
 
+    def retrograde(self) -> FiniteSequence:
+        """Return the sequence, reversed
+        """
+        return self.extend(events=list(reversed(self.events)))
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False

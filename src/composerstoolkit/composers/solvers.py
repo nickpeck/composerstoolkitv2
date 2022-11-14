@@ -4,11 +4,12 @@ These are not designed for on-the-fly usage.
 """
 
 from decimal import Decimal
+import itertools
 import math
 import random
-from typing import Dict
+from typing import Dict, Optional, List
 
-from composerstoolkit.core import Event, Sequence, FiniteSequence
+from composerstoolkit.core import Event, Sequence, FiniteSequence, Constraint
 from composerstoolkit.resources import NOTE_MIN, NOTE_MAX
 
 class DeadEndReached(Exception):
@@ -272,3 +273,35 @@ def backtracking_solver(
             #this choice was bad, so we must exclude it
             choices.remove(note.pitches[-1])
     return seq
+
+def canon_finder(
+    phrase: FiniteSequence,
+    constraints: Optional[List[Constraint]] = None) -> List[FiniteSequence]:
+    """
+    Brute force tool for finding all possible canons of a given phrase
+    canon at any given interval that obeys constraints
+    retrograde canon
+    inversion canon
+    """
+    canons = []
+    for i1 in range(0,12):
+        interval_canon = phrase.extend(
+            events=[e.extend(pitches=[p+i1 for p in e.pitches]) for e in phrase.events],
+            meta={"canon":f"canon at {i1} semitones"})
+        canons.append(interval_canon)
+        canons.append(interval_canon.retrograde().extend(meta={"canon":f"retrograde canon at {i1} semitones"}))
+        for i2 in range(0, int(phrase.duration)):
+            displacement_canon = interval_canon.extend(
+                events=[Event(duration=i2)] + interval_canon.events,
+                meta={"canon":f"canon at {i1} semitones, {i2} beats"})
+            canons.append(displacement_canon)
+            canons.append(displacement_canon.retrograde().extend(
+                meta={"canon":f"retrograde canon at {i1} semitones, {i2} beats"}))
+    keepers = []
+    for canon in canons:
+        results = set()
+        for constraint in constraints:
+            results.update([constraint(canon)])
+        if results == {True}:
+            keepers.append(canon)
+    return keepers
