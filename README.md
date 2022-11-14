@@ -15,7 +15,7 @@ A brief overview of the features I am working towards:
 
 Practical examples are given in the examples directory.
 
-### Events, Sequences and Containers
+### Events, Sequences and Sequencers
 The basic atomic unit of structure is the Event class. An event holds 0...* pitches that might sound together as a chord or single note.
 
 ~~~
@@ -74,11 +74,11 @@ fin_seq.time_slice(0, 2)
 ... FiniteSequence(events=[Event(pitches=[48], duration=QUARTER_NOTE), Event(pitches=[43], duration=QUARTER_NOTE)])
 ~~~
 
-### Containers
-Containers are analogous to a MIDI sequencer, and allow us to cue multiple sequences together for playback on a given engine. By default, we use composerstoolkit.core.synth.DummyPlayback (which just logs the noteon/noteoff events), but we could save to MIDI, send to a MIDI device, or write our own playback engine that implements composerstoolkit.core.synth.Playback
+### Sequencers
+Sequencers are analogous to a MIDI sequencer, and allow us to cue multiple sequences together for playback on a given engine. By default, we use composerstoolkit.core.synth.DummyPlayback (which just logs the noteon/noteoff events), but we could save to MIDI, send to a MIDI device, or write our own playback engine that implements composerstoolkit.core.synth.Playback
 
 ~~~
-Container(bpm=240, playback_rate=1)\
+Sequencer(bpm=240, playback_rate=1)\
     .add_sequence(seq)\
     .add_sequence(fin_seq, offset=10)\
     .playback()
@@ -93,7 +93,7 @@ $export DEFAULT_SYNTH=MySynth.Synth
 If you have Lilypond installed on your system, you can generate basic notation output from your container. (Note, only FiniteSequences are supported and the system does not currently handle tuplet durations).
 
 ~~~
-Container(bpm=240, playback_rate=1)\
+Sequencer(bpm=240, playback_rate=1)\
     .add_sequence(fin_seq)\
     .show_notation()
 ~~~

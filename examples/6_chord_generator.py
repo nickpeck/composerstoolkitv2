@@ -11,6 +11,6 @@ chords = Sequence.from_generator(artificial_scale)\
     .transform(loop())\
     .transform(aggregate(4, HALF_NOTE))
 
-Container(bpm=100, playback_rate=1)\
+Sequencer(bpm=100, playback_rate=1)\
     .add_sequence(chords)\
     .playback()

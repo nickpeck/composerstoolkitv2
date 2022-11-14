@@ -4,7 +4,7 @@ from typing import List, Any, Tuple, Set
 
 from prefixspan import PrefixSpan
 
-from ..core import Graph, FiniteSequence, Container, Event, Sequence
+from ..core import Graph, FiniteSequence, Sequencer, Event, Sequence
 from ..builders.transformers import *
 
 def common_subsequences(

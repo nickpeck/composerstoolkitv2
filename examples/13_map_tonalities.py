@@ -135,7 +135,7 @@ melody = Sequence.from_generator(
     )
 )
 
-Container(bpm=95, playback_rate=1, debug=True)\
+Sequencer(bpm=95, playback_rate=1, debug=True)\
     .add_sequence(melody)\
     .add_sequence(backing_figure)\
     .add_sequence(chords)\

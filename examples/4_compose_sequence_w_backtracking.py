@@ -17,6 +17,6 @@ seq = backtracking_solver(
         constraint_no_leaps_more_than(4)],
 )
 
-Container(bpm=240, playback_rate=1)\
+Sequencer(bpm=240, playback_rate=1)\
     .add_sequence(seq)\
     .playback()

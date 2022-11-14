@@ -61,7 +61,7 @@ accompaniment = Sequence.from_generator(
 )).transform(loop(
 ))
 
-Container(bpm=120, playback_rate=1)\
+Sequencer(bpm=120, playback_rate=1)\
     .add_sequence(melody, offset=EIGHTH_NOTE)\
     .add_sequence(accompaniment)\
     .add_sequence(baseline)\

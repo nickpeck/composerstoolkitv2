@@ -23,7 +23,7 @@ seq_upper = Sequence.from_generator(random_slice(
     ])
 ))
 
-Container(bpm=240, playback_rate=1)\
+Sequencer(bpm=240, playback_rate=1)\
     .add_sequence(seq_upper)\
     .add_sequence(ostinato)\
     .playback()

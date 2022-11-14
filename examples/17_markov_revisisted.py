@@ -25,6 +25,6 @@ melody = Sequence.from_generator(using_markov_table(
     map_to_pulses(pulse)
 )
 
-Container(bpm=250, playback_rate=1)\
+Sequencer(bpm=250, playback_rate=1)\
     .add_sequence(melody)\
     .playback()

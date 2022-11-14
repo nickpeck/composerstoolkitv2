@@ -32,6 +32,6 @@ seq = Sequence.from_generator(
         lambda e: min(e.pitches) < 59 or max(e.pitches) > 62
 ))
 
-Container(bpm=150, playback_rate=1)\
+Sequencer(bpm=150, playback_rate=1)\
     .add_sequence(seq)\
     .playback()

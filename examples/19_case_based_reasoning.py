@@ -48,6 +48,6 @@ solver = CaseBasedSolver(source=source,
 
 for solution, rating in iter(solver):
     print("rating", rating)
-    Container(bpm=50, playback_rate=1)\
+    Sequencer(bpm=50, playback_rate=1)\
         .add_sequence(solution)\
         .playback()

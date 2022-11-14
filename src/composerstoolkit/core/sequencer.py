@@ -19,7 +19,7 @@ from . synth import DummyPlayback
 from . sequence import FiniteSequence
 from .. resources.pitches import PitchFactory
 
-class Container:
+class Sequencer:
     """Provides a context for playing back multiple sequences
     or rendering them out to a MIDI file.
     """
@@ -54,10 +54,10 @@ class Container:
             kwargs["debug"] = False
             
         if kwargs["debug"]:
-            Container._init_logger()
+            Sequencer._init_logger()
 
         if "synth" not in kwargs:
-            kwargs["synth"] = Container.get_fallback_synth()
+            kwargs["synth"] = Sequencer.get_fallback_synth()
 
         logging.getLogger().info(f'Using synth {kwargs["synth"]}')
 
@@ -75,7 +75,7 @@ class Container:
         return [seq for (channel_no, offset, seq) in self.sequences]
 
     def add_sequence(self, seq, **kwargs):
-        """Add a sequence to the playback container.
+        """Add a sequence to the playback sequencer.
         optional args:
             offset (default 0)
             channel_no (defaults to the next available channel)
@@ -140,9 +140,9 @@ class Container:
                 if running_count == 0:
                     return
                     
-    def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Container:
+    def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:
         """Convenience method for applying a transformation function globally to all
-        sequences in the Container.
+        sequences in the Sequencer.
         """
         for i,_seq in enumerate(self.sequences):
             channel_no, offset, seq = self.sequences[i]
@@ -151,7 +151,7 @@ class Container:
         return self
 
     def save_as_midi_file(self, filename):
-        """Save the contents of the container as a MIDI file
+        """Save the contents of the sequencer as a MIDI file
         """
         midifile = MIDIFile(len(self.sequences))
         midifile.addTempo(0, 0, self.options["bpm"])
@@ -182,7 +182,7 @@ class Container:
                 octave = "'"
                 duration = 4/event.duration
                 if duration % 1 > 0:
-                    raise Exception("Tuplets are not currently supported in Container.show_notation")
+                    raise Exception("Tuplets are not currently supported in Sequencer.show_notation")
                 duration = int(duration)
                 if len(event.pitches) == 0:
                     # rest

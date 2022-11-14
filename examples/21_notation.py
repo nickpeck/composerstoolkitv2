@@ -14,7 +14,7 @@ seq = Sequence(
         Event(pitches=[41], duration=QUARTER_NOTE)]).flatten()
     ).transform(transpose(24))
 
-Container(bpm=100, playback_rate=1)\
+Sequencer(bpm=100, playback_rate=1)\
     .add_sequence(seq.bake())\
     .add_sequence(chords.bake())\
     .show_notation()\

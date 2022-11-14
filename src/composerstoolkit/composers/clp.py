@@ -1,7 +1,7 @@
 import random
 from typing import List, Iterator, Callable
 
-from .. core import FiniteSequence, Transformer, Constraint, Container
+from .. core import FiniteSequence, Transformer, Constraint, Sequencer
 
 class CLP:
     class Voice(FiniteSequence):
@@ -118,7 +118,7 @@ class CLP:
     def __iter__(self):
         return self
 
-    def __next__(self) -> Container:
+    def __next__(self) -> Sequencer:
         solution: List[FiniteSequence] = \
                 [FiniteSequence([]) for i in range(self._n_voices)]
 
@@ -144,10 +144,10 @@ class CLP:
         for i_voice, voice in enumerate(solution):
             solution[i_voice] = voice.time_slice(0, self._max_len_beats)
         self.visited_paths.append(solution)
-        container = Container()
+        sequencer = Sequencer()
         for seq in solution:
-            container.add_sequence(seq)
-        return container
+            sequencer.add_sequence(seq)
+        return sequencer
 
 
 """

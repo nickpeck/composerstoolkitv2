@@ -63,7 +63,7 @@ found_chords = Sequence(found_chords).transform(
 common_chords = common_subsequences([e.pitches for e in found_chords.events])
 for count, progression in common_chords:
     seq = FiniteSequence([Event(sorted(chord), 2) for chord in progression])
-    Container(bpm=50, playback_rate=1)\
+    Sequencer(bpm=50, playback_rate=1)\
         .add_sequence(seq)\
         .playback()
 

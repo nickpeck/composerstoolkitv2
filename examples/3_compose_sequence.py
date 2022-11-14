@@ -27,6 +27,6 @@ seq = develop(
     min_beats=16
 )
 
-Container(bpm=240, playback_rate=1)\
+Sequencer(bpm=240, playback_rate=1)\
     .add_sequence(seq)\
     .playback()

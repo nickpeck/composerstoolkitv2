@@ -56,7 +56,7 @@ chords = Sequence.from_generator(chords_from_scale(
         choices = [1,2,3,4],
         threshold = 0.0))
 
-Container(bpm=150, playback_rate=1)\
+Sequencer(bpm=150, playback_rate=1)\
     .add_sequence(melody)\
     .add_sequence(chords)\
     .playback()

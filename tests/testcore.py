@@ -499,29 +499,29 @@ class FiniteSequenceTests(unittest.TestCase):
         vectors = seq.to_vectors()
         assert vectors == [(-7, 1), (2, 2), (2, 1), (-4, 3)]
 
-class ContainerTests(unittest.TestCase):
+class SequencerTests(unittest.TestCase):
 
     def test_defaults_options(self):
-        c = Container()
+        s = Sequencer()
         assert c.options["synth"] != None
         assert c.options["bpm"] == 120
         assert c.options["playback_rate"] == 1
 
     def test_option_overrides(self):
-        c = Container(bpm=300, playback_rate=2)
+        s = Sequencer(bpm=300, playback_rate=2)
         assert c.options["synth"] != None
         assert c.options["bpm"] == 300
         assert c.options["playback_rate"] == 2
 
     def test_can_add_a_sequence(self):
-        c = Container(bpm=300, playback_rate=2)
+        s = Sequencer(bpm=300, playback_rate=2)
         seq = FiniteSequence([
             Event(pitches=[67], duration=1)])
         c.add_sequence(seq)
         assert c.sequences[0] == (1, 0, seq)
         
     def test_can_add_a_global_transformer(self):
-        c = Container(bpm=300, playback_rate=2)
+        s = Sequencer(bpm=300, playback_rate=2)
         seq = FiniteSequence([
             Event(pitches=[67], duration=1)])
         c.add_sequence(seq)
@@ -530,7 +530,7 @@ class ContainerTests(unittest.TestCase):
         assert list(seq.events) == [Event(pitches=[68], duration=1, meta={})]
 
     def test_can_add_a_sequence_on_a_given_channel_and_offset(self):
-        c = Container(bpm=300, playback_rate=2)
+        s = Sequencer(bpm=300, playback_rate=2)
         seq = FiniteSequence([
             Event(pitches=[67], duration=1)])
         c.add_sequence(seq, channel_no=3, offset=100)
@@ -538,7 +538,7 @@ class ContainerTests(unittest.TestCase):
 
     def test_can_save_to_midi_file(self):
         filename = "test.MID"
-        c = Container(bpm=100, playback_rate=1)
+        s = Sequencer(bpm=100, playback_rate=1)
         seq = FiniteSequence([
             Event(pitches=[60], duration=1),
             Event(pitches=[62], duration=1)])
@@ -555,7 +555,7 @@ class ContainerTests(unittest.TestCase):
         assert graph.edges[1].end_time == 2
 
     def test_can_playback(self):
-        c = Container(synth=DummyPlayback(), debug=False)
+        s = Sequencer(synth=DummyPlayback(), debug=False)
         seq = FiniteSequence([
             Event(pitches=[60], duration=1),
             Event(pitches=[62], duration=1)])

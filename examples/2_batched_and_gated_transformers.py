@@ -58,6 +58,6 @@ seq = Sequence(events=[
                 rhythmic_diminution(0.5)])
           , my_gate2))
 
-Container(bpm=240, playback_rate=1)\
+Sequencer(bpm=240, playback_rate=1)\
     .add_sequence(seq)\
     .playback()

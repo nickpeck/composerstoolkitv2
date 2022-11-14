@@ -82,7 +82,7 @@ voice4 = backtracking_markov_solver(
 
 voice4 = Sequence(voice4.events).transform(tie_repeated()).bake()
 
-Container(bpm=60, playback_rate=1)\
+Sequencer(bpm=60, playback_rate=1)\
     .add_sequence(voice1)\
     .add_sequence(voice2)\
     .add_sequence(voice3)\
