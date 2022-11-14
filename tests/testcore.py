@@ -519,6 +519,15 @@ class ContainerTests(unittest.TestCase):
             Event(pitches=[67], duration=1)])
         c.add_sequence(seq)
         assert c.sequences[0] == (1, 0, seq)
+        
+    def test_can_add_a_global_transformer(self):
+        c = Container(bpm=300, playback_rate=2)
+        seq = FiniteSequence([
+            Event(pitches=[67], duration=1)])
+        c.add_sequence(seq)
+        c.add_transformer(transpose(1))
+        channel_no,offset,seq = c.sequences[0]
+        assert list(seq.events) == [Event(pitches=[68], duration=1, meta={})]
 
     def test_can_add_a_sequence_on_a_given_channel_and_offset(self):
         c = Container(bpm=300, playback_rate=2)
