@@ -16,7 +16,7 @@ import abjad
 from midiutil.MidiFile import MIDIFile # type: ignore
 from mido import MidiTrack, Message # type: ignore
 from . synth import DummyPlayback 
-from . sequence import FiniteSequence
+from . sequence import Event, FiniteSequence
 from .. resources.pitches import PitchFactory
 
 class Sequencer:
@@ -84,10 +84,14 @@ class Sequencer:
             offset = kwargs["offset"]
         except KeyError:
             offset = 0
+        if offset > 0:
+            seq = seq.extend(
+                events=itertools.chain([Event(duration=offset)], seq.events))
         try:
             channel_no = kwargs["channel_no"]
         except KeyError:
             channel_no = len(self.sequences) + 1
+        seq.meta["channel_no"] = channel_no
         self.sequences.append((channel_no, offset, seq))
         return self
 
@@ -96,7 +100,7 @@ class Sequencer:
         bpm = self.options["bpm"]
         time_scale_factor = (1/(bpm/60)) * (1/playback_rate)
         logging.getLogger().info(f"Channel {channel_no} playback starting")
-        sleep(offset)
+        #sleep(offset)
         for event in seq.events:
             if self.options["debug"]:
                 logging.getLogger().info(event)

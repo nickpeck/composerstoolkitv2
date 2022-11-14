@@ -570,10 +570,16 @@ class SequencerTests(unittest.TestCase):
 
     def test_can_add_a_sequence_on_a_given_channel_and_offset(self):
         s = Sequencer(bpm=300, playback_rate=2)
-        seq = FiniteSequence([
+        seq1 = FiniteSequence([
             Event(pitches=[67], duration=1)])
-        s.add_sequence(seq, channel_no=3, offset=100)
-        assert s.sequences[0] == (3, 100, seq)
+        seq2 = FiniteSequence([
+            Event(pitches=[67], duration=1)])
+        s.add_sequence(seq1, channel_no=1, offset=100)
+        s.add_sequence(seq2, channel_no=2)
+        channel_no, offset, seq3 = s.sequences[0]
+        assert list(seq3.events) == [Event(pitches=[], duration=100), Event(pitches=[67], duration=1)]
+        channel_no, offset, seq4 = s.sequences[1]
+        assert list(seq4.events) == [Event(pitches=[67], duration=1)]
 
     def test_can_save_to_midi_file(self):
         filename = "test.MID"
