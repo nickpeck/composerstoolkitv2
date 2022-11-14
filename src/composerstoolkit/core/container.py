@@ -139,6 +139,16 @@ class Container:
                         running_count = running_count + 1
                 if running_count == 0:
                     return
+                    
+    def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Container:
+        """Convenience method for applying a transformation function globally to all
+        sequences in the Container.
+        """
+        for i,_seq in enumerate(self.sequences):
+            channel_no, offset, seq = self.sequences[i]
+            self.sequences[i] = (channel_no, offset, seq.__class__(
+                events = transformer(seq)))
+        return self
 
     def save_as_midi_file(self, filename):
         """Save the contents of the container as a MIDI file
