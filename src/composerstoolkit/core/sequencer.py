@@ -69,6 +69,7 @@ class Sequencer:
         
         self.sequences = []
         self.options.update(kwargs)
+        self.active_pitches = []
 
     @property
     def voices(self):
@@ -106,9 +107,11 @@ class Sequencer:
                 logging.getLogger().info(event)
             for pitch in event.pitches:
                 synth.noteon(channel_no, pitch, 60)
+                self.active_pitches.append((pitch, channel_no))
             sleep(event.duration * time_scale_factor)
             for pitch in event.pitches:
                 synth.noteoff(channel_no, pitch)
+                self.active_pitches.remove((pitch, channel_no))
         logging.getLogger().info("Channel {} playback ended".format(channel_no))
 
     def playback(self):
@@ -118,6 +121,10 @@ class Sequencer:
         with synth:
             def signal_handler(_sig, _frame):
                 logging.getLogger().info("Stop signal recieved")
+                logging.getLogger().info("Stopping all active pitches")
+                for pitch, channel_no in self.active_pitches:
+                    synth.noteoff(channel_no, pitch)
+                logging.getLogger().info("...done")
                 print('Bye')
                 sys.exit(0)
             signal.signal(signal.SIGINT, signal_handler)
