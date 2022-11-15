@@ -70,6 +70,7 @@ class Sequencer:
         self.sequences = []
         self.options.update(kwargs)
         self.active_pitches = []
+        self.is_playing = False
 
     @property
     def voices(self):
@@ -103,6 +104,8 @@ class Sequencer:
         logging.getLogger().info(f"Channel {channel_no} playback starting")
         #sleep(offset)
         for event in seq.events:
+            if not self.is_playing:
+                return
             if self.options["debug"]:
                 logging.getLogger().info(event)
             for pitch in event.pitches:
@@ -121,9 +124,12 @@ class Sequencer:
         with synth:
             def signal_handler(_sig, _frame):
                 logging.getLogger().info("Stop signal recieved")
-                logging.getLogger().info("Stopping all active pitches")
-                for pitch, channel_no in self.active_pitches:
-                    synth.noteoff(channel_no, pitch)
+                logging.getLogger().info("Sending note off to all pitches")
+                self.is_playing = False
+                sleep(2)
+                for pitch in range(0,127):
+                    for channel_no in range(1,17):
+                        synth.noteoff(channel_no, pitch)
                 logging.getLogger().info("...done")
                 print('Bye')
                 sys.exit(0)
@@ -135,6 +141,7 @@ class Sequencer:
 
             
             channels = []
+            self.is_playing = True
             for channel_no, offset, seq in self.sequences:
                 player_thread = Thread(
                     target=self._play_channel,
