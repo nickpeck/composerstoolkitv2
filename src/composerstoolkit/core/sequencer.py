@@ -127,8 +127,9 @@ class Sequencer:
                 logging.getLogger().info("Sending note off to all pitches")
                 self.is_playing = False
                 sleep(2)
-                for pitch in range(0,127):
+                for pitch in range(0,128):
                     for channel_no in range(1,17):
+                        logging.debug(f"noteoff pitch {pitch} channel {channel_no}")
                         synth.noteoff(channel_no, pitch)
                 logging.getLogger().info("...done")
                 print('Bye')
