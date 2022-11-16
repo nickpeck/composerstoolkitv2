@@ -6,6 +6,7 @@ import os
 from time import sleep
 import signal
 import sys
+import time
 from typing import Any, Dict, List, Optional, Callable, Iterator, Set
 from threading import Thread
 
@@ -103,15 +104,25 @@ class Sequencer:
         time_scale_factor = (1/(bpm/60)) * (1/playback_rate)
         logging.getLogger().info(f"Channel {channel_no} playback starting")
         #sleep(offset)
+        drift = None
         for event in seq.events:
             if not self.is_playing:
                 return
             if self.options["debug"]:
-                logging.getLogger().info(event)
+                logging.getLogger().info(f"Channel {channel_no} {event}")
+            future_time = time.time() + (event.duration * time_scale_factor)
+            if drift is not None:
+                future_time = future_time - drift
+                drift = None
             for pitch in event.pitches:
                 synth.noteon(channel_no, pitch, 60)
                 self.active_pitches.append((pitch, channel_no))
-            sleep(event.duration * time_scale_factor)
+            pause_int = future_time - time.time()
+            if pause_int > 0:
+                sleep(pause_int)
+            else:
+                logging.getLogger().debug(f"Channel {channel_no} drift {abs(pause_int)} s")
+                drift = abs(pause_int)
             for pitch in event.pitches:
                 synth.noteoff(channel_no, pitch)
                 self.active_pitches.remove((pitch, channel_no))
