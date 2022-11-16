@@ -103,7 +103,6 @@ class Sequencer:
         bpm = self.options["bpm"]
         time_scale_factor = (1/(bpm/60)) * (1/playback_rate)
         logging.getLogger().info(f"Channel {channel_no} playback starting")
-        #sleep(offset)
         drift = None
         for event in seq.events:
             if not self.is_playing:
@@ -127,6 +126,12 @@ class Sequencer:
                 synth.noteoff(channel_no, pitch)
                 self.active_pitches.remove((pitch, channel_no))
         logging.getLogger().info("Channel {} playback ended".format(channel_no))
+        
+    def clear_all(self, synth):
+        for pitch in range(0,128):
+            for channel_no in range(1,17):
+                synth.noteoff(channel_no, pitch)
+        logging.getLogger().info("...done")
 
     def playback(self):
         """Playback all midi channels
@@ -138,11 +143,7 @@ class Sequencer:
                 logging.getLogger().info("Sending note off to all pitches")
                 self.is_playing = False
                 sleep(2)
-                for pitch in range(0,128):
-                    for channel_no in range(1,17):
-                        logging.debug(f"noteoff pitch {pitch} channel {channel_no}")
-                        synth.noteoff(channel_no, pitch)
-                logging.getLogger().info("...done")
+                self.clear_all(synth)
                 print('Bye')
                 sys.exit(0)
             signal.signal(signal.SIGINT, signal_handler)

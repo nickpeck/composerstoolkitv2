@@ -4,6 +4,7 @@ Some intefaces for different playback engines.
 
 from abc import ABC
 import logging
+import time
 
 class Playback(ABC):
     def noteon(self, channel: int, pitch: int, velocity: int):
@@ -61,6 +62,8 @@ class RTPMidi(Playback):
         
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.midiout.close_port()
+        time.sleep(0.1)
+        del self.midiout
         logging.getLogger().debug("Closed connection to RTPMidi port")
 
 class FluidsynthPlayback(Playback):
