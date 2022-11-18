@@ -55,8 +55,10 @@ class Sequencer(Thread):
     def context(self) -> Optional[Context]:
         if self._playback_started_ts is None:
             return None
+        bpm = self.options["bpm"]
+        rate = self.options["playback_rate"]
         time_offset = time.time() - self._playback_started_ts
-        beat_offset = (time_offset / self.options["bpm"]) * self.options["playback_rate"]
+        beat_offset = time_offset * ((bpm/60) * rate)
         return Context(
             time_offset_secs = time_offset,
             beat_offset = beat_offset,
