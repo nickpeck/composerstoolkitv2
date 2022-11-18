@@ -50,14 +50,17 @@ seq = Sequence(events=[
     .transform(
         gated(
             rhythmic_augmentation(2),
-            my_gate1))\
+            my_gate1,
+            get_context = lambda: mysequencer.context))\
     .transform(
         gated(
             batch([
                 transpose(12),
                 rhythmic_diminution(0.5)])
-          , my_gate2))
+          , my_gate2,
+          get_context = lambda: mysequencer.context))
 
-Sequencer(bpm=240, playback_rate=1)\
-    .add_sequence(seq)\
-    .playback()
+mysequencer = Sequencer(bpm=240, playback_rate=1)\
+    .add_sequence(seq)
+    
+mysequencer.playback()

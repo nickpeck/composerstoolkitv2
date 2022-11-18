@@ -20,7 +20,13 @@ from . synth import DummyPlayback
 from . sequence import Event, FiniteSequence
 from .. resources.pitches import PitchFactory
 
-class Sequencer:
+@dataclass
+class Context:
+    sequencer: Sequencer
+    beat_offset: float = 0.0
+    time_offset_secs: float = 0.0
+
+class Sequencer(Thread):
     """Provides a context for playing back multiple sequences
     or rendering them out to a MIDI file.
     """
@@ -44,6 +50,18 @@ class Sequencer:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         root.addHandler(handler)
+        
+    @property
+    def context(self) -> Optional[Context]:
+        if self._playback_started_ts is None:
+            return None
+        time_offset = time.time() - self._playback_started_ts
+        beat_offset = (time_offset / self.options["bpm"]) * self.options["playback_rate"]
+        return Context(
+            time_offset_secs = time_offset,
+            beat_offset = beat_offset,
+            sequencer = self
+        )
     
     def __init__(self, **kwargs):
         """Optional args:
@@ -51,6 +69,7 @@ class Sequencer:
         bpm - int
         playback_rate - defaults to 1
         """
+        super().__init__()
         if "debug" not in kwargs:
             kwargs["debug"] = False
             
@@ -72,6 +91,7 @@ class Sequencer:
         self.options.update(kwargs)
         self.active_pitches = []
         self.is_playing = False
+        self._playback_started_ts = None
 
     @property
     def voices(self):
@@ -132,6 +152,9 @@ class Sequencer:
             for channel_no in range(1,17):
                 synth.noteoff(channel_no, pitch)
         logging.getLogger().info("...done")
+        
+    def run(self):
+        self.playback()
 
     def playback(self):
         """Playback all midi channels
@@ -155,6 +178,7 @@ class Sequencer:
             
             channels = []
             self.is_playing = True
+            self._playback_started_ts = time.time()
             for channel_no, offset, seq in self.sequences:
                 player_thread = Thread(
                     target=self._play_channel,

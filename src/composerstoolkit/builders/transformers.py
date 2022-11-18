@@ -391,7 +391,8 @@ def random_transformation(seq: Sequence,
 @Transformer
 def gated(seq: Sequence,
     transformer: Transformer,
-    condition: Callable[[Context], bool]) -> Iterator[Event]:
+    condition: Callable[[Context], bool],
+    get_context: Callable[[], Context]) -> Iterator[Event]:
     """Return a new stream of events such as that:
     whenever condition evaluates to true, we return the next
     item in the transformed sequence.
@@ -404,12 +405,7 @@ def gated(seq: Sequence,
     for event in a:
         if previous is not None:
             i = i + previous.duration
-        context = Context(
-            event = a,
-            sequence = seq,
-            beat_offset = i,
-            previous = previous
-        )
+        context = get_context()
         if condition(context):
             previous = next(transformed)
             yield previous

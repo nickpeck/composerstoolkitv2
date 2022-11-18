@@ -559,6 +559,11 @@ class SequencerTests(unittest.TestCase):
         s.add_sequence(seq)
         assert s.sequences[0] == (1, 0, seq)
         
+    def test_context_is_none_before_playback(self):
+        s = Sequencer(bpm=300, playback_rate=2)
+        c = s.context
+        assert c is None
+        
     def test_can_add_a_global_transformer(self):
         s = Sequencer(bpm=300, playback_rate=2)
         seq = FiniteSequence([

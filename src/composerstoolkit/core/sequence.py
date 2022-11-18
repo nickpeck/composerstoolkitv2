@@ -125,7 +125,7 @@ class Sequence:
         Return the new sequence, allowing transformations to be chained in a single
         statement.
         """
-        new_seq = self.__class__(
+        new_seq = self.extend(
             events = transformer(self))
         return new_seq
 
@@ -307,14 +307,3 @@ class FiniteSequence:
 
     def __add__(self, other: FiniteSequence) -> FiniteSequence:
         return self.extend(events=self.events + other.events)
-
-@dataclass(frozen=True)
-class Context:
-    event: Event
-    sequence: FiniteSequence
-    beat_offset: int = 0
-    previous: Optional[Event] = None
-    nth_voice: Optional[int] = None
-    silbings: List[FiniteSequence] = field(
-        default_factory = lambda: []
-    )

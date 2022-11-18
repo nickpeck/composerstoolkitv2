@@ -385,10 +385,24 @@ class TransformerTests(unittest.TestCase):
 
     def test_gated_transformer(self):
         my_gate = lambda c: c.beat_offset % 2 == 0
+        def _context():
+            i = 0
+            while True:
+                c = Context(
+                    sequencer = None,
+                    beat_offset = i,
+                    time_offset_secs = i
+                )
+                yield c
+                i = i + 1
+        
+        context = _context()
+        
         transformed = self.test_seq.transform(
             gated(
                 transformer=transpose(interval=12),
-                condition=my_gate)
+                condition=my_gate,
+                get_context=lambda : next(context))
         ).bake()
         assert transformed.pitches == [
             72,62,76,65,79]

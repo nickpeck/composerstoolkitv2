@@ -44,13 +44,15 @@ chords = Sequence(events=[
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        time_gate(60,20,40)
+        time_gate(60,20,40),
+        get_context = lambda: mysequencer.context
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        time_gate(60,40,60)
+        time_gate(60,40,60),
+        get_context = lambda: mysequencer.context
     )
 )
 
@@ -62,13 +64,15 @@ bassline = Sequence(events=[
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        time_gate(60,20,40)
+        time_gate(60,20,40),
+        get_context = lambda: mysequencer.context
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        time_gate(60,40,60)
+        time_gate(60,40,60),
+        get_context = lambda: mysequencer.context
     )
 ).transform(
     tie_repeated()
@@ -89,13 +93,15 @@ backing_figure = Sequence(events=[
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        time_gate(60,20,40)
+        time_gate(60,20,40),
+        get_context = lambda: mysequencer.context
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        time_gate(60,40,60)
+        time_gate(60,40,60),
+        get_context = lambda: mysequencer.context
     )
 )
 
@@ -125,19 +131,22 @@ melody = Sequence.from_generator(
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        time_gate(60,20,40)
+        time_gate(60,20,40),
+        get_context = lambda: mysequencer.context
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        time_gate(60,40,60)
+        time_gate(60,40,60),
+        get_context = lambda: mysequencer.context
     )
 )
 
-Sequencer(bpm=95, playback_rate=1, debug=True)\
+mysequencer = Sequencer(bpm=95, playback_rate=1, debug=True)\
     .add_sequence(melody)\
     .add_sequence(backing_figure)\
     .add_sequence(chords)\
-    .add_sequence(bassline)\
-    .playback()
+    .add_sequence(bassline)
+
+mysequencer.playback()
