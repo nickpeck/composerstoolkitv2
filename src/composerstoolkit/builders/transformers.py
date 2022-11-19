@@ -314,6 +314,25 @@ def map_to_pitches(seq: Sequence, pitch_sequence: Sequence) -> Iterator[Event]:
         except StopIteration:
             yield event.extend(pitches=[])
 
+
+@Transformer
+def map_to_intervals(seq: Sequence,
+        starting_pitch: int,
+        intervals:List[int],
+        random_order=True) -> Iterator[Event]:
+    """Return a new stream of events which yields a melodic
+    pitch_sequence mapped to the events of seq using the given intervals,
+    either in order, or randdm order.
+    """
+    if not random_order:
+        iter_intervals = itertools.cycle(iter(intervals))
+    else:
+        iter_intervals = (random.choice(intervals) for i in itertools.count())
+    for event in seq.events:
+        next_int = next(iter_intervals)
+        starting_pitch = starting_pitch + next_int
+        yield event.extend(pitches=[starting_pitch])
+
 @Transformer
 def tie_repeated(seq: Sequence) -> Iterator[Event]:
     """Tie events notes with repeated pitches

@@ -62,7 +62,7 @@ accompaniment = Sequence.from_generator(
 ))
 
 Sequencer(bpm=120, playback_rate=1)\
-    .add_sequence(melody, offset=EIGHTH_NOTE)\
-    .add_sequence(accompaniment)\
-    .add_sequence(baseline)\
+    .add_sequence(melody, offset=EIGHTH_NOTE, channel_no=1)\
+    .add_sequence(accompaniment, channel_no=2)\
+    .add_sequence(baseline, channel_no=3)\
     .playback()

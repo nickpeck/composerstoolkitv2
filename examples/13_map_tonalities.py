@@ -21,17 +21,6 @@ from composerstoolkit.resources.rhythms import *
 
 pf = pitches.PitchFactory()
 
-def time_gate(cycle_length, in_secs, out_secs):
-    def _gate(context):
-        nonlocal cycle_length
-        nonlocal in_secs
-        nonlocal out_secs
-        mod = context.beat_offset % cycle_length
-        if mod >= in_secs and mod < out_secs:
-            return True
-        return False
-    return _gate
-
 chords = Sequence(events=[
         Event([pf("C3")], duration=EIGHTH_NOTE),
         Event([pf("F3")], duration=EIGHTH_NOTE),
@@ -44,14 +33,14 @@ chords = Sequence(events=[
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        time_gate(60,20,40),
+        cyclic_time_gate(60,20,40),
         get_context = lambda: mysequencer.context
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        time_gate(60,40,60),
+        cyclic_time_gate(60,40,60),
         get_context = lambda: mysequencer.context
     )
 )
@@ -64,14 +53,14 @@ bassline = Sequence(events=[
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        time_gate(60,20,40),
+        cyclic_time_gate(60,20,40),
         get_context = lambda: mysequencer.context
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        time_gate(60,40,60),
+        cyclic_time_gate(60,40,60),
         get_context = lambda: mysequencer.context
     )
 ).transform(
@@ -93,14 +82,14 @@ backing_figure = Sequence(events=[
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        time_gate(60,20,40),
+        cyclic_time_gate(60,20,40),
         get_context = lambda: mysequencer.context
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        time_gate(60,40,60),
+        cyclic_time_gate(60,40,60),
         get_context = lambda: mysequencer.context
     )
 )
@@ -131,14 +120,14 @@ melody = Sequence.from_generator(
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        time_gate(60,20,40),
+        cyclic_time_gate(60,20,40),
         get_context = lambda: mysequencer.context
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        time_gate(60,40,60),
+        cyclic_time_gate(60,40,60),
         get_context = lambda: mysequencer.context
     )
 )

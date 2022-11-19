@@ -658,6 +658,74 @@ class AnnotationsTests(unittest.TestCase):
         t = as_is(4)
         assert str(t) == "<Transformer: as_is(4,)>"
 
+class GateTests(unittest.TestCase):
+
+    def test_time_gate(self):
+        gate = time_gate(
+            on=0,
+            off=5
+        )
+        
+        c = Context(beat_offset=0, time_offset_secs=0, sequencer=None)
+        assert gate(c) == True
+        c.beat_offset = 4
+        assert gate(c) == True
+        c.beat_offset = 5
+        assert gate(c) == False
+        
+        gate = time_gate(
+            on=5
+        )
+        
+        c = Context(beat_offset=0, time_offset_secs=0, sequencer=None)
+        assert gate(c) == False
+        c.beat_offset = 4
+        assert gate(c) == False
+        c.beat_offset = 5
+        assert gate(c) == True
+        
+        gate = time_gate(
+            on=5,
+            off=10
+        )
+        
+        c = Context(beat_offset=0, time_offset_secs=0, sequencer=None)
+        assert gate(c) == False
+        c.beat_offset = 4
+        assert gate(c) == False
+        c.beat_offset = 5
+        assert gate(c) == True
+        c.beat_offset = 9
+        assert gate(c) == True
+        c.beat_offset = 10
+        assert gate(c) == False
+
+
+    def test_cyclic_time_gate(self):
+        gate = cyclic_time_gate(
+            cycle_length=10,
+            on=5,
+            off=10
+        )
+        
+        c = Context(beat_offset=0, time_offset_secs=0, sequencer=None)
+        assert gate(c) == False
+        c.beat_offset = 5
+        assert gate(c) == True
+        c.beat_offset = 6
+        assert gate(c) == True
+        c.beat_offset = 9
+        assert gate(c) == True
+        c.beat_offset = 10
+        assert gate(c) == False
+        c.beat_offset = 11
+        assert gate(c) == False
+        c.beat_offset = 14
+        assert gate(c) == False
+        c.beat_offset = 15
+        assert gate(c) == True
+
+
 
 if __name__ == "__main__":
     unittest.main()
