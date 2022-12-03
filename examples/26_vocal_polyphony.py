@@ -2,27 +2,9 @@ from typing import Callable, Set, List
 
 from composerstoolkit import *
     
-@Transformer
-def enforce_shared_pitch_class_set(seq: Sequence,
-    pitch_class_set: Set[int],
-    get_context: Callable[[], Context]):
-    for event in seq.events:
-        pitches = event.pitches
-        sequencer = get_context().sequencer
-        other_pitches = [p for p,_c in sequencer.active_pitches]
-        all_pitches = pitches + other_pitches
-        aggregate = set()
-        for e1 in all_pitches:
-            for e2 in all_pitches:
-                if e1 == e2:
-                    continue
-                aggregate.add(abs(e2-e1) % 12)
-        if aggregate.issubset(pitch_class_set):
-            yield event
-           
 
 # alternative to 'fitpitch_range', because that uses 
-# octave displacements which are no always natural for
+# octave displacements which are not always natural for
 # vocal lines.           
 @Transformer
 def enforce_pitch_range(seq: Sequence,
@@ -42,7 +24,7 @@ NEXUS_SET = {0,2,5}
    
    
 
-g = enforce_shared_pitch_class_set(
+harmony_gate = enforce_shared_pitch_class_set(
             pitch_class_set=NEXUS_SET,
             get_context = lambda: mysequencer.context)
 
@@ -80,7 +62,7 @@ bass = Sequence.from_generator(random_slice(
 ).transform(
     enforce_pitch_range(min_pitch=40, max_pitch=60)
 ).transform(
-    g
+    harmony_gate
 )
 
 ##################### Alto #######################
@@ -94,7 +76,7 @@ alto = Sequence.from_generator(random_slice(
 ).transform(
     enforce_pitch_range(min_pitch=55, max_pitch=72)
 ).transform(
-    g
+    harmony_gate
 )
 
 
@@ -108,7 +90,7 @@ soprano = Sequence.from_generator(random_slice(
 ).transform(
     enforce_pitch_range(min_pitch=60, max_pitch=77)
 ).transform(
-    g
+    harmony_gate
 )
 
 mysequencer = Sequencer(bpm=35, playback_rate=1, debug=True)\

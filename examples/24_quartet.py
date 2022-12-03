@@ -11,24 +11,7 @@ such as the 2nd Viennese trichord.
 from typing import Callable, Set, List
 
 from composerstoolkit import *
-    
-@Transformer
-def enforce_shared_pitch_class_set(seq: Sequence,
-    pitch_class_set: Set[int],
-    get_context: Callable[[], Context]):
-    for event in seq.events:
-        pitches = event.pitches
-        sequencer = get_context().sequencer
-        other_pitches = [p for p,_c in sequencer.active_pitches]
-        all_pitches = pitches + other_pitches
-        aggregate = set()
-        for e1 in all_pitches:
-            for e2 in all_pitches:
-                if e1 == e2:
-                    continue
-                aggregate.add(abs(e2-e1) % 12)
-        if aggregate.issubset(pitch_class_set):
-            yield event
+
 
 @Transformer
 def rest(seq: Sequence):
@@ -38,7 +21,7 @@ def rest(seq: Sequence):
 NEXUS_SET = {0,1,6}
 #NEXUS_SET = {0,2,5}
     
-g = enforce_shared_pitch_class_set(
+harmony_gate = enforce_shared_pitch_class_set(
             pitch_class_set=NEXUS_SET,
             get_context = lambda: mysequencer.context)
 
@@ -83,7 +66,7 @@ bass = Sequence.from_generator(random_slice(
 ).transform(
     fit_to_range(min_pitch=30, max_pitch=60)
 ).transform(
-    g
+    harmony_gate
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=30, on=5, off=13),
@@ -108,7 +91,7 @@ alto = Sequence.from_generator(random_slice(
 ).transform(
     fit_to_range(min_pitch=50, max_pitch=80)
 ).transform(
-    g
+    harmony_gate
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=10, on=5, off=9),
@@ -137,7 +120,7 @@ soprano = Sequence.from_generator(random_slice(
 ).transform(
     fit_to_range(min_pitch=65, max_pitch=100)
 ).transform(
-    g
+    harmony_gate
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=15, on=2, off=9),

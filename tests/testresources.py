@@ -109,5 +109,23 @@ class TestChordBuilder(unittest.TestCase):
         cb = ChordBuilder()
         assert cb("C/G").pitches == [7,12,16,19]
 
+class PitchClassSetTests(unittest.TestCase):
+
+    def test_to_prime_form_empty_set(self):
+        assert pitchset.to_prime_form(set()) == set()
+    
+    def test_to_prime_form_single_item(self):
+        assert pitchset.to_prime_form({5}) == {0}
+
+    def test_to_prime_form(self):
+        assert pitchset.to_prime_form({0,4,6,7}) == {0,1,3,7}
+        assert pitchset.to_prime_form({7,4,6,0}) == {0,1,3,7}
+        assert pitchset.to_prime_form({2,6,8,9}) == {0,1,3,7}
+        assert pitchset.to_prime_form({8,6,2,9}) == {0,1,3,7}          
+        
+    def test_to_prime_form_from_list(self):
+        assert pitchset.to_prime_form([0,4,6,7]) == {0,1,3,7}
+
+
 if __name__ == "__main__":
     unittest.main()

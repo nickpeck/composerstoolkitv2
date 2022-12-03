@@ -10,7 +10,15 @@ from typing import List, Optional, Iterator, Union, Callable, Set, Any
 import more_itertools
 
 from ..core import Event, Sequence, Transformer, Context, Constraint, FiniteSequence
-from ..resources import NOTE_MIN, NOTE_MAX
+from ..resources import NOTE_MIN, NOTE_MAX, pitchset
+
+@Transformer
+def rest(seq: Sequence):
+    """Remove any pitches but retain the durations,
+    creating a series of rest events.
+    """
+    for event in seq.events:
+        yield event.extend(pitches=[])
 
 @Transformer
 def loop(seq: Sequence,
@@ -319,19 +327,24 @@ def map_to_pitches(seq: Sequence, pitch_sequence: Sequence) -> Iterator[Event]:
 def map_to_intervals(seq: Sequence,
         starting_pitch: int,
         intervals:List[int],
-        random_order=True) -> Iterator[Event]:
+        random_order=True,
+        min=NOTE_MIN,
+        max=NOTE_MAX) -> Iterator[Event]:
     """Return a new stream of events which yields a melodic
     pitch_sequence mapped to the events of seq using the given intervals,
     either in order, or randdm order.
     """
+    pitch = starting_pitch
     if not random_order:
         iter_intervals = itertools.cycle(iter(intervals))
     else:
         iter_intervals = (random.choice(intervals) for i in itertools.count())
     for event in seq.events:
         next_int = next(iter_intervals)
-        starting_pitch = starting_pitch + next_int
-        yield event.extend(pitches=[starting_pitch])
+        _pitch = pitch + next_int
+        if _pitch >= min and _pitch <= max:
+            pitch = _pitch
+            yield event.extend(pitches=[pitch])
 
 @Transformer
 def tie_repeated(seq: Sequence) -> Iterator[Event]:
@@ -538,3 +551,54 @@ def random_mutation(seq: Sequence,
         choice = random.choice(choices)
         event = key_function(event, choice)
         yield event
+
+@Transformer
+def shape_sine(seq: Sequence,
+    get_context: Callable[[], Context],
+    period_beats = 100, min=60, max=90, phase=0):
+    """Only allows events to pass such as that the
+    shape of the resulting line obeys a sine shape.
+    """
+    last_pitch = None
+    for event in seq.events:
+        if not last_pitch:
+            last_pitch = event.pitches[0]
+            continue
+        cur_pitch = event.pitches[0]
+        if cur_pitch > max or cur_pitch < min:
+            continue
+        context = get_context()
+        beats = context.beat_offset
+        beat = context.beat_offset % period_beats
+        degrees = (beat/period_beats * 360) - phase % 360
+        radians = math.radians(degrees)
+        sine_value = math.sin(radians)
+        weights = [sine_value, random.randrange(-10,10,1)/10, -sine_value]
+        active = random.choices([1, 0, -1], weights)[0]
+        if active == 1:
+            if cur_pitch > last_pitch:
+                last_pitch = cur_pitch
+                yield event
+        elif active == -1:
+            if cur_pitch < last_pitch:
+                last_pitch = cur_pitch
+                yield event
+        else:
+            yield event
+
+@Transformer
+def enforce_shared_pitch_class_set(seq: Sequence,
+    pitch_class_set: Set[int],
+    get_context: Callable[[], Context]):
+    """Only allow events to pass where the
+    aggregate of all pitches in the context is a subset
+    of the given pitch class (or vice versa).
+    """
+    pitch_class_set = pitchset.to_prime_form(pitch_class_set)
+    for event in seq.events:
+        pitches = event.pitches
+        sequencer = get_context().sequencer
+        aggregate = set([p % 12 for p in pitches]).union(set([p % 12 for p, _c in sequencer.active_pitches]))
+        aggregate = pitchset.to_prime_form(aggregate)
+        if pitch_class_set.issubset(aggregate) or aggregate.issubset(pitch_class_set):
+            yield event

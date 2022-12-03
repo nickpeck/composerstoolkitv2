@@ -2,33 +2,10 @@ from typing import Callable, Set, List
 
 from composerstoolkit import *
     
-@Transformer
-def enforce_shared_pitch_class_set(seq: Sequence,
-    pitch_class_set: Set[int],
-    get_context: Callable[[], Context]):
-    for event in seq.events:
-        pitches = event.pitches
-        sequencer = get_context().sequencer
-        other_pitches = [p for p,_c in sequencer.active_pitches]
-        all_pitches = pitches + other_pitches
-        aggregate = set()
-        for e1 in all_pitches:
-            for e2 in all_pitches:
-                if e1 == e2:
-                    continue
-                aggregate.add(abs(e2-e1) % 12)
-        if aggregate.issubset(pitch_class_set):
-            yield event
-
-@Transformer
-def rest(seq: Sequence):
-    for event in seq.events:
-        yield event.extend(pitches=[])
-    
 NEXUS_SET = {0,1,6}
 #NEXUS_SET = {0,2,5}
     
-g = enforce_shared_pitch_class_set(
+harmony_gate = enforce_shared_pitch_class_set(
             pitch_class_set=NEXUS_SET,
             get_context = lambda: mysequencer.context)
 
@@ -56,7 +33,7 @@ flute = Sequence.from_generator(random_slice(
         get_context=lambda: mysequencer.context
     )
 ).transform(
-    g
+    harmony_gate
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=5, on=4, off=5),
@@ -96,7 +73,7 @@ harp = Sequence(events=[Event(pitches=[], duration=1)]
         get_context=lambda: mysequencer.context
     )
 ).transform(
-    g
+    harmony_gate
 ).transform(
     fit_to_range(min_pitch=40, max_pitch=70)
 ).transform(
