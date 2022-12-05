@@ -13,7 +13,7 @@ def to_interval_vectors(pcs: Union[Set[int],List[int]]) -> List[int]:
     return [pcs[i + 1] - pcs[i] for i in range(len(pcs) - 1)] + [12 + min(pcs) - pcs[-1]]
     
 def get_compact_form(rotations: List[List[int]]) -> List[int]:
-    rotations = sorted(rotations, key=lambda r: reduce((lambda x, y: x * y), r))
+    rotations = sorted(rotations, key=lambda r: reduce((lambda x, y: pow(x,y)), r))
     return rotations[0]
     
 def get_rotations(intervals: List[int]) -> List[List[int]]:

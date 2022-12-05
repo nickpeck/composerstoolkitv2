@@ -121,7 +121,8 @@ class PitchClassSetTests(unittest.TestCase):
         assert pitchset.to_prime_form({0,4,6,7}) == {0,1,3,7}
         assert pitchset.to_prime_form({7,4,6,0}) == {0,1,3,7}
         assert pitchset.to_prime_form({2,6,8,9}) == {0,1,3,7}
-        assert pitchset.to_prime_form({8,6,2,9}) == {0,1,3,7}          
+        assert pitchset.to_prime_form({8,6,2,9}) == {0,1,3,7}
+        assert pitchset.to_prime_form({60,62,63,68}) == {0,1,3,7}        
         
     def test_to_prime_form_from_list(self):
         assert pitchset.to_prime_form([0,4,6,7]) == {0,1,3,7}

@@ -335,10 +335,15 @@ def map_to_intervals(seq: Sequence,
     either in order, or randdm order.
     """
     pitch = starting_pitch
-    if not random_order:
-        iter_intervals = itertools.cycle(iter(intervals))
-    else:
-        iter_intervals = (random.choice(intervals) for i in itertools.count())
+    def it():
+        l = len(intervals)
+        while True:
+            r1 = random.choice(range(0, l))
+            r2 = random.choice(range(r1, l))
+            list = intervals[r1:r2]
+            for r in list:
+                yield r
+    iter_intervals = it()
     for event in seq.events:
         next_int = next(iter_intervals)
         _pitch = pitch + next_int
@@ -600,5 +605,5 @@ def enforce_shared_pitch_class_set(seq: Sequence,
         sequencer = get_context().sequencer
         aggregate = set([p % 12 for p in pitches]).union(set([p % 12 for p, _c in sequencer.active_pitches]))
         aggregate = pitchset.to_prime_form(aggregate)
-        if pitch_class_set.issubset(aggregate) or aggregate.issubset(pitch_class_set):
+        if aggregate.issubset(pitch_class_set):
             yield event
