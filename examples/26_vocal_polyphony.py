@@ -20,7 +20,7 @@ def rest(seq: Sequence):
         yield event.extend(pitches=[])
     
 #NEXUS_SET = {0,1,6}
-NEXUS_SET = {0,2,5}
+NEXUS_SET = {0,2,4,5,7,9,10}
    
    
 
