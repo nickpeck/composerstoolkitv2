@@ -129,9 +129,14 @@ class Sequence:
             events = transformer(self))
         return new_seq
 
-    def bake(self) -> FiniteSequence:
+    def bake(self, n_beats=None) -> FiniteSequence:
         """Convert a sequence into a FiniteSequence
         """
+        if n_beats is None:
+            return FiniteSequence(list(self.events))
+        _events = []
+        for i in range(n_beats):
+            _events.append(next(self.events))
         return FiniteSequence(list(self.events))
 
     def tap(self) -> Sequence:

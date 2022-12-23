@@ -123,9 +123,18 @@ class PitchClassSetTests(unittest.TestCase):
         assert pitchset.to_prime_form({2,6,8,9}) == {0,1,3,7}
         assert pitchset.to_prime_form({8,6,2,9}) == {0,1,3,7}
         assert pitchset.to_prime_form({60,62,63,68}) == {0,1,3,7}        
+        assert pitchset.to_prime_form({0,1}) == {0,1}
+        assert pitchset.to_prime_form({0,1,3,5,7}) == {0,1,3,5,7}
+        assert pitchset.to_prime_form({0,1,3,5,7,10}) == {0,2,3,5,7,9}
         
     def test_to_prime_form_from_list(self):
         assert pitchset.to_prime_form([0,4,6,7]) == {0,1,3,7}
+
+    def test_get_missing(self):
+        assert list(pitchset.complete_set(pitches={0,1}, target_pcs={0,1,3,5,6,8,10})) == [{3,5,6,8,10}]
+        assert list(pitchset.complete_set(pitches={3,4}, target_pcs={0,1,2,3})) == [{5,6}, {1,2}]
+        assert list(pitchset.complete_set(pitches={0,5}, target_pcs={0, 1, 3, 5, 7, 8, 10}))\
+            == [{1, 3, 7, 8, 10}, {1, 3, 6, 8, 10}, {2, 4, 7, 9, 11}]
 
 
 if __name__ == "__main__":
