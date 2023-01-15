@@ -71,6 +71,33 @@ class MidiListener(Thread):
             if self.input_dev.poll():
                 self._poll_for_events()
 
+class MidiInputBus:
+    """
+    Transforms the stream of events from a midi input device into a form that can
+    be used by multiple gates or transformers.
+    The bus has two properties, active_notes and control_data, which can be queried to determine
+    the current state of the midi input device.
+    """
+    def __init__(self, midi_device):
+        self.active_notes = []
+        self.control_data = {}
+        listener = MidiListener(
+            midi_device,
+            note_on=self._on_note_on,
+            note_off=self._on_note_off,
+            control_change=self._on_control_change)
+        listener.setDaemon(True)
+        listener.start()
+
+    def _on_note_on(self, e):
+        self.active_notes.append(e.data1)
+
+    def _on_note_off(self, e):
+        self.active_notes.remove(e.data1)
+
+    def _on_control_change(self, e):
+        self.control_data[e.status] = e.data2
+
 def get_midi_device_id(midi_device_name):
     init_midi()
     device = None
