@@ -81,6 +81,7 @@ pyasn1==0.4.8
 pycodestyle==2.7.0
 pycparser==2.20
 pyflakes==2.3.1
+pygame==2.1.2
 Pygments==2.11.2
 pygubu==0.12
 pygubu-designer==0.17
