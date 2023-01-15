@@ -1,3 +1,4 @@
+import logging
 import os
 from threading import Thread
 
@@ -23,7 +24,7 @@ def enummerate_devices(mode="input"):
     return results
 
 class MidiListener(Thread):
-    def __init__(self, input_id, *args, **kwargs):
+    def __init__(self, input_id, **kwargs):
         """
         Midi Listener
         Parameters input_id - the numeric index of the device (see enummerate_devices)
@@ -96,7 +97,7 @@ class MidiInputBus:
         self.active_notes.remove(e.data1)
 
     def _on_control_change(self, e):
-        self.control_data[e.status] = e.data2
+        self.control_data[e.data1] = e.data2
 
 def get_midi_device_id(midi_device_name):
     init_midi()
