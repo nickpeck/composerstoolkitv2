@@ -3,6 +3,7 @@ All transformers act upon a given source Sequence to derrive a new List or
 Iterator of Event objects.
 """
 import itertools
+import logging
 import math
 import random
 from typing import List, Optional, Iterator, Union, Callable, Set, Any
@@ -54,6 +55,43 @@ def slice_looper(seq: Sequence,
             buffer = [event]
     for event in buffer:
         yield event
+
+
+@Transformer
+def loop_capture(seq: Sequence, toggle=lambda: True, debug=False):
+    """Capture midi events and play them back in a loop.
+    toggle is a function that changes state in and out of capture mode (which could be based on a MIDI
+    controller status, or a pre-determined algorithm).
+    Whilst toggle returns True, capture events into a buffer
+    when the toggle state changes to False, loop playback through the buffer until
+    toggle status flips back to True again, at which point the capture process repeats.
+    """
+    itterable = seq.events
+    while True:
+        if not toggle():
+            yield next(itterable)
+            continue
+        if debug:
+            logging.getLogger().debug("loop_capture starting event capture")
+        buffer = FiniteSequence()
+        for event in itterable:
+            if toggle():
+                buffer.events.append(event)
+                yield(event) # pass-through events during capture
+            else:
+                # exit capture state
+                break
+        if debug:
+            logging.getLogger().debug("loop_capture starting buffer loop playback")
+        buffer = buffer.to_sequence().transform(loop())
+        while not toggle():
+            for event in buffer.events:
+                yield event
+                if toggle():
+                    break
+        if debug:
+            logging.getLogger().debug("loop_capture playback ending")
+
 
 @Transformer
 def feedback(seq: Sequence,
