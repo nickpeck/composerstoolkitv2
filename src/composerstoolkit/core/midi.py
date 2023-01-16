@@ -94,7 +94,10 @@ class MidiInputBus:
         self.active_notes.append(e.data1)
 
     def _on_note_off(self, e):
-        self.active_notes.remove(e.data1)
+        try:
+            self.active_notes.remove(e.data1)
+        except ValueError:
+            pass
 
     def _on_control_change(self, e):
         self.control_data[e.data1] = e.data2
