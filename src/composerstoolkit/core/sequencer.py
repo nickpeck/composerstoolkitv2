@@ -155,9 +155,8 @@ class Sequencer(Thread):
         logging.getLogger().info("Channel {} playback ended".format(channel_no))
         
     def clear_all(self, synth):
-        for pitch in range(0,128):
-            for channel_no in range(1,17):
-                synth.noteoff(channel_no, pitch)
+        for pitch, channel_no in self.active_pitches:
+            synth.noteoff(channel_no, pitch)
         logging.getLogger().info("...done")
         
     def run(self):
@@ -172,7 +171,6 @@ class Sequencer(Thread):
                 logging.getLogger().info("Stop signal recieved")
                 logging.getLogger().info("Sending note off to all pitches")
                 self.is_playing = False
-                sleep(2)
                 self.clear_all(synth)
                 print('Bye')
                 sys.exit(0)
