@@ -224,15 +224,17 @@ def aggregate(seq: Sequence,
     """
     for group in more_itertools.grouper(seq.events, n_voices):
         pitches = []
+        meta = {}
         for event in group:
             if event is None:
                 continue
             pitches = pitches + list(
                 filter(lambda p: p is not None, event.pitches))
+            meta.update(event.meta)
         yield Event(
             sorted(pitches),
             duration,
-            event.meta) # type: ignore
+            meta) # type: ignore
 
 @Transformer
 def linear_interpolate(seq: Sequence,
