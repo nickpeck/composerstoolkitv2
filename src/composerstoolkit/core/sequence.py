@@ -31,11 +31,11 @@ class Event:
     
     def extend(self, pitches=None, duration=None, meta=None) -> Event:
         if pitches is None:
-            pitches = self.pitches
+            pitches = self.pitches.copy()
         if duration is None:
             duration = self.duration
         if meta is None:
-            meta = self.meta
+            meta = self.meta.copy()
         return Event(pitches=pitches, duration=duration, meta=meta)
 
     def to_edges(self, offset: int=0) -> List[Edge]:
@@ -91,7 +91,7 @@ class Sequence:
         if events is None:    
             events = b
         if meta is None:
-            meta = self.meta
+            meta = self.meta.copy()
         return Sequence(events=events, meta=meta)
 
     def __post_init__(self):
@@ -113,11 +113,14 @@ class Sequence:
         return (e.duration for e in list(self.events))
 
     @classmethod
-    def from_generator(cls, generator: Iterator[Event]) -> Sequence:
+    def from_generator(cls, generator: Iterator[Event], meta=None) -> Sequence:
         """Return a new Sequence using the seed of a given generator function.
         """
+        if meta is None:
+            meta = {}
         return cls(
-            events = generator
+            events = generator,
+            meta = meta
         )
 
     def transform(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequence:
@@ -163,9 +166,9 @@ class FiniteSequence:
     
     def extend(self, events=None, meta=None) -> FiniteSequence:
         if events is None:
-            events = self.events
+            events = self.events.copy()
         if meta is None:
-            meta = self.meta
+            meta = self.meta.copy()
         return FiniteSequence(events=events, meta=meta)
 
     @property

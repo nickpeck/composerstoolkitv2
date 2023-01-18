@@ -136,7 +136,7 @@ class Sequencer(Thread):
                 future_time = future_time - drift
                 drift = None
             for pitch in event.pitches:
-                if event.duration != 0:
+                if event.meta.get("realtime", None) != "note_off":
                     synth.noteon(channel_no, pitch, 60)
                     self.active_pitches.append((pitch, channel_no))
             pause_int = future_time - time.time()
@@ -146,9 +146,12 @@ class Sequencer(Thread):
                 logging.getLogger().debug(f"Channel {channel_no} drift {abs(pause_int)} s")
                 drift = abs(pause_int)
             for pitch in event.pitches:
-                if event.duration != -1:
+                if event.meta.get("realtime", None) != "note_on":
                     synth.noteoff(channel_no, pitch)
-                    self.active_pitches.remove((pitch, channel_no))
+                    try:
+                        self.active_pitches.remove((pitch, channel_no))
+                    except ValueError:
+                        pass
         logging.getLogger().info("Channel {} playback ended".format(channel_no))
         
     def clear_all(self, synth):

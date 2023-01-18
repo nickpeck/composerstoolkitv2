@@ -6,6 +6,7 @@ import itertools
 import logging
 import math
 import random
+import time
 from typing import List, Optional, Iterator, Union, Callable, Set, Any
 
 import more_itertools
@@ -74,9 +75,26 @@ def loop_capture(seq: Sequence, toggle=lambda: True, debug=False):
         if debug:
             logging.getLogger().debug("loop_capture starting event capture")
         buffer = FiniteSequence()
+        holding = {}
+        def handle_realtime_event(event):
+            if event.meta["realtime"] == "note_on":
+                for pitch in event.pitches:
+                    new_event = event.extend(pitches=[pitch])
+                    del new_event.meta["realtime"]
+                    holding[pitch] = (event, time.time())
+            elif event.meta["realtime"] == "note_off":
+                for pitch in event.pitches:
+                    stored_event, start_time = holding.get(pitch, (None, None))
+                    if stored_event is not None:
+                        bpm = seq.meta.get("bpm", 60)
+                        stored_event.duration = (time.time() - start_time) * (bpm / 60)
+                        buffer.events.append(stored_event)
+                        del holding[pitch]
+
         for event in itterable:
             if toggle():
-                buffer.events.append(event)
+                if "realtime" in event.meta:
+                    handle_realtime_event(event)
                 yield(event) # pass-through events during capture
             else:
                 # exit capture state
@@ -213,7 +231,8 @@ def aggregate(seq: Sequence,
                 filter(lambda p: p is not None, event.pitches))
         yield Event(
             sorted(pitches),
-            duration) # type: ignore
+            duration,
+            event.meta) # type: ignore
 
 @Transformer
 def linear_interpolate(seq: Sequence,
@@ -242,7 +261,7 @@ def linear_interpolate(seq: Sequence,
             new_pitch = left.pitches[-1] + pitch_increment
             if constrain_to_scale is not None:
                 new_pitch = min(constrain_to_scale, key=lambda x:abs(x-new_pitch))
-            yield Event([new_pitch], duration_increment)
+            yield Event([new_pitch], duration_increment, left.meta)
             pitch_increment = pitch_increment + pitch_increment
     yield right
 
@@ -325,14 +344,22 @@ def rhythmic_augmentation(seq: Sequence, multiplier: int) -> Iterator[Event]:
     """Return a new stream of events in which all the durations of
     the source sequence have been expanded by a given factor.
     """
-    return (e.extend(duration=multiplier*e.duration) for e in seq.events)
+    for e in seq.events:
+        if "realtime" in e.meta:
+            yield e
+            continue
+        yield e.extend(duration=multiplier*e.duration)
 
 @Transformer
 def rhythmic_diminution(seq: Sequence, factor: Union[int, float]) -> Iterator[Event]:
     """Return a new stream of events in which all the durations of
     the source sequence have been reduced by a given factor.
     """
-    return (e.extend(duration=e.duration/factor) for e in seq.events)
+    for e in seq.events:
+        if "realtime" in e.meta:
+            yield e
+            continue
+        yield e.extend(duration=e.duration/factor)
 
 @Transformer
 def map_to_pulses(seq: Sequence, pulse_sequence: Sequence) -> Iterator[Event]:

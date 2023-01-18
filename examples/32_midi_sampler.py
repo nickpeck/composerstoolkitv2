@@ -12,20 +12,17 @@ init_midi()
 MIDI_CONTROLLER_NAME = "V61"
 midi_in = MidiInputBus(midi_device=get_midi_device_id(MIDI_CONTROLLER_NAME))
 
-sample_length = 4 # length is in beats, so set a sequencer BPM of 60 to avoid confusion
 quantization_period = 0.1
 
-def my_sampler():
-    # TODO this is a bit crude, as we aren't capturing the durations properly
-    # but just to illustrate the concept for future refinement
+def midi_realtime_input():
     held_pitches = set()
     while True:
         active = set(midi_in.active_notes)
         new_pitches = active.difference(held_pitches)
         released_pitches = held_pitches.difference(active)
         held_pitches = active
-        yield Event(pitches=list(new_pitches), duration=-1)
-        yield Event(pitches=list(released_pitches), duration=0)
+        yield Event(pitches=list(new_pitches), meta={"realtime": "note_on"})
+        yield Event(pitches=list(released_pitches), meta={"realtime": "note_off"})
         sleep(quantization_period)
 
 def toggle_capture_mode():
@@ -33,10 +30,10 @@ def toggle_capture_mode():
         return midi_in.control_data[48] > 0
     return False
 
-live_seq = Sequence.from_generator(my_sampler())\
+live_seq = Sequence.from_generator(midi_realtime_input(), meta={"realtime": True, "bpm": 60})\
     .transform(loop_capture(toggle=toggle_capture_mode, debug=True))
 
-mysequencer = Sequencer(bpm=60, debug=False) \
+mysequencer = Sequencer(bpm=live_seq.meta["bpm"], debug=False) \
     .add_sequence(live_seq, channel_no=1)
 
 mysequencer.playback()
