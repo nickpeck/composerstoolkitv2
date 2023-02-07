@@ -11,6 +11,11 @@ import more_itertools
 from ..core import Event, Sequence, FiniteSequence
 from ..resources import NOTE_MIN, NOTE_MAX
 
+def infinate_stream():
+    """infinate stream of empty events"""
+    while True:
+        yield Event()
+
 def cantus(pitches: Iterator[int]) -> Iterator[Event]:
     """Return a series of pitched events of duration 0, derrived
     from the given iterator.
