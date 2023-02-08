@@ -434,6 +434,7 @@ def fit_to_range(seq: Sequence,
     to adjust the pitches within the range(min_pitch, max_pitch).
     Raise an exception if max_pitch - min_pitch < 12
     """
+    print(max_pitch, min_pitch)
     if max_pitch < min_pitch:
         raise Exception("max_pitch cannot be less than min_pitch")
     if max_pitch - min_pitch < 12:
