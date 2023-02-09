@@ -176,10 +176,6 @@ class Sequencer(Thread):
                 sys.exit(0)
             signal.signal(signal.SIGINT, signal_handler)
             print('Press Ctrl+C to exit')
-            if os.name != 'nt':
-                # pylint: disable=no-member
-                signal.pause()
-
             
             channels = []
             self.is_playing = True
