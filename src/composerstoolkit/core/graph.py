@@ -11,7 +11,6 @@ from threading import Thread
 import itertools
 import functools
 
-import fluidsynth # type: ignore
 from midiutil.MidiFile import MIDIFile # type: ignore
 from mido import MidiTrack, Message # type: ignore
 import numpy
