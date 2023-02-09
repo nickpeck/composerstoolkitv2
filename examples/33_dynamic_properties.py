@@ -22,10 +22,9 @@ def min_pitch():
             return x - 24
     return 12
 
-
 line = Sequence.from_generator(random_noise()).transform(fit_to_range(
-    max_pitch = IntProperty(max_pitch),
-    min_pitch = IntProperty(min_pitch)
+    max_pitch = IntProp(max_pitch),
+    min_pitch = IntProp(min_pitch)
 ))
 
 mysequencer = Sequencer(bpm=300, debug=True) \
