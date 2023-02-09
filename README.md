@@ -13,6 +13,45 @@ A brief overview of the features I am working towards:
 
 ## Quickstart
 
+~~~
+git clone https://github.com/nickpeck/composerstoolkitv2.git
+cd composerstoolkitv2
+python3 -m venv .
+source bin/activate
+export PYTHONPATH=${PYTHONPATH}:path_to_src_folder
+python examples/1_random_slicing.py
+~~~
+
+By default you won't get any sound because it'll be using 'DummyPlayback' (a synth interface that simply logs events).
+To use an existing local MIDI interface, or RTP MIDI interface, create a file such as this in your current working directory. 
+
+~~~
+# MySynth.py
+from composerstoolkit import RTPMidi
+
+class LocalSynth(RTPMidi):
+
+    # change this to the name of your interface
+    def __init__(self, get_port = lambda port_names: port_names.index("name of your MIDI interface ...")):
+        super().__init__(get_port)
+~~~
+
+To get a list of possible interface names, you can run:
+
+~~~
+python -c "import rtmidi;print(rtmidi.MidiOut().get_ports())"
+~~~
+
+Then, run the following: 
+~~~
+export DEFAULT_SYNTH=MySynth.LocalSynth
+~~~
+
+You can now run the examples and you should get playback on the configured interface.
+(n.b. on Windows, it is a known issue that the default WINDOWS_MM api blocks rtmidi calls until each message is sent. This causes
+playbac to drift out of sync - try using a different interface or Linux/Mac over a RTP Midi network configuration for the best results).
+
+
 Practical examples are given in the examples directory.
 
 ### Events, Sequences and Sequencers
