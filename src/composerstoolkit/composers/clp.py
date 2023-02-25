@@ -1,23 +1,25 @@
 import random
 from typing import List, Iterator, Callable
 
-from .. core import FiniteSequence, Transformer, Constraint, Sequencer
+from ..core import FiniteSequence, Transformer, Constraint, Sequencer
+
 
 class CLP:
     class Voice(FiniteSequence):
         def __init__(self, events):
             self.constraints = []
             super().__init__(events)
+
         def add_constraint(self, constraint: Constraint):
             self.constraints.append(constraint)
 
     def __init__(self,
-            source_material: List[FiniteSequence],
-            max_len_beats: int,
-            n_voices: int,
-            transformations: List[Transformer] = None,
-            heuristics: List[Callable] = None
-        ):
+                 source_material: List[FiniteSequence],
+                 max_len_beats: int,
+                 n_voices: int,
+                 transformations: List[Transformer] = None,
+                 heuristics: List[Callable] = None
+                 ):
         self._source_material = source_material
         self._max_len_beats = max_len_beats
         self._n_voices = n_voices
@@ -31,7 +33,7 @@ class CLP:
         self.solutions: List[List[FiniteSequence]] = []
         # Todo, check not violates input constraints
         self.voices = []
-        self.visited_paths:List[FiniteSequence] = []
+        self.visited_paths: List[FiniteSequence] = []
         for i in range(self._n_voices):
             try:
                 events = self._source_material[i].events
@@ -40,31 +42,35 @@ class CLP:
             self.voices.append(CLP.Voice(events))
 
     def _is_within_len(self, solution: List[FiniteSequence]):
+        """
+        Return true if all voices have been composed up to or
+        over _max_len_beats. The result will be trimmed later.
+        """
         for seq in solution:
-            if seq.duration > self._max_len_beats:
-                return False
-        return True
+            if seq.duration < self._max_len_beats:
+                return True
+        return False
 
     def _pick_fragment(self) -> FiniteSequence:
         return random.choice(self._source_material)
 
     def _get_transformations(self,
-            voice: FiniteSequence,
-            motive: FiniteSequence) -> List[FiniteSequence]:
+                             voice: FiniteSequence,
+                             motive: FiniteSequence) -> List[FiniteSequence]:
         if len(self._transformations) == 0:
             return [voice + motive]
         candidates: List[FiniteSequence] = []
         random.shuffle(self._transformations)
         for trans in self._transformations:
             motive_as_seq = motive.to_sequence()
-            candidate = voice +\
-                FiniteSequence(list(trans(motive_as_seq)))
+            candidate = voice + \
+                        FiniteSequence(list(trans(motive_as_seq)))
             candidates.append(candidate)
         return candidates
 
     def _exclude_visited_paths(self,
-        candidates: List[FiniteSequence],
-        i_voice: int) -> List[FiniteSequence]:
+                               candidates: List[FiniteSequence],
+                               i_voice: int) -> List[FiniteSequence]:
         results = []
         for candidate in candidates:
             rejected = False
@@ -78,8 +84,8 @@ class CLP:
                 results.append(candidate)
         return results
 
-    def _check_global_constraints(self, 
-        candidates: List[FiniteSequence]) -> List[FiniteSequence]:
+    def _check_global_constraints(self,
+                                  candidates: List[FiniteSequence]) -> List[FiniteSequence]:
         results = []
         for candidate in candidates:
             rejected = False
@@ -91,10 +97,10 @@ class CLP:
                 results.append(candidate)
         return results
 
-    def _check_local_constraints(self, 
-        candidates: List[FiniteSequence],
-        i_voice: int,
-        solution: List[FiniteSequence]) -> List[FiniteSequence]:
+    def _check_local_constraints(self,
+                                 candidates: List[FiniteSequence],
+                                 i_voice: int,
+                                 solution: List[FiniteSequence]) -> List[FiniteSequence]:
         results = []
         constraints = self.voices[i_voice].constraints
         for candidate in candidates:
@@ -110,8 +116,8 @@ class CLP:
     def add_constraint(self, constraint: Constraint):
         self._constraints.append(constraint)
 
-    def _chose_best_fit(self, 
-        candidates: List[FiniteSequence]) -> List[FiniteSequence]:
+    def _chose_best_fit(self,
+                        candidates: List[FiniteSequence]) -> List[FiniteSequence]:
         # TODO
         return candidates[0]
 
@@ -120,11 +126,11 @@ class CLP:
 
     def __next__(self) -> Sequencer:
         solution: List[FiniteSequence] = \
-                [FiniteSequence([]) for i in range(self._n_voices)]
+            [FiniteSequence(self.voices[i].events[:]) for i in range(self._n_voices)]
 
         while self._is_within_len(solution):
             memento = solution[:]
-            for i_voice, voice in enumerate(solution): # each voice
+            for i_voice, voice in enumerate(solution):  # each voice
                 motive = self._pick_fragment()
                 candidates = self._get_transformations(voice, motive)
                 candidates = self._exclude_visited_paths(candidates, i_voice)
@@ -177,6 +183,6 @@ while all voices are less than duration:
             pick highest score, or random choice if tie
             update voices
             previous_state = current state
-    
-        
+
+
 """
