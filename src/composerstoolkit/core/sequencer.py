@@ -126,7 +126,23 @@ class Sequencer(Thread):
         time_scale_factor = (1/(bpm/60)) * (1/playback_rate)
         logging.getLogger().info(f"Channel {channel_no} playback starting")
         drift = None
-        for event in seq.events:
+        def _iter():
+            memento = seq.events
+            iterator = iter(seq.events)
+            def f():
+                nonlocal iterator
+                nonlocal memento
+                if memento != seq.events:
+                    iterator = iter(seq.events)
+                return next(iterator)
+            return f
+        it = _iter()
+        while True:
+            #for event in seq.events:
+            try:
+                event = it()
+            except StopIteration:
+                break
             if not self.is_playing:
                 return
             if self.options["debug"]:
