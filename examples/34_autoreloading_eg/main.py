@@ -1,18 +1,16 @@
-import sys
-import time
-import logging
-import os
+"""
+Use the built-in init_reloader() to enable hot reloading of python files.
+Assumes:
+    file is adjacent to this main file (no recursive dirs)
+    file defines a Sequence with the same name as the module
 
-from importlib import reload
-
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+(try updating the definition of track1 in track1.py).
+Provides an interesting POC as to how to improve the on-the-fly workflow.
+"""
 
 from composerstoolkit import *
 
 from track1 import track1
-
-print(sys.modules['track1'])
 
 init_reloader()
 
