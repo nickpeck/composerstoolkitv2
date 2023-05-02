@@ -26,7 +26,7 @@ NEXUS_SET = {0,2,4,5,7,9,10}
 
 harmony_gate = enforce_shared_pitch_class_set(
             pitch_class_set=NEXUS_SET,
-            get_context = lambda: mysequencer.context)
+            get_context = lambda: Context.get_context())
 
             
 intervals = [0,2,-2,1,-1,3,-3,4,-4]
@@ -103,16 +103,14 @@ mysequencer = Sequencer(bpm=35, playback_rate=1, debug=True)\
             condition = cyclic_time_gate(20, 16, 18),
             transformer = enforce_shared_pitch_class_set(
                 pitch_class_set={0,4,7},
-                get_context = lambda: mysequencer.context
-            ),
-            get_context = lambda: mysequencer.context
+                get_context = lambda: Context.get_context()
+            )
         )
     )\
     .add_transformer( # complete rest every cycle
         gated(
             condition = cyclic_time_gate(20, 18, 20),
-            transformer = rest(),
-            get_context = lambda: mysequencer.context
+            transformer = rest()
         )
     )
 

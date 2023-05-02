@@ -33,15 +33,13 @@ chords = Sequence(events=[
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        cyclic_time_gate(60,20,40),
-        get_context = lambda: mysequencer.context
+        cyclic_time_gate(60,20,40)
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        cyclic_time_gate(60,40,60),
-        get_context = lambda: mysequencer.context
+        cyclic_time_gate(60,40,60)
     )
 )
 
@@ -53,15 +51,13 @@ bassline = Sequence(events=[
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        cyclic_time_gate(60,20,40),
-        get_context = lambda: mysequencer.context
+        cyclic_time_gate(60,20,40)
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        cyclic_time_gate(60,40,60),
-        get_context = lambda: mysequencer.context
+        cyclic_time_gate(60,40,60)
     )
 ).transform(
     tie_repeated()
@@ -82,15 +78,13 @@ backing_figure = Sequence(events=[
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        cyclic_time_gate(60,20,40),
-        get_context = lambda: mysequencer.context
+        cyclic_time_gate(60,20,40)
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        cyclic_time_gate(60,40,60),
-        get_context = lambda: mysequencer.context
+        cyclic_time_gate(60,40,60)
     )
 )
 
@@ -120,15 +114,13 @@ melody = Sequence.from_generator(
     gated(
         # maps the pattern to D major between 20-40 secs
         modal_quantize(scales.D_major),
-        cyclic_time_gate(60,20,40),
-        get_context = lambda: mysequencer.context
+        cyclic_time_gate(60,20,40)
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
         modal_quantize(scales.Db_major),
-        cyclic_time_gate(60,40,60),
-        get_context = lambda: mysequencer.context
+        cyclic_time_gate(60,40,60)
     )
 )
 

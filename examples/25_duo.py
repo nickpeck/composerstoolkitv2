@@ -7,7 +7,7 @@ NEXUS_SET = {0,1,6}
     
 harmony_gate = enforce_shared_pitch_class_set(
             pitch_class_set=NEXUS_SET,
-            get_context = lambda: mysequencer.context)
+            get_context = lambda: Context.get_context())
 
 ##################### Flute #######################
             
@@ -29,16 +29,14 @@ flute = Sequence.from_generator(random_slice(
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=9,on=0,off=4),
-        transformer=rhythmic_diminution(factor=3),
-        get_context=lambda: mysequencer.context
+        transformer=rhythmic_diminution(factor=3)
     )
 ).transform(
     harmony_gate
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=5, on=4, off=5),
-        transformer=rest(),
-        get_context=lambda: mysequencer.context
+        transformer=rest()
     )
 )
 
@@ -54,8 +52,7 @@ harp = Sequence(events=[Event(pitches=[], duration=1)]
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=10,on=5,off=10),
-        transformer=aggregate(n_voices=5, duration=1),
-        get_context=lambda: mysequencer.context
+        transformer=aggregate(n_voices=5, duration=1)
     )
 ).transform(
     map_to_pulses(pulse_sequence=Sequence.from_generator(random_slice(
@@ -69,8 +66,7 @@ harp = Sequence(events=[Event(pitches=[], duration=1)]
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=10,on=0,off=4),
-        transformer=rhythmic_diminution(factor=5),
-        get_context=lambda: mysequencer.context
+        transformer=rhythmic_diminution(factor=5)
     )
 ).transform(
     harmony_gate
@@ -79,8 +75,7 @@ harp = Sequence(events=[Event(pitches=[], duration=1)]
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=15, on=5, off=8),
-        transformer=rest(),
-        get_context=lambda: mysequencer.context
+        transformer=rest()
     )
 )
 

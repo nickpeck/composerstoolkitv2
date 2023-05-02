@@ -77,11 +77,9 @@ mysequencer = Sequencer(bpm=80, debug=True)\
     .add_sequence(ostinato, offset=80, channel_no=4)\
     .add_transformer(gated(
         modal_quantize(scales.E_major),
-        cyclic_time_gate(300,100,200),
-        lambda: mysequencer.context))\
+        cyclic_time_gate(300,100,200)))\
     .add_transformer(gated(
         modal_quantize(scales.Ab_major),
-        cyclic_time_gate(300,200,300),
-        get_context = lambda: mysequencer.context))
+        cyclic_time_gate(300,200,300)))
 
 mysequencer.playback()

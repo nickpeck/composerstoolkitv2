@@ -559,10 +559,10 @@ class SequencerTests(unittest.TestCase):
         s.add_sequence(seq)
         assert s.sequences[0] == (1, 0, seq)
         
-    def test_context_is_none_before_playback(self):
-        s = Sequencer(bpm=300, playback_rate=2)
-        c = s.context
-        assert c is None
+    # def test_context_is_none_before_playback(self):
+    #     s = Sequencer(bpm=300, playback_rate=2)
+    #     c = s.context
+    #     assert c is None
         
     def test_can_add_a_global_transformer(self):
         s = Sequencer(bpm=300, playback_rate=2)
@@ -666,7 +666,7 @@ class GateTests(unittest.TestCase):
             off=5
         )
         
-        c = Context(beat_offset=0, time_offset_secs=0, sequencer=None)
+        c = Context.get_context()
         assert gate(c) == True
         c.beat_offset = 4
         assert gate(c) == True
@@ -676,8 +676,8 @@ class GateTests(unittest.TestCase):
         gate = time_gate(
             on=5
         )
-        
-        c = Context(beat_offset=0, time_offset_secs=0, sequencer=None)
+
+        c = Context.get_context()
         assert gate(c) == False
         c.beat_offset = 4
         assert gate(c) == False
@@ -688,8 +688,8 @@ class GateTests(unittest.TestCase):
             on=5,
             off=10
         )
-        
-        c = Context(beat_offset=0, time_offset_secs=0, sequencer=None)
+
+        c = Context.get_context()
         assert gate(c) == False
         c.beat_offset = 4
         assert gate(c) == False

@@ -23,7 +23,7 @@ NEXUS_SET = {0,1,6}
     
 harmony_gate = enforce_shared_pitch_class_set(
             pitch_class_set=NEXUS_SET,
-            get_context = lambda: mysequencer.context)
+            get_context = lambda: Context.get_context())
 
 ##################### Tenor #######################
             
@@ -45,8 +45,7 @@ tenor = Sequence.from_generator(random_slice(
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=20, on=8, off=18),
-        transformer=rest(),
-        get_context=lambda: mysequencer.context
+        transformer=rest()
     )
 )
 
@@ -71,7 +70,6 @@ bass = Sequence.from_generator(random_slice(
     gated(
         condition=cyclic_time_gate(cycle_length=30, on=5, off=13),
         transformer=rest(),
-        get_context=lambda: mysequencer.context
     )
 )
 
@@ -95,8 +93,7 @@ alto = Sequence.from_generator(random_slice(
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=10, on=5, off=9),
-        transformer=rest(),
-        get_context=lambda: mysequencer.context
+        transformer=rest()
     )
 )
 
@@ -124,8 +121,7 @@ soprano = Sequence.from_generator(random_slice(
 ).transform(
     gated(
         condition=cyclic_time_gate(cycle_length=15, on=2, off=9),
-        transformer=rest(),
-        get_context=lambda: mysequencer.context
+        transformer=rest()
     )
 )
 

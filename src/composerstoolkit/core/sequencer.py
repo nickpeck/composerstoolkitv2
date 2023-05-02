@@ -7,7 +7,7 @@ from time import sleep
 import signal
 import sys
 import time
-from typing import Any, Dict, List, Optional, Callable, Iterator, Set
+from typing import Any, Dict, List, Optional, Callable, Iterator, Set, ClassVar
 from threading import Thread
 
 import itertools
@@ -22,9 +22,37 @@ from .. resources.pitches import PitchFactory
 
 @dataclass
 class Context:
-    sequencer: Sequencer
-    beat_offset: float = 0.0
-    time_offset_secs: float = 0.0
+    sequencer: Optional[Sequencer] = None
+    playback_started_ts: Optional[int] = None
+    _context: Optional[ClassVar['Context']] = None
+
+    @property
+    def bpm(self) -> float:
+        return self.sequencer.options["bpm"]
+
+    @property
+    def rate(self) -> float:
+        return self.sequencer.options["playback_rate"]
+
+    @property
+    def time_offset(self) -> float:
+        if self.sequencer is None:
+            return 0
+        return time.time() - self.sequencer._playback_started_ts
+
+    @property
+    def beat_offset(self) -> float:
+        if self.sequencer is None:
+            return 0
+        return self.time_offset * ((self.bpm / 60) * self.rate)
+
+    @staticmethod
+    def get_context(*args, **kwargs):
+        if Context._context is None:
+            Context._context = Context(*args, **kwargs)
+        return Context._context
+
+
 
 class Sequencer(Thread):
     """Provides a context for playing back multiple sequences
@@ -51,19 +79,19 @@ class Sequencer(Thread):
         handler.setFormatter(formatter)
         root.addHandler(handler)
         
-    @property
-    def context(self) -> Optional[Context]:
-        if self._playback_started_ts is None:
-            return None
-        bpm = self.options["bpm"]
-        rate = self.options["playback_rate"]
-        time_offset = time.time() - self._playback_started_ts
-        beat_offset = time_offset * ((bpm/60) * rate)
-        return Context(
-            time_offset_secs = time_offset,
-            beat_offset = beat_offset,
-            sequencer = self
-        )
+    # @property
+    # def context(self) -> Optional[Context]:
+    #     if self._playback_started_ts is None:
+    #         return None
+    #     bpm = self.options["bpm"]
+    #     rate = self.options["playback_rate"]
+    #     time_offset = time.time() - self._playback_started_ts
+    #     beat_offset = time_offset * ((bpm/60) * rate)
+    #     return Context(
+    #         time_offset_secs = time_offset,
+    #         beat_offset = beat_offset,
+    #         sequencer = self
+    #     )
     
     def __init__(self, **kwargs):
         """Optional args:
@@ -72,6 +100,7 @@ class Sequencer(Thread):
         playback_rate - defaults to 1
         """
         super().__init__()
+        Context.get_context().sequencer = self
         if "debug" not in kwargs:
             kwargs["debug"] = False
             
