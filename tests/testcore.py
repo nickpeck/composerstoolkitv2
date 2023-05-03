@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 import types
 import unittest
@@ -658,6 +659,12 @@ class AnnotationsTests(unittest.TestCase):
         t = as_is(4)
         assert str(t) == "<Transformer: as_is(4,)>"
 
+@dataclass
+class MockContext:
+    beat_offset: int  = 0
+    time_offset_secs: int = 0
+    sequencer: Optional[Sequencer] = None
+
 class GateTests(unittest.TestCase):
 
     def test_time_gate(self):
@@ -666,7 +673,7 @@ class GateTests(unittest.TestCase):
             off=5
         )
         
-        c = Context.get_context()
+        c = MockContext()
         assert gate(c) == True
         c.beat_offset = 4
         assert gate(c) == True
@@ -677,7 +684,7 @@ class GateTests(unittest.TestCase):
             on=5
         )
 
-        c = Context.get_context()
+        c = MockContext()
         assert gate(c) == False
         c.beat_offset = 4
         assert gate(c) == False
@@ -689,7 +696,7 @@ class GateTests(unittest.TestCase):
             off=10
         )
 
-        c = Context.get_context()
+        c = MockContext()
         assert gate(c) == False
         c.beat_offset = 4
         assert gate(c) == False
@@ -708,7 +715,7 @@ class GateTests(unittest.TestCase):
             off=10
         )
         
-        c = Context(beat_offset=0, time_offset_secs=0, sequencer=None)
+        c = MockContext(beat_offset=0, time_offset_secs=0)
         assert gate(c) == False
         c.beat_offset = 5
         assert gate(c) == True
