@@ -45,7 +45,7 @@ strings = Sequence.from_generator(
         cycle_of=-4,
         max_len=16)).transform(loop())
 
-mysequencer = Sequencer(bpm=220, playback_rate=1, debug=True)\
+mysequencer = Context.get_context().new_sequencer(bpm=220, playback_rate=1, debug=True)\
     .add_sequence(trumpet, channel_no=2)\
     .add_sequence(cello, channel_no=14)\
     .add_sequence(strings, channel_no=3)

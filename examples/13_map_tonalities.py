@@ -124,7 +124,7 @@ melody = Sequence.from_generator(
     )
 )
 
-mysequencer = Sequencer(bpm=95, playback_rate=1, debug=True)\
+mysequencer = Context.get_context().new_sequencer(bpm=95, playback_rate=1, debug=True)\
     .add_sequence(melody)\
     .add_sequence(backing_figure)\
     .add_sequence(chords)\

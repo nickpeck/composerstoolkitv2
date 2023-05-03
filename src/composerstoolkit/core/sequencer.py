@@ -52,6 +52,10 @@ class Context:
             Context._context = Context(*args, **kwargs)
         return Context._context
 
+    def new_sequencer(self, *args, **kwargs) -> Sequencer:
+        self.sequencer = Sequencer(*args, **kwargs)
+        return self.sequencer
+
 
 
 class Sequencer(Thread):
@@ -100,7 +104,6 @@ class Sequencer(Thread):
         playback_rate - defaults to 1
         """
         super().__init__()
-        Context.get_context().sequencer = self
         if "debug" not in kwargs:
             kwargs["debug"] = False
             

@@ -58,7 +58,7 @@ seq = Sequence(events=[
                 rhythmic_diminution(0.5)])
           , my_gate2))
 
-mysequencer = Sequencer(bpm=240, playback_rate=1)\
+mysequencer = Context.get_context().new_sequencer(bpm=240, playback_rate=1)\
     .add_sequence(seq)
     
 mysequencer.playback()

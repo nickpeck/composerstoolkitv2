@@ -49,7 +49,7 @@ chords = Sequence.from_generator(
     loop()
 )
 
-Sequencer(bpm=150, playback_rate=1)\
+Context.get_context().new_sequencer(bpm=150, playback_rate=1)\
     .add_sequence(melodic_variations1)\
     .add_sequence(chords, offset=6.5)\
     .playback()

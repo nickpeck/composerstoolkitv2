@@ -52,7 +52,7 @@ for canon in canons:
     if canon.duration > 40:
         continue
     print(canon.meta["canon"])
-    Sequencer(bpm=200, playback_rate=1, debug=False)\
+    Context.get_context().new_sequencer(bpm=200, playback_rate=1, debug=False)\
         .add_sequence(source)\
         .add_sequence(canon)\
         .playback()

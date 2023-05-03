@@ -41,7 +41,7 @@ melody = develop(
 
 melody = Sequence(melody.events).transform(tie_repeated()).bake()
 
-Sequencer(bpm=60, playback_rate=1)\
+Context.get_context().new_sequencer(bpm=60, playback_rate=1)\
     .add_sequence(melody[:16])\
     .add_sequence(chords)\
     .playback()

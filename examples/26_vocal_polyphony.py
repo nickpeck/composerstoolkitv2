@@ -93,7 +93,7 @@ soprano = Sequence.from_generator(random_slice(
     harmony_gate
 )
 
-mysequencer = Sequencer(bpm=35, playback_rate=1, debug=True)\
+mysequencer = Context.get_context().new_sequencer(bpm=35, playback_rate=1, debug=True)\
     .add_sequence(tenor, channel_no=3)\
     .add_sequence(alto, offset=5, channel_no=2)\
     .add_sequence(soprano, offset=10, channel_no=1)\
