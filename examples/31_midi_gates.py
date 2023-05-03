@@ -16,10 +16,10 @@ MIDI_CONTROLLER_NAME = "V61"
 
 midi_in = MidiInputBus(midi_device = get_midi_device_id(MIDI_CONTROLLER_NAME))
 
-def my_gate1(context):
+def my_gate1(context = lambda: Context.get_context()):
     return 40 in midi_in.active_notes
 
-def my_gate2(context):
+def my_gate2(context = lambda: Context.get_context()):
     return 44 in midi_in.active_notes
 
 @Transformer
@@ -46,15 +46,13 @@ ostinato = Sequence(events=[
     my_pitch_transformer()
 )
     
-mysequencer = Sequencer(bpm=80, debug=False)\
+mysequencer = Context.get_context().new_sequencer(bpm=80, debug=False)\
     .add_sequence(ostinato, channel_no=1)\
     .add_transformer(gated(
         modal_quantize(scales.E_major),
-        my_gate1,
-        lambda: mysequencer.context))\
+        my_gate1))\
     .add_transformer(gated(
         modal_quantize(scales.Ab_major),
-        my_gate2,
-        lambda: mysequencer.context))
+        my_gate2))
 
 mysequencer.playback()

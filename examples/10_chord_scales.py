@@ -13,6 +13,6 @@ chords = Sequence.from_generator(chords_from_scale(
      Sequence.from_generator(pulses([WHOLE_NOTE])).transform(loop())
 )).transform(transpose(60))
 
-Sequencer(bpm=120, playback_rate=1)\
+Context.get_context().new_sequencer(bpm=120, playback_rate=1)\
     .add_sequence(chords)\
     .playback()

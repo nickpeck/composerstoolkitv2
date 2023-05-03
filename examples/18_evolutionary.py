@@ -6,7 +6,7 @@ from composerstoolkit import *
 pf = pitches.PitchFactory()
 
 def playback(seq):
-    Sequencer(bpm=250, playback_rate=1)\
+    Context.get_context().new_sequencer(bpm=250, playback_rate=1)\
         .add_sequence(seq)\
         .playback()
 

@@ -69,7 +69,9 @@ ostinato = Sequence.from_generator(random_slice(
     loop()
 )
 
-mysequencer = Sequencer(bpm=80, debug=True)\
+print(dir(Context.get_context()))
+
+mysequencer = Context.get_context().new_sequencer(bpm=80, debug=True)\
     .add_sequence(drone_c, channel_no=1)\
     .add_sequence(drone_g, offset=30, channel_no=2)\
     .add_sequence(chords, offset=5, channel_no=2)\
@@ -77,11 +79,9 @@ mysequencer = Sequencer(bpm=80, debug=True)\
     .add_sequence(ostinato, offset=80, channel_no=4)\
     .add_transformer(gated(
         modal_quantize(scales.E_major),
-        cyclic_time_gate(300,100,200),
-        lambda: mysequencer.context))\
+        cyclic_time_gate(300,100,200)))\
     .add_transformer(gated(
         modal_quantize(scales.Ab_major),
-        cyclic_time_gate(300,200,300),
-        get_context = lambda: mysequencer.context))
+        cyclic_time_gate(300,200,300)))
 
 mysequencer.playback()

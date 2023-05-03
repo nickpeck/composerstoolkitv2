@@ -117,7 +117,7 @@ fin_seq.time_slice(0, 2)
 Sequencers are analogous to a MIDI sequencer, and allow us to cue multiple sequences together for playback on a given engine. By default, we use composerstoolkit.core.synth.DummyPlayback (which just logs the noteon/noteoff events), but we could save to MIDI, send to a MIDI device, or write our own playback engine that implements composerstoolkit.core.synth.Playback
 
 ~~~
-Sequencer(bpm=240, playback_rate=1)\
+Context.get_context().new_sequencer(bpm=240, playback_rate=1)\
     .add_sequence(seq)\
     .add_sequence(fin_seq, offset=10)\
     .playback()
@@ -132,7 +132,7 @@ $export DEFAULT_SYNTH=MySynth.Synth
 If you have Lilypond installed on your system, you can generate basic notation output from your container. (Note, only FiniteSequences are supported and the system does not currently handle tuplet durations).
 
 ~~~
-Sequencer(bpm=240, playback_rate=1)\
+Context.get_context().new_sequencer(bpm=240, playback_rate=1)\
     .add_sequence(fin_seq)\
     .show_notation()
 ~~~

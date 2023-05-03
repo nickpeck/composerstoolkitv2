@@ -49,6 +49,6 @@ progression = Sequence.from_generator(
     max_pitch = pf("C9")
 ))
 
-Sequencer(bpm=300, playback_rate=1)\
+Context.get_context().new_sequencer(bpm=300, playback_rate=1)\
     .add_sequence(progression)\
     .playback()

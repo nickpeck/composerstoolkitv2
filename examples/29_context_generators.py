@@ -3,7 +3,7 @@ from composerstoolkit import *
 def my_generator(
     min=40,
     max=80,
-    get_context =  lambda : mysequencer.context):
+    get_context = lambda: Context.get_context()):
     set = {0,2,4,6,7,9,11}
     last_pitch = 60
     while True:
@@ -26,7 +26,7 @@ oboe = Sequence.from_generator(
     ))
 ).transform(
     shape_sine(period_beats=20,
-    get_context = lambda: mysequencer.context)
+    get_context = lambda: Context.get_context())
 )
 
 
@@ -40,7 +40,7 @@ glock = Sequence.from_generator(
     ))
 ).transform(
     shape_sine(period_beats=20,
-    get_context = lambda: mysequencer.context)
+    get_context = lambda: Context.get_context())
 ).transform(
     rhythmic_augmentation(3)
 )
@@ -64,7 +64,7 @@ basses = Sequence.from_generator(
     rhythmic_augmentation(10)
 )
 
-mysequencer = Sequencer(bpm=220, playback_rate=1, debug=True)\
+mysequencer = Context.get_context().new_sequencer(bpm=220, playback_rate=1, debug=True)\
     .add_sequence(glock, channel_no=1)\
     .add_sequence(oboe, channel_no=2)\
     .add_sequence(strings, channel_no=11)\

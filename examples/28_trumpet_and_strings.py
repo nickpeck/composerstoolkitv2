@@ -10,7 +10,7 @@ NEXUS_SET = {0,2,5}
     
 harmony_gate = enforce_shared_pitch_class_set(
             pitch_class_set=NEXUS_SET,
-            get_context = lambda: mysequencer.context)
+            get_context = lambda: Context.get_context())
 
 trumpet = Sequence.from_generator(random_slice(
     Sequence.from_generator(collision_pattern(3,5))
@@ -20,7 +20,7 @@ trumpet = Sequence.from_generator(random_slice(
     harmony_gate
 ).transform(
     shape_sine(period_beats=20,
-    get_context = lambda: mysequencer.context)
+    get_context = lambda: Context.get_context())
 ).transform(
     tie_repeated()
 ).transform(
@@ -35,7 +35,7 @@ cello = Sequence.from_generator(random_slice(
     harmony_gate
 ).transform(
     shape_sine(period_beats=20,
-    get_context = lambda: mysequencer.context)
+    get_context = lambda: Context.get_context())
 )
 
 strings = Sequence.from_generator(
@@ -45,7 +45,7 @@ strings = Sequence.from_generator(
         cycle_of=-4,
         max_len=16)).transform(loop())
 
-mysequencer = Sequencer(bpm=220, playback_rate=1, debug=True)\
+mysequencer = Context.get_context().new_sequencer(bpm=220, playback_rate=1, debug=True)\
     .add_sequence(trumpet, channel_no=2)\
     .add_sequence(cello, channel_no=14)\
     .add_sequence(strings, channel_no=3)

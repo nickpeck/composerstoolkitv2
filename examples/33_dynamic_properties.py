@@ -9,17 +9,15 @@ that forces the notes into a given octave space that rises upwards every 60 beat
 from composerstoolkit import *
 
 def max_pitch():
-    if mysequencer.context is not None:
-        x = int(mysequencer.context.beat_offset) % 60
-        if x >= 24:
-            return x
+    x = int(Context.get_context().beat_offset) % 60
+    if x >= 24:
+        return x
     return 24
 
 def min_pitch():
-    if mysequencer.context is not None:
-        x = int(mysequencer.context.beat_offset % 60)
-        if x > 24:
-            return x - 24
+    x = int(Context.get_context().beat_offset % 60)
+    if x > 24:
+        return x - 24
     return 12
 
 line = Sequence.from_generator(random_noise()).transform(fit_to_range(
@@ -27,7 +25,7 @@ line = Sequence.from_generator(random_noise()).transform(fit_to_range(
     min_pitch = IntProp(min_pitch)
 ))
 
-mysequencer = Sequencer(bpm=300, debug=True) \
+mysequencer = Context.get_context().new_sequencer(bpm=300, debug=True) \
     .add_sequence(line, channel_no=1)
 
 mysequencer.playback()

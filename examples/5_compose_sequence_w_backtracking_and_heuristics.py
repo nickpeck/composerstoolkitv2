@@ -24,6 +24,6 @@ seq = backtracking_solver(
 # make some interesting rhythms out of this repetition
 seq = Sequence(seq.events).transform(tie_repeated())
 
-Sequencer(bpm=240, playback_rate=1)\
+Context.get_context().new_sequencer(bpm=240, playback_rate=1)\
     .add_sequence(seq)\
     .playback()

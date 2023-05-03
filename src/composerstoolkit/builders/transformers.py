@@ -496,7 +496,7 @@ def random_transformation(seq: Sequence,
 def gated(seq: Sequence,
     transformer: Transformer,
     condition: Callable[[Context], bool],
-    get_context: Callable[[], Context]) -> Iterator[Event]:
+    get_context = lambda: Context.get_context()) -> Iterator[Event]:
     """Return a new stream of events such as that:
     whenever condition evaluates to true, we return the next
     item in the transformed sequence.
@@ -626,7 +626,7 @@ def random_mutation(seq: Sequence,
 
 @Transformer
 def shape_sine(seq: Sequence,
-    get_context: Callable[[], Context],
+    get_context = lambda: Context.get_context(),
     period_beats = 100, min=60, max=90, phase=0):
     """Only allows events to pass such as that the
     shape of the resulting line obeys a sine shape.
@@ -661,7 +661,7 @@ def shape_sine(seq: Sequence,
 @Transformer
 def enforce_shared_pitch_class_set(seq: Sequence,
     pitch_class_set: Set[int],
-    get_context: Callable[[], Context]):
+    get_context = lambda: Context.get_context()):
     """Only allow events to pass where the
     aggregate of all pitches in the context is a subset
     of the given pitch class (or vice versa).

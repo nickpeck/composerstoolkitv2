@@ -33,7 +33,7 @@ def toggle_capture_mode():
 live_seq = Sequence.from_generator(midi_realtime_input(), meta={"realtime": True, "bpm": 60})\
     .transform(loop_capture(toggle=toggle_capture_mode, debug=True))
 
-mysequencer = Sequencer(bpm=live_seq.meta["bpm"], debug=False) \
+mysequencer = Context.get_context().new_sequencer(bpm=live_seq.meta["bpm"], debug=False) \
     .add_sequence(live_seq, channel_no=1)
 
 mysequencer.playback()

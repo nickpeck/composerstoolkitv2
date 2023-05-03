@@ -1,6 +1,7 @@
 import unittest
 
 from composerstoolkit import *
+from testcore import MockContext
 
 class PermutationsTests(unittest.TestCase):
 
@@ -388,7 +389,7 @@ class TransformerTests(unittest.TestCase):
         def _context():
             i = 0
             while True:
-                c = Context(
+                c = MockContext(
                     sequencer = None,
                     beat_offset = i,
                     time_offset_secs = i
