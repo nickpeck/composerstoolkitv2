@@ -32,6 +32,22 @@ class TestGenerators(unittest.TestCase):
         with self.assertRaises(StopIteration):
             assert next(events)
 
+    def test_collision_pattern_max_len(self):
+        events = collision_pattern(2,3, max_len=4)
+        #print(list(events))
+        assert next(events) == Event(pitches=[], duration=2)
+        assert next(events) == Event(pitches=[], duration=1)
+        assert next(events) == Event(pitches=[], duration=1)
+        with self.assertRaises(StopIteration):
+            assert next(events)
+
+        events = collision_pattern(2,3, max_len=3)
+        #print(list(events))
+        assert next(events) == Event(pitches=[], duration=2)
+        assert next(events) == Event(pitches=[], duration=1)
+        with self.assertRaises(StopIteration):
+            assert next(events)
+
     def test_resultant_pitches(self):
         events = resultant_pitches(counters=[2,3])
         assert next(events) == Event(pitches=[0], duration=0)

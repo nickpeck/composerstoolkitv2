@@ -28,7 +28,7 @@ def pulses(pulse_values: Iterator[int]) -> Iterator[Event]:
     """
     return (Event(duration=d) for d in pulse_values)
 
-def collision_pattern(*clocks) -> Iterator[Event]:
+def collision_pattern(*clocks, max_len=None) -> Iterator[Event]:
     """given clocks in the ratio x:y ,
     generate the sequence of attack points
     that results from the collision of their pulses.
@@ -46,29 +46,35 @@ def collision_pattern(*clocks) -> Iterator[Event]:
     for clock in clocks:
         lcm = lcm*clock//math.gcd(lcm, clock)
     n_ticks = lcm
+    if max_len is not None:
+        if max_len < lcm:
+            n_ticks = max_len
+
     pulse_pattern = [0 for i in range(0, n_ticks)]
     for i in range(0, n_ticks):
         for clock in clocks:
             if i % clock == 0:
                 pulse_pattern[i] = 1
                 continue
-
     cur_duration = None
-
-    for i in range(n_ticks -1):
+    sum_durations = 0
+    for i in range(n_ticks):
+        if max_len is None and i == n_ticks -1:
+            break
         current = pulse_pattern[i]
-
         if current == 1:
             if cur_duration is not None:
                 yield Event(duration=cur_duration)
+                sum_durations = sum_durations + cur_duration
             cur_duration = 1
         elif current == 0:
-            # if cur_duration is None:
-                # cur_duration = 1
-            # else:
             cur_duration = cur_duration + 1
-    # if cur_duration is None:
-        # cur_duration = 0
+
+    if max_len is not None:
+        yield Event(duration=cur_duration)
+        if max_len > sum_durations:
+            return Event(duration=max_len-sum_durations)
+        return
     yield Event(duration=cur_duration + 1)
 
 def resultant_pitches(counters = List[int],
