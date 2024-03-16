@@ -7,7 +7,7 @@ import logging
 import math
 import random
 import time
-from typing import List, Optional, Iterator, Union, Callable, Set, Any
+from typing import List, Optional, Iterator, Union, Callable, Set, Any, Dict
 
 import more_itertools
 
@@ -674,3 +674,26 @@ def enforce_shared_pitch_class_set(seq: Sequence,
         aggregate = pitchset.to_prime_form(aggregate)
         if aggregate.issubset(pitch_class_set):
             yield event
+
+@Transformer
+def rhythmic_time_points(seq: Sequence,
+               time_points: Dict[str, float],
+               meter_duration_beats: int):
+    """
+    appromixation of Babbitt's time-poitn technique.
+    time_points, a dictionary of pitch class -> meter offset
+    meter_duration_beats: length of the meter (typically 12)
+    """
+    is_first = True
+    for left, right in more_itertools.windowed(seq.events, 2, fillvalue=None):
+        left_pitch = left.pitches[0]
+        left_tp = time_points[left_pitch % 12]
+        right_pitch = right.pitches[0]
+        right_tp = time_points[right_pitch % 12]
+        if is_first and left_tp != 0:
+            is_first = False
+            yield Event(duration=left_tp)
+        duration = right_tp - left_tp
+        if right_tp < left_tp:
+            duration = right_tp + meter_duration_beats - left_tp
+        yield Event(pitches=[left_pitch], duration=duration)
