@@ -126,6 +126,7 @@ class Sequencer(Thread):
         self.active_pitches = []
         self.is_playing = False
         self._playback_started_ts = None
+        self.buffer = {}
 
     @property
     def voices(self):
@@ -152,11 +153,15 @@ class Sequencer(Thread):
         self.sequences.append((channel_no, offset, seq))
         return self
 
-    def _play_channel(self, channel_no, offset, seq, synth):
+    def _play_channel(self, channel_no, offset, seq, synth, store_midi):
+        midi_buffer = None
+        if store_midi:
+            midi_buffer = []
         playback_rate = self.options["playback_rate"]
         bpm = self.options["bpm"]
         time_scale_factor = (1/(bpm/60)) * (1/playback_rate)
         logging.getLogger().info(f"Channel {channel_no} playback starting")
+        count = 0
         drift = None
         def _iter():
             memento = seq.events
@@ -171,14 +176,18 @@ class Sequencer(Thread):
         it = _iter()
         while True:
             #for event in seq.events:
+            if not self.is_playing:
+                logging.getLogger().debug(f"Channel {channel_no} noted stop signal")
+                if midi_buffer is not None:
+                    self.buffer[channel_no] = midi_buffer
+                    logging.getLogger().debug(f"Channel {channel_no} dumped events to self.buffer")
+                return
             try:
+                logging.getLogger().debug(f"Channel {channel_no} calculating next pitch")
                 event = it()
             except StopIteration:
                 break
-            if not self.is_playing:
-                return
-            if self.options["debug"]:
-                logging.getLogger().info(f"Channel {channel_no} {event}")
+            logging.getLogger().debug(f"Channel {channel_no} {event}")
             future_time = time.time() + (event.duration * time_scale_factor)
             if drift is not None:
                 future_time = future_time - drift
@@ -186,9 +195,13 @@ class Sequencer(Thread):
             for pitch in event.pitches:
                 if event.meta.get("realtime", None) != "note_off":
                     synth.noteon(channel_no, pitch, 60)
+                    if midi_buffer is not None:
+                        midi_buffer.append((channel_no - 1, 0, pitch, count, event.duration, 60))
                     self.active_pitches.append((pitch, channel_no))
+                    count = count + event.duration
             pause_int = future_time - time.time()
             if pause_int > 0:
+                logging.getLogger().debug(f"Channel {channel_no} sleeping for {pause_int}")
                 sleep(pause_int)
             else:
                 logging.getLogger().debug(f"Channel {channel_no} drift {abs(pause_int)} s")
@@ -210,28 +223,42 @@ class Sequencer(Thread):
     def run(self):
         self.playback()
 
-    def playback(self):
+    def playback(self, to_midi=False):
         """Playback all midi channels
         """
         synth = self.options.get("synth", None)
+        channels = []
         with synth:
             def signal_handler(_sig, _frame):
                 logging.getLogger().info("Stop signal recieved")
                 logging.getLogger().info("Sending note off to all pitches")
                 self.is_playing = False
                 self.clear_all(synth)
+                waiting_to_close = True
+                logging.getLogger().info("Waiting for all threads to terminate")
+                while waiting_to_close:
+                    sleep(0.5)
+                    all_closed = True
+                    for ch in channels:
+                        if ch.is_alive():
+                            all_closed = False
+                    if all_closed:
+                        logging.getLogger().info("All threads terminated")
+                        waiting_to_close = False
+                if self.buffer is not None:
+                    self._write_buffer_to_midi_file()
                 print('Bye')
                 sys.exit(0)
             signal.signal(signal.SIGINT, signal_handler)
             print('Press Ctrl+C to exit')
             
-            channels = []
+
             self.is_playing = True
             self._playback_started_ts = time.time()
             for channel_no, offset, seq in self.sequences:
                 player_thread = Thread(
                     target=self._play_channel,
-                    args=(channel_no, offset, seq,synth))
+                    args=(channel_no, offset, seq,synth, to_midi))
                 player_thread.daemon = True
                 channels.append(player_thread)
             for player_thread in channels:
@@ -243,6 +270,19 @@ class Sequencer(Thread):
                         running_count = running_count + 1
                 if running_count == 0:
                     return
+    def _write_buffer_to_midi_file(self):
+        logging.getLogger().info(f"writing midi data to file")
+        midifile = MIDIFile(len(self.sequences))
+        midifile.addTempo(0, 0, self.options["bpm"])
+        for channel_no, events in self.buffer.items():
+            midifile.addTrackName(channel_no - 1, 0, "Channel {}".format(channel_no))
+            for c_, _, pitch, count, duration, dynamic in events:
+                midifile.addNote(channel_no - 1, 0, pitch, count, duration, dynamic)
+        filename = str(int(time.time())) + ".midi"
+        with open(filename, 'wb') as outf:
+            midifile.writeFile(outf)
+        logging.getLogger().info(f"dumped MIDI output to {filename}")
+        return self
                     
     def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:
         """Convenience method for applying a transformation function globally to all

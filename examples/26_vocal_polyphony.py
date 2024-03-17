@@ -10,6 +10,8 @@ from composerstoolkit import *
 def enforce_pitch_range(seq: Sequence,
     min_pitch, max_pitch):
     for event in seq.events:
+        if not Context.get_context().sequencer.is_playing:
+            yield event
         if event.pitches[0] <= max_pitch \
             and event.pitches[0] >= min_pitch:
             yield event
@@ -20,7 +22,7 @@ def rest(seq: Sequence):
         yield event.extend(pitches=[])
     
 #NEXUS_SET = {0,1,6}
-NEXUS_SET = {0,2,4,5,7,9,10}
+NEXUS_SET = {0,2,5,7, 10}
    
    
 
