@@ -8,7 +8,7 @@ import signal
 import sys
 import time
 from typing import Any, Dict, List, Optional, Callable, Iterator, Set, ClassVar
-from threading import Thread
+from threading import Thread, Lock
 
 import itertools
 import functools
@@ -19,6 +19,8 @@ from mido import MidiTrack, Message # type: ignore
 from . synth import DummyPlayback 
 from . sequence import Event, FiniteSequence
 from .. resources.pitches import PitchFactory
+
+lock = Lock()
 
 @dataclass
 class Context:
@@ -153,6 +155,11 @@ class Sequencer(Thread):
         self.sequences.append((channel_no, offset, seq))
         return self
 
+    def _dump_events(self, channel_no, events):
+        lock.acquire()
+        self.buffer[channel_no] = events
+        lock.release()
+
     def _play_channel(self, channel_no, offset, seq, synth, store_midi):
         midi_buffer = None
         if store_midi:
@@ -179,7 +186,8 @@ class Sequencer(Thread):
             if not self.is_playing:
                 logging.getLogger().debug(f"Channel {channel_no} noted stop signal")
                 if midi_buffer is not None:
-                    self.buffer[channel_no] = midi_buffer
+                    self._dump_events(channel_no, midi_buffer)
+                    #self.buffer[channel_no] = midi_buffer
                     logging.getLogger().debug(f"Channel {channel_no} dumped events to self.buffer")
                 return
             try:
@@ -198,7 +206,7 @@ class Sequencer(Thread):
                     if midi_buffer is not None:
                         midi_buffer.append((channel_no - 1, 0, pitch, count, event.duration, 60))
                     self.active_pitches.append((pitch, channel_no))
-                    count = count + event.duration
+            count = count + event.duration
             pause_int = future_time - time.time()
             if pause_int > 0:
                 logging.getLogger().debug(f"Channel {channel_no} sleeping for {pause_int}")
@@ -236,15 +244,10 @@ class Sequencer(Thread):
                 self.clear_all(synth)
                 waiting_to_close = True
                 logging.getLogger().info("Waiting for all threads to terminate")
-                while waiting_to_close:
-                    sleep(0.5)
-                    all_closed = True
-                    for ch in channels:
-                        if ch.is_alive():
-                            all_closed = False
-                    if all_closed:
-                        logging.getLogger().info("All threads terminated")
-                        waiting_to_close = False
+                for ch in channels:
+                    if ch.is_alive():
+                        ch.join(3)
+                logging.getLogger().info("All threads terminated")
                 if self.buffer is not None:
                     self._write_buffer_to_midi_file()
                 print('Bye')
@@ -272,6 +275,8 @@ class Sequencer(Thread):
                     return
     def _write_buffer_to_midi_file(self):
         logging.getLogger().info(f"writing midi data to file")
+        import pprint
+        pprint.pprint(self.buffer, indent=4)
         midifile = MIDIFile(len(self.sequences))
         midifile.addTempo(0, 0, self.options["bpm"])
         for channel_no, events in self.buffer.items():
