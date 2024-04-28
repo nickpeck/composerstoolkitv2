@@ -637,6 +637,46 @@ class TransformerTests(unittest.TestCase):
         mutated = list(filter(lambda e: e == 1, new_pitches))
         assert len(mutated) > 400 and len(mutated) < 600
 
+    def test_tintinnabulation_below(self):
+        seq = Sequence([Event([0], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="below"))
+        assert next(seq.events).pitches == [0,0]
+        seq = Sequence([Event([2], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="below"))
+        assert next(seq.events).pitches == [2,0]
+        seq = Sequence([Event([5], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="below"))
+        assert next(seq.events).pitches == [5,4]
+        seq = Sequence([Event([8], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="below"))
+        assert next(seq.events).pitches == [8,7]
+        seq = Sequence([Event([12], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="below"))
+        assert next(seq.events).pitches == [12,12]
+        seq = Sequence([Event([13], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="below"))
+        assert next(seq.events).pitches == [13,12]
+
+    def test_tintinnabulation_above(self):
+        seq = Sequence([Event([0], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="above"))
+        assert next(seq.events).pitches == [0,0]
+        seq = Sequence([Event([2], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="above"))
+        assert next(seq.events).pitches == [2,4]
+        seq = Sequence([Event([5], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="above"))
+        assert next(seq.events).pitches == [5,7]
+        seq = Sequence([Event([8], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="above"))
+        assert next(seq.events).pitches == [8,12]
+        seq = Sequence([Event([12], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="above"))
+        assert next(seq.events).pitches == [12,12]
+        seq = Sequence([Event([13], 1)]).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="above"))
+        assert next(seq.events).pitches == [13,16]
+
+    def test_tintinnabulation_abovebelow(self):
+        events = [Event([i], 1) for i in range(2,9)]
+        seq = Sequence(events).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="abovebelow"))
+        event_pitches = [e.pitches for e in seq.events]
+        assert(event_pitches == [[2,4], [3,0], [4,4], [5,4], [6,7], [7,7], [8,12]])
+
+    def test_tintinnabulation_belowabove(self):
+        events = [Event([i], 1) for i in range(2,9)]
+        seq = Sequence(events).transform(tintinnabulation(t_voice_pcs={0,4,7}, position="belowabove"))
+        event_pitches = [e.pitches for e in seq.events]
+        assert(event_pitches == [[2,0], [3,4], [4,4], [5,7], [6,4], [7,7], [8,7]])
+
 
 if __name__ == "__main__":
     unittest.main()

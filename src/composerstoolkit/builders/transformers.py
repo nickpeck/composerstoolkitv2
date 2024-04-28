@@ -680,7 +680,7 @@ def rhythmic_time_points(seq: Sequence,
                time_points: Dict[str, float],
                meter_duration_beats: int):
     """
-    appromixation of Babbitt's time-poitn technique.
+    appromixation of Babbitt's time-point technique.
     time_points, a dictionary of pitch class -> meter offset
     meter_duration_beats: length of the meter (typically 12)
     """
@@ -697,3 +697,37 @@ def rhythmic_time_points(seq: Sequence,
         if right_tp < left_tp:
             duration = right_tp + meter_duration_beats - left_tp
         yield Event(pitches=[left_pitch], duration=duration)
+
+@Transformer
+def tintinnabulation(seq: Sequence, t_voice_pcs: Set[int], position: str="below"):
+    if len(t_voice_pcs) == 0:
+        return seq
+    t_voice_pcs = sorted(t_voice_pcs)
+    if position not in ["below", "above", "belowabove", "abovebelow"]:
+        raise Exception(f"Unrecognised tintinnabulation mode {position}")
+    is_alternate = True if position in ["belowabove", "abovebelow"] else False
+    if position == "belowabove":
+        position = "below"
+    if position == "abovebelow":
+        position = "above"
+    for event in seq.events:
+        if len(event.pitches) == 0:
+            yield event
+            continue
+        m_voice = event.pitches[0]
+        m_voice_pc = m_voice % 12
+        t_voice = m_voice
+
+        if position == "below":
+            if m_voice_pc < t_voice_pcs[0]:
+                m_voice_pc = m_voice_pc + 12
+            t_voice_pc = list(filter(lambda t: t <= m_voice_pc, t_voice_pcs))[-1]
+            t_voice = m_voice - (m_voice_pc - t_voice_pc)
+        if position == "above":
+            if m_voice_pc > t_voice_pcs[-1]:
+                m_voice_pc = m_voice_pc - 12
+            t_voice_pc = list(filter(lambda t: t >= m_voice_pc, t_voice_pcs))[0]
+            t_voice = m_voice + (t_voice_pc - m_voice_pc)
+        yield Event(pitches=[m_voice, t_voice], duration=event.duration)
+        if is_alternate:
+            position = "below" if position == "above" else "above"
