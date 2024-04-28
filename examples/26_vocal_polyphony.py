@@ -22,7 +22,7 @@ def rest(seq: Sequence):
         yield event.extend(pitches=[])
     
 #NEXUS_SET = {0,1,6}
-NEXUS_SET = {0,2,5,7, 10}
+NEXUS_SET = {0,2,4,5,7,9,11}
    
    
 
@@ -97,9 +97,9 @@ soprano = Sequence.from_generator(random_slice(
 
 mysequencer = Context.get_context().new_sequencer(bpm=35, playback_rate=1, debug=True)\
     .add_sequence(tenor, channel_no=3)\
-    .add_sequence(alto, offset=5, channel_no=2)\
-    .add_sequence(soprano, offset=10, channel_no=1)\
-    .add_sequence(bass, offset=15, channel_no=4)\
+    .add_sequence(alto, channel_no=2)\
+    .add_sequence(soprano, channel_no=1)\
+    .add_sequence(bass, channel_no=4)\
     .add_transformer(
         gated( # cycle ends on a major or min triad
             condition = cyclic_time_gate(20, 16, 18),
@@ -118,4 +118,4 @@ mysequencer = Context.get_context().new_sequencer(bpm=35, playback_rate=1, debug
 
     
 
-mysequencer.playback()
+mysequencer.playback(to_midi=True)

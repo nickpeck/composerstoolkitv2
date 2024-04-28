@@ -721,13 +721,21 @@ def tintinnabulation(seq: Sequence, t_voice_pcs: Set[int], position: str="below"
         if position == "below":
             if m_voice_pc < t_voice_pcs[0]:
                 m_voice_pc = m_voice_pc + 12
-            t_voice_pc = list(filter(lambda t: t <= m_voice_pc, t_voice_pcs))[-1]
-            t_voice = m_voice - (m_voice_pc - t_voice_pc)
+            try:
+                t_voice_pc = list(filter(lambda t: t < m_voice_pc, t_voice_pcs))[-1]
+                t_voice = m_voice - (m_voice_pc - t_voice_pc)
+            except IndexError:
+                t_voice_pc = t_voice_pcs[-1]
+                t_voice = m_voice - (12 - t_voice_pc)
         if position == "above":
             if m_voice_pc > t_voice_pcs[-1]:
                 m_voice_pc = m_voice_pc - 12
-            t_voice_pc = list(filter(lambda t: t >= m_voice_pc, t_voice_pcs))[0]
-            t_voice = m_voice + (t_voice_pc - m_voice_pc)
+            try:
+                t_voice_pc = list(filter(lambda t: t > m_voice_pc, t_voice_pcs))[0]
+                t_voice = m_voice + (t_voice_pc - m_voice_pc)
+            except IndexError:
+                t_voice_pc = t_voice_pcs[0]
+                t_voice = m_voice + (12 - m_voice_pc)
         yield Event(pitches=[m_voice, t_voice], duration=event.duration)
         if is_alternate:
             position = "below" if position == "above" else "above"

@@ -14,8 +14,8 @@ def my_generator(
         available_notes = sorted(filter(lambda x: (x % 12) in diff, range(min, max)), key=lambda n: abs(last_pitch-n))
         for n in available_notes:
             last_pitch = n
-            yield Event(pitches=[n], duration=1)
 
+            yield Event(pitches=[n], duration=1)
 oboe = Sequence.from_generator(
     my_generator()
 ).transform(
@@ -67,7 +67,7 @@ basses = Sequence.from_generator(
 mysequencer = Context.get_context().new_sequencer(bpm=220, playback_rate=1, debug=True)\
     .add_sequence(glock, channel_no=1)\
     .add_sequence(oboe, channel_no=2)\
-    .add_sequence(strings, channel_no=11)\
-    .add_sequence(basses, channel_no=14)
+    .add_sequence(strings, channel_no=3)\
+    .add_sequence(basses, channel_no=4)
 
 mysequencer.playback()

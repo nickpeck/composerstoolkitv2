@@ -246,7 +246,7 @@ class Sequencer(Thread):
                 logging.getLogger().info("Waiting for all threads to terminate")
                 for ch in channels:
                     if ch.is_alive():
-                        ch.join(3)
+                        ch.join()
                 logging.getLogger().info("All threads terminated")
                 if self.buffer is not None:
                     self._write_buffer_to_midi_file()

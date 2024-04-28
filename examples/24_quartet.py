@@ -131,4 +131,4 @@ mysequencer = Context.get_context().new_sequencer(bpm=100, playback_rate=1, debu
     .add_sequence(alto, offset=10, channel_no=2)\
     .add_sequence(soprano, offset=15, channel_no=1)
 
-mysequencer.playback()
+mysequencer.playback(to_midi=True)
