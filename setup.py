@@ -12,6 +12,10 @@ setuptools.setup(
     url='',
     package_dir={'': 'src'},
     packages=setuptools.find_packages(where='src'),
+    scripts=[
+        "src/composerstoolkit/scripts/initproject.py",
+        "src/composerstoolkit/scripts/initproject.cmd"
+    ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
