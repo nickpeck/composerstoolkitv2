@@ -45,6 +45,7 @@ def loop(seq: Sequence,
 def slice_looper(seq: Sequence,
     n_events: int,
     n_repeats: int = 1) -> Iterator[Event]:
+    """Loop up to n_events of a given sequence"""
     buffer = []
     for event in seq.events:
         if len(buffer) < n_events:
@@ -60,7 +61,8 @@ def slice_looper(seq: Sequence,
 
 @Transformer
 def loop_capture(seq: Sequence, toggle=lambda: True, debug=False):
-    """Capture midi events and play them back in a loop.
+    """
+    Capture midi events and play them back in a loop.
     toggle is a function that changes state in and out of capture mode (which could be based on a MIDI
     controller status, or a pre-determined algorithm).
     Whilst toggle returns True, capture events into a buffer
@@ -114,6 +116,9 @@ def loop_capture(seq: Sequence, toggle=lambda: True, debug=False):
 @Transformer
 def feedback(seq: Sequence,
     n_events: int) -> Iterator[Event]:
+    """
+    Modify a stream of events by persisting pitches for up to n_events forwards
+    """
     buffer = []
     for event in seq.events:
         buffer.insert(0, event)
@@ -478,7 +483,8 @@ def concertize(seq: Sequence,
 @Transformer
 def batch(seq: Sequence,
     transformations: List[Transformer]) -> Iterator[Event]:
-    """Apply multiple transformations a sequence, such as
+    """
+    Apply multiple transformations a sequence, such as
     batch(seq, [a,b,c]) == a(b(c(seq)))
     """
     for transformer in transformations:
@@ -488,6 +494,10 @@ def batch(seq: Sequence,
 @Transformer
 def random_transformation(seq: Sequence,
     transformations: List[Transformer]) -> Iterator[Event]:
+    """
+    Select a transformation at random from transformations and
+    return a new sequence with this transformation applied
+    """
     choice = random.choice(transformations)
     seq = seq.extend(events=choice(seq))
     return seq.events
@@ -497,7 +507,8 @@ def gated(seq: Sequence,
     transformer: Transformer,
     condition: Callable[[Context], bool],
     get_context = lambda: Context.get_context()) -> Iterator[Event]:
-    """Return a new stream of events such as that:
+    """
+    Return a new stream of events such as that:
     whenever condition evaluates to true, we return the next
     item in the transformed sequence.
     Otherwise, return the next item in the source sequence
@@ -521,7 +532,8 @@ def gated(seq: Sequence,
 @Transformer
 def arpeggiate(seq: Sequence,
     individual_note_len=None) -> Iterator[Event]:
-    """Transform a sequence of chords into a series of arpeggios.
+    """
+    Transform a sequence of chords into a series of arpeggios.
     individual_note_len is the length of each note in the 
     arpeggio. If not given, it is the length of the source chord
     divided by the number of notes in the chord.
@@ -536,12 +548,18 @@ def arpeggiate(seq: Sequence,
 @Transformer
 def displacement(seq: Sequence,
     interval: int=0) -> Iterator[Event]:
+    """
+    Displace a seires of events by a duration of 'interval'
+    """
     yield Event([], duration=interval)
     for event in seq.events:
         yield event
 
 @Transformer
 def monody(seq: Sequence) -> Iterator[Event]:
+    """
+    Transforms a sequence of events by filtering all but the uppermost pitch
+    """
     for event in seq.events:
         if len(event.pitches) == 0:
             yield event
@@ -700,6 +718,11 @@ def rhythmic_time_points(seq: Sequence,
 
 @Transformer
 def tintinnabulation(seq: Sequence, t_voice_pcs: Set[int], position: str="below"):
+    """
+    Adds a 2nd pitch to each event in a 'tintinnabulation' style.
+    t_voice_pcs is a list or set of pitch classes for the tintinnabulation tones.
+    position is 'below' or 'above', or for alternating motion use: 'belowabove' or 'abovebelow'
+    """
     if len(t_voice_pcs) == 0:
         return seq
     t_voice_pcs = sorted(t_voice_pcs)
