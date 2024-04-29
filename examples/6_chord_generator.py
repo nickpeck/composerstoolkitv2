@@ -1,5 +1,5 @@
 """Presents an infinate-length series of chords derived from
-an aritifical scale constructed from the resultant pattern
+an artifical scale constructed from the resultant pattern
 of 3 different integers.
 """
 from composerstoolkit import *
