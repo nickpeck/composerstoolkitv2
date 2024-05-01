@@ -762,3 +762,19 @@ def tintinnabulation(seq: Sequence, t_voice_pcs: Set[int], position: str="below"
         yield Event(pitches=[m_voice, t_voice], duration=event.duration)
         if is_alternate:
             position = "below" if position == "above" else "above"
+
+@Transformer
+def split_voices(seq: Sequence, *parts: Sequence, rule="ommit"):
+    """
+    Split each 'chordal' event in seq into multiple sequences, creating a polyphony.
+    rule is one of:
+    - 'ommit' (default), if no pitches, or not enough pitches for each part, emit a 'rest' event into each part
+    TODO add more ie doublelead
+    """
+    for event in seq.events:
+        for i,part in enumerate(parts):
+            try:
+                pitch = event.pitches[i]
+                part.events = itertools.chain.from_iterable([part.events, [event.extend([pitch], event.duration)]])
+            except IndexError:
+                part.events = itertools.chain.from_iterable([part.events, [event.extend(pitches=[])]])
