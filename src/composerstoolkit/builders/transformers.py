@@ -802,6 +802,10 @@ def update_meta(seq: Sequence, **meta):
 
 @Transformer
 def cyclic_modulation(seq: Sequence, period=60, starting_deg=270, modulator=lambda e, v: None):
+    """
+    Apply a function to each event object with a value based upon the current sin value
+    of the event within a given period (value range is 0-127).
+    """
     i = 0
     for event in seq.events:
         sin = math.sin(math.radians((360 * i/period) - (360-starting_deg)))
