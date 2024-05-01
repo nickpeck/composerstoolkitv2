@@ -12,6 +12,9 @@ class Playback(ABC):
         
     def noteoff(self, channel: int, pitch: int):
         raise NotImplementedError("noteoff")
+
+    def control_change(self, channel: int, cc: int, value: int):
+        raise NotImplementedError("control_change")
         
     def __enter__(self):
         return self
@@ -28,6 +31,9 @@ class DummyPlayback(Playback):
         
     def noteoff(self, channel: int, pitch: int):
         logging.getLogger().info(f"NOTE OFF channel:{channel} pitch:{pitch}")
+
+    def control_change(self, channel: int, cc: int, value: int):
+        logging.getLogger().info(f"NOTE OFF channel:{channel} cc:{cc} value:{value}")
 
 class RTPMidi(Playback):
     """
@@ -54,6 +60,11 @@ class RTPMidi(Playback):
         from rtmidi.midiconstants import NOTE_OFF
         status = NOTE_OFF | (channel - 1)
         self.midiout.send_message([status, pitch, 0])
+
+    def control_change(self, channel: int , cc: int, value: int):
+        from rtmidi.midiconstants import CONTROL_CHANGE
+        status = CONTROL_CHANGE | (channel - 1)
+        self.midiout.send_message([status, cc, value])
         
     def __enter__(self):
         self.midiout.open_port(self.port_no)

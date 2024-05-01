@@ -120,7 +120,8 @@ class Sequencer(Thread):
         self.options = {
             "bpm": 120,
             "playback_rate": 1,
-            "meter": (4,4)
+            "meter": (4,4),
+            "dump_midi": False
         }
         
         self.sequences = []
@@ -165,9 +166,9 @@ class Sequencer(Thread):
         self.buffer[channel_no] = events
         lock.release()
 
-    def _play_channel(self, channel_no, offset, seq, synth, store_midi):
+    def _play_channel(self, channel_no, offset, seq, synth, to_midi):
         midi_buffer = None
-        if store_midi:
+        if to_midi:
             midi_buffer = []
         playback_rate = self.options["playback_rate"]
         bpm = self.options["bpm"]
@@ -206,10 +207,14 @@ class Sequencer(Thread):
                 future_time = future_time - drift
                 drift = None
             for pitch in event.pitches:
+                for cc, value in event.meta.get("cc", []):
+                    synth.control_change(channel_no, cc, value)
+                    if midi_buffer is not None:
+                        midi_buffer.append(("cc", channel_no - 1, count, cc, value))
                 if event.meta.get("realtime", None) != "note_off":
                     synth.noteon(channel_no, pitch, 60)
                     if midi_buffer is not None:
-                        midi_buffer.append((channel_no - 1, 0, pitch, count, event.duration, 60))
+                        midi_buffer.append(("note", channel_no - 1, 0, pitch, count, event.duration, 60))
                     self.active_pitches.append((pitch, channel_no))
             count = count + event.duration
             pause_int = future_time - time.time()
@@ -236,7 +241,7 @@ class Sequencer(Thread):
     def run(self):
         self.playback()
 
-    def playback(self, to_midi=False):
+    def playback(self):
         """Playback all midi channels
         """
         synth = self.options.get("synth", None)
@@ -253,7 +258,7 @@ class Sequencer(Thread):
                     if ch.is_alive():
                         ch.join()
                 logging.getLogger().info("All threads terminated")
-                if self.buffer is not None:
+                if self.buffer is not None and self.options["dump_midi"]:
                     self._write_buffer_to_midi_file()
                 print('Bye')
                 sys.exit(0)
@@ -266,7 +271,7 @@ class Sequencer(Thread):
             for channel_no, offset, seq in self.sequences:
                 player_thread = Thread(
                     target=self._play_channel,
-                    args=(channel_no, offset, seq,synth, to_midi))
+                    args=(channel_no, offset, seq,synth, self.options["dump_midi"]))
                 player_thread.daemon = True
                 channels.append(player_thread)
             for player_thread in channels:
@@ -286,8 +291,13 @@ class Sequencer(Thread):
         midifile.addTempo(0, 0, self.options["bpm"])
         for channel_no, events in self.buffer.items():
             midifile.addTrackName(channel_no - 1, 0, "Channel {}".format(channel_no))
-            for c_, _, pitch, count, duration, dynamic in events:
-                midifile.addNote(channel_no - 1, 0, pitch, count, duration, dynamic)
+            for event in events:
+                if event[0] == "note":
+                    _, c_, _, pitch, count, duration, dynamic = event
+                    midifile.addNote(channel_no - 1, 0, pitch, count, duration, dynamic)
+                elif event[0] == "cc":
+                    _, c_, count, cc, value = event
+                    midifile.addControllerEvent(channel_no -1, 0, count, cc, value)
         filename = str(int(time.time())) + ".midi"
         with open(filename, 'wb') as outf:
             midifile.writeFile(outf)
@@ -313,6 +323,8 @@ class Sequencer(Thread):
             midifile.addTrackName(channel_no - 1, offset, "Channel {}".format(channel_no))
             count = offset
             for event in seq.events:
+                for cc, value in event.meta.get("cc", []):
+                    midifile.addControllerEvent(channel_no -1, 0, count, cc, value)
                 for pitch in event.pitches:
                     try:
                         dynamic = event.meta["dynamic"]

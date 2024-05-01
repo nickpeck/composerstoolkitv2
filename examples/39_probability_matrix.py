@@ -15,7 +15,9 @@ pad = Sequence.from_generator(probability_matrix(choices=[
     monody=True
 )).transform(
     map_to_pulses(Sequence.from_generator(collision_pattern(4,7)))
+).transform( # sustains each node
+    update_meta(cc=[(64,127)])
 )
 
-sequencer = Sequencer(bpm=30, debug=True).add_sequence(pad)
+sequencer = Sequencer(bpm=90, debug=True, dump_midi=True).add_sequence(pad)
 sequencer.playback()
