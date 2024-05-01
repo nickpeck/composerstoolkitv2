@@ -762,3 +762,35 @@ def tintinnabulation(seq: Sequence, t_voice_pcs: Set[int], position: str="below"
         yield Event(pitches=[m_voice, t_voice], duration=event.duration)
         if is_alternate:
             position = "below" if position == "above" else "above"
+
+@Transformer
+def split_voices(seq: Sequence, *parts: Sequence, mode="ommit"):
+    """
+    Split each 'chordal' event in seq into multiple sequences, creating a polyphony.
+    mode is one of:
+    - 'ommit' (default), if no pitches, or not enough pitches for each part, emit a 'rest' event into each lower part
+    - 'doublelead' - fill all voices by doubling the lead note to compensate
+    TODO add more ie doublelead
+    """
+    n_voices = len(parts)
+    if mode not in ["ommit", "doublelead"]:
+        raise Exception(f"unrecognised mode for split_voices {mode}")
+    for event in seq.events:
+        if mode == "ommit":
+            for i,part in enumerate(parts):
+                try:
+                    pitch = event.pitches[i]
+                    part.events = itertools.chain.from_iterable([part.events, [event.extend([pitch], event.duration)]])
+                except IndexError:
+                    part.events = itertools.chain.from_iterable([part.events, [event.extend(pitches=[])]])
+        if mode == "doublelead":
+            makeup_parts = n_voices - len(event.pitches)
+            for i,part in enumerate(parts):
+                if len(event.pitches) == 0:
+                    pitches = []
+                elif i-1 < makeup_parts:
+                    pitches = [event.pitches[0]]
+                else:
+                    pitches = [event.pitches[i-makeup_parts]]
+                part.events = itertools.chain.from_iterable([part.events, [event.extend(pitches, event.duration)]])
+
