@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 from composerstoolkit import *
 from testcore import MockContext
 
@@ -54,6 +56,16 @@ class PermutationsTests(unittest.TestCase):
                  n_generations=2, 
                  return_last_gen_only=True)
         assert list(perms) == [(1, 1, 1, 1, 1, 1)]
+
+class SerialMatrixTests(unittest.TestCase):
+    def test_generate_permutations_is_iterable(self):
+        matrix = SerialMatrix([2,1,3])
+        permutations = [p for p in matrix]
+        assert permutations == [[2,1,3], [1,3,2], [3,2,1]]
+
+    def test_can_return_numpy_array(self):
+        matrix = SerialMatrix([2,1,3]).as_matrix()
+        assert np.array_equal(matrix, np.array([[2,1,3], [1,3,2], [3,2,1]]))
 
 class TransformerTests(unittest.TestCase):
     def setUp(self):

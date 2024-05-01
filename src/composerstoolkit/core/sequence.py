@@ -148,6 +148,11 @@ class Sequence:
         """
         return self.extend()
 
+    def feed_into(self, other_sequence: Sequence):
+        copied = self.tap()
+        other_sequence.events = copied.events
+        return self
+
     def __add__(self, other):
         """Allows sequences to be added together.
         """

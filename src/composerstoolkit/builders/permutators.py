@@ -3,6 +3,8 @@
 import itertools
 import math
 from typing import Iterator, List, TypeVar, Generic
+from more_itertools import windowed
+import numpy as np
 
 # pylint: disable=invalid-name
 T = TypeVar('T')
@@ -55,3 +57,37 @@ class Permutations(Generic[T]):
         for _list in self:
             for item in _list:
                 yield item
+
+class SerialMatrix(Generic[T]):
+    """
+    Generate a Stockhausen-like array of permutations.
+    for each item in the input list, return a new order, which is shifting of the
+    source set relative to their cyclic indices in the ordered source set
+    ie, for a sequence [2,1,3], yield permutations [2,1,3], [1,3,2], [3,2,1],
+    this being based on [2,1,3] giving directional vectors [-1,2] in the ordered set {1,2,3}
+    """
+    def __init__(self, base_row=List[T]):
+        self.base_row = base_row
+        self.base_row_ordered = list(sorted(self.base_row))
+        self.vectors = self._generate_vectors()
+
+    def _generate_vectors(self):
+        vectors = [self.base_row_ordered.index(right) - self.base_row_ordered.index(left) for left, right in windowed(self.base_row, 2)]
+        return vectors
+
+    def __iter__(self) -> Iterator[List[T]]:
+        for item in self.base_row:
+            result_list = [item]
+            i = self.base_row_ordered.index(item)
+            for v in self.vectors:
+                i_current = self.base_row_ordered.index(result_list[-1])
+                i_next = i_current + v
+                if i_next > len(self.base_row_ordered)-1:
+                    next = self.base_row_ordered[i_next - len(self.base_row_ordered)]
+                else:
+                    next = self.base_row_ordered[i_next]
+                result_list.append(next)
+            yield result_list
+
+    def as_matrix(self) -> np.array:
+        return np.array([permutation for permutation in self])
