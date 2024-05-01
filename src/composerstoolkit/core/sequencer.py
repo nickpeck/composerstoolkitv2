@@ -134,6 +134,11 @@ class Sequencer(Thread):
     def voices(self):
         return [seq for (channel_no, offset, seq) in self.sequences]
 
+    def add_sequences(self, *sequences):
+        for sequence in sequences:
+            self.add_sequence(sequence)
+        return self
+
     def add_sequence(self, seq, **kwargs):
         """Add a sequence to the playback sequencer.
         optional args:
