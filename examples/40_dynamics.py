@@ -1,25 +1,34 @@
+"""
+modulates the volume parameter to crossfade between two repeated pitches a 5th apart
+"""
+
 from composerstoolkit import *
 import math
 
-@Transformer
-def fade_in_and_out(seq: Sequence, period=60, starting_deg=270):
-    i = 0
-    for event in seq.events:
-        sin = math.sin(math.radians((360 * i/period) - (360-starting_deg)))
-        volume = 127 * ((sin+1)/2)
-        event.meta["volume"] = int(volume)
-        i = i + event.duration
-        yield event
+def set_volume(event, value):
+    event.meta["volume"] = value
 
-
-seq = Sequence(events=[Event([60], 1)])\
+seq1 = Sequence(events=[Event([60], 1)])\
     .transform(loop())\
     .transform(
-        fade_in_and_out()
+        cyclic_modulation(
+            period = 60,
+            starting_deg = 270,
+            modulator = set_volume
+        )
     )
 
+seq2 = Sequence(events=[Event([67], 1)])\
+    .transform(loop())\
+    .transform(
+        cyclic_modulation(
+            period = 60,
+            starting_deg = 180,
+            modulator = set_volume
+        )
+    )
 
-sequencer = Sequencer(debug=True, dump_midi=True).add_sequence(seq)
+sequencer = Sequencer(debug=True).add_sequences(seq1, seq2)
 
 sequencer.playback()
 

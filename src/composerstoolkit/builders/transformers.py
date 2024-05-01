@@ -799,3 +799,13 @@ def update_meta(seq: Sequence, **meta):
     for event in seq.events:
         event.meta.update(meta)
         yield event
+
+@Transformer
+def cyclic_modulation(seq: Sequence, period=60, starting_deg=270, modulator=lambda e, v: None):
+    i = 0
+    for event in seq.events:
+        sin = math.sin(math.radians((360 * i/period) - (360-starting_deg)))
+        value = 127 * ((sin+1)/2)
+        modulator(event, value)
+        i = i + event.duration
+        yield event
