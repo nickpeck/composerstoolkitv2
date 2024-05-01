@@ -3,7 +3,7 @@ All generators return a list or Iterator of Event objects
 """
 import itertools
 import math
-from typing import Iterator, Optional, Set, List, Dict, Callable
+from typing import Iterator, Optional, Set, List, Dict, Callable, Tuple
 import random
 
 import more_itertools
@@ -415,3 +415,17 @@ def variations(base_seq: FiniteSequence,
                         yield event
             i = i + 1
     return compose_vars()
+
+def probability_matrix(choices=List[Tuple[int, float]], window=1, monody=False):
+    while True:
+        if monody:
+            pitches = [p for p, _ in choices]
+            probabilities = [prob for _, prob in choices]
+            choice_pitch = random.choices(pitches, probabilities)[0]
+            yield Event([choice_pitch], duration=window)
+        else:
+            resultant_pitches = []
+            for pitch,probability in choices:
+                choice_pitch = random.choices([[pitch], []], [probability, 1.0-probability])[0]
+                resultant_pitches = resultant_pitches + choice_pitch
+            yield Event(resultant_pitches, duration=window)
