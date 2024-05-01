@@ -770,7 +770,6 @@ def split_voices(seq: Sequence, *parts: Sequence, mode="ommit"):
     mode is one of:
     - 'ommit' (default), if no pitches, or not enough pitches for each part, emit a 'rest' event into each lower part
     - 'doublelead' - fill all voices by doubling the lead note to compensate
-    TODO add more ie doublelead
     """
     n_voices = len(parts)
     if mode not in ["ommit", "doublelead"]:

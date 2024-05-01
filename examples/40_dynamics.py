@@ -6,7 +6,7 @@ from composerstoolkit import *
 import math
 
 def set_volume(event, value):
-    event.meta["volume"] = value
+    event.meta["volume"] = int(value)
 
 seq1 = Sequence(events=[Event([60], 1)])\
     .transform(loop())\
@@ -28,7 +28,7 @@ seq2 = Sequence(events=[Event([67], 1)])\
         )
     )
 
-sequencer = Sequencer(debug=True).add_sequences(seq1, seq2)
+sequencer = Sequencer(debug=True, dump_midi=True).add_sequences(seq1, seq2)
 
 sequencer.playback()
 

@@ -68,7 +68,7 @@ i0 = Sequence.from_generator(cantus(row_pcs))\
         .transform(map_to_pulses(durations))\
         .transform(gated(rhythmic_aggregate(), my_gate1))
 
-mysequencer = Context.get_context().new_sequencer(bpm=120, playback_rate=1)\
+mysequencer = Context.get_context().new_sequencer(bpm=120, playback_rate=1, dump_midi=True)\
     .add_sequence(p0)\
     .add_sequence(i0)
     

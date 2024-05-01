@@ -206,12 +206,12 @@ class Sequencer(Thread):
             if drift is not None:
                 future_time = future_time - drift
                 drift = None
+            for cc, value in event.meta.get("cc", []):
+                synth.control_change(channel_no, cc, value)
+                if midi_buffer is not None:
+                    midi_buffer.append(("cc", channel_no - 1, count, cc, value))
             for pitch in event.pitches:
                 volume = event.meta.get("volume", 60)
-                for cc, value in event.meta.get("cc", []):
-                    synth.control_change(channel_no, cc, value)
-                    if midi_buffer is not None:
-                        midi_buffer.append(("cc", channel_no - 1, count, cc, value))
                 if event.meta.get("realtime", None) != "note_off":
                     synth.noteon(channel_no, pitch, volume)
                     if midi_buffer is not None:
@@ -288,17 +288,21 @@ class Sequencer(Thread):
         logging.getLogger().info(f"writing midi data to file")
         import pprint
         pprint.pprint(self.buffer, indent=4)
-        midifile = MIDIFile(len(self.sequences))
+        midifile = MIDIFile(
+            len(self.sequences),
+            deinterleave=False) # https://github.com/MarkCWirt/MIDIUtil/issues/24
         midifile.addTempo(0, 0, self.options["bpm"])
         for channel_no, events in self.buffer.items():
             midifile.addTrackName(channel_no - 1, 0, "Channel {}".format(channel_no))
             for event in events:
                 if event[0] == "note":
                     _, c_, _, pitch, count, duration, dynamic = event
-                    midifile.addNote(channel_no - 1, 0, pitch, count, duration, dynamic)
+                    midifile.addNote(
+                        track=channel_no - 1, channel=0, pitch=pitch, time=count, duration=duration, volume=dynamic)
                 elif event[0] == "cc":
                     _, c_, count, cc, value = event
-                    midifile.addControllerEvent(channel_no -1, 0, count, cc, value)
+                    midifile.addControllerEvent(
+                        track=channel_no -1, channel=0, time=count, controller_number=cc, parameter=value)
         filename = str(int(time.time())) + ".midi"
         with open(filename, 'wb') as outf:
             midifile.writeFile(outf)
@@ -318,7 +322,7 @@ class Sequencer(Thread):
     def save_as_midi_file(self, filename):
         """Save the contents of the sequencer as a MIDI file
         """
-        midifile = MIDIFile(len(self.sequences))
+        midifile = MIDIFile(len(self.sequences), deinterleave=False)
         midifile.addTempo(0, 0, self.options["bpm"])
         for (channel_no, offset, seq) in self.sequences:
             midifile.addTrackName(channel_no - 1, offset, "Channel {}".format(channel_no))
