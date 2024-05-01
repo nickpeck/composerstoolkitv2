@@ -207,14 +207,15 @@ class Sequencer(Thread):
                 future_time = future_time - drift
                 drift = None
             for pitch in event.pitches:
+                volume = event.meta.get("volume", 60)
                 for cc, value in event.meta.get("cc", []):
                     synth.control_change(channel_no, cc, value)
                     if midi_buffer is not None:
                         midi_buffer.append(("cc", channel_no - 1, count, cc, value))
                 if event.meta.get("realtime", None) != "note_off":
-                    synth.noteon(channel_no, pitch, 60)
+                    synth.noteon(channel_no, pitch, volume)
                     if midi_buffer is not None:
-                        midi_buffer.append(("note", channel_no - 1, 0, pitch, count, event.duration, 60))
+                        midi_buffer.append(("note", channel_no - 1, 0, pitch, count, event.duration, volume))
                     self.active_pitches.append((pitch, channel_no))
             count = count + event.duration
             pause_int = future_time - time.time()
