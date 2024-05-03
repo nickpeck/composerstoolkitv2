@@ -1,21 +1,83 @@
+from __future__ import annotations
 import math
+from typing import Tuple, List, Optional
 
-def curve_target(time, length=20, start_value=60, end_value=127, f=math.sin):
-    """
-    Typically used to generate musical materials that curve upwards or downwards in pitch, accels/decel etc or
-    any value that be modulated on a curved plain.
-    Calculate the position on a 1/4 of a curve as a function of time, where:
-    time - the current time elasped (or horizontal distance / x axis)
-    length - the duration of the curve object
-    start_value - the origin of the curve (at time = 0)
-    end_value - the target peak or trough of the curve. If this is greater than start_value, it will be an ascending
-        curve, otherwise will descend
-    f - the function of the number of degrees traversed (math.sin or math.cos)
-    """
-    if start_value < end_value:
-        angle = time / length * 90
-    else:
-        angle = (time / length * 90) + 180
-    _sin = f(math.radians(angle))
-    target = math.ceil(_sin * (abs(end_value-start_value))) + start_value
-    return target
+class Curve:
+    def __init__(self,
+                 bounds_x: Tuple[int, int],
+                 bounds_y: Tuple[int, int],
+                 bounds_deg: Tuple[int, int] = (0, 360),
+                 f=math.sin,
+                 modulators: Optional[List[Curve]] = None):
+        """
+        Used to modulate a musical parameter (y) as a function of time on a sine wave
+        For example, pitch, duration, dynamic
+        bounds_x: the range of time over which the curve will be applied
+        bounds_y: the range of values of the curve, from trough to peak
+        bounds_deg: how many degs the curve occupies. (A range of 0-360 is a complete up-down cycle for a sine).
+        f: the curve function (typically math.sin or math.cos or your functor)
+        modulators: other wave forms to modulate this carrier wave with to produce a more complex shape.
+        """
+        self.bounds_x = bounds_x
+        self.bounds_y = bounds_y
+        self.bounds_deg = bounds_deg
+        self.f = f
+        self.modulators = []
+        if modulators is not None:
+            self.modulators = modulators
+
+    @property
+    def x_min(self):
+        return self.bounds_x[0]
+
+    @property
+    def x_max(self):
+        return self.bounds_x[1]
+
+    @property
+    def y_min(self):
+        return self.bounds_y[0]
+
+    @property
+    def y_max(self):
+        return self.bounds_y[1]
+
+    @property
+    def start_deg(self):
+        return self.bounds_deg[0]
+
+    @property
+    def end_deg(self):
+        return self.bounds_deg[1]
+
+    @property
+    def degrees(self):
+        return self.end_deg - self.start_deg
+
+    def y(self, x, modulate=True):
+        """
+        Solve the y value for the given x (time) on the graph
+        """
+        if self.y_min < self.y_max:
+            angle = (x / self.x_max) * self.degrees + self.start_deg
+        else:
+            angle = ((x / self.x_max) * self.degrees) + 180 + self.start_deg
+        val = self.f(math.radians(angle))
+        y = math.ceil(val * (abs(self.y_max - self.y_min))) + self.y_min
+        if modulate:
+            y = self._apply_modulators(x, y)
+        return y
+
+    def _apply_modulators(self, x, y):
+        values = [y] + [mod.y(x) for mod in self.modulators]
+        return sum(values) / len(values)
+
+    def plot(self, x_label="Time (Beats)", y_label=""):
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        x_range = self.x_max - self.x_min
+        y_range = self.y_max - self.y_min
+        ax.plot(range(x_range), [(self.y(i)) for i in range(x_range)])
+        plt.show()
