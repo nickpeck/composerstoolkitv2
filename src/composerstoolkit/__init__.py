@@ -7,5 +7,6 @@ from composerstoolkit.resources import scales as scales
 from composerstoolkit.resources import pitches as pitches
 from composerstoolkit.resources import chords as chords
 from composerstoolkit.resources import pitchset as pitchset
+from composerstoolkit.resources import shapes as shapes
 from composerstoolkit.composers.heuristics import *
 from composerstoolkit.builders.permutators import *
