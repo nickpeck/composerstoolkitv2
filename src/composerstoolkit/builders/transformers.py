@@ -792,6 +792,7 @@ def split_voices(seq: Sequence, *parts: Sequence, mode="ommit"):
                 else:
                     pitches = [event.pitches[i-makeup_parts]]
                 part.events = itertools.chain.from_iterable([part.events, [event.extend(pitches, event.duration)]])
+        yield event
 
 @Transformer
 def update_meta(seq: Sequence, **meta):
