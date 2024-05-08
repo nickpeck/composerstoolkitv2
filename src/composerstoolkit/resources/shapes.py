@@ -62,6 +62,7 @@ class Curve:
             angle = (x / self.x_max) * self.degrees + self.start_deg
         else:
             angle = ((x / self.x_max) * self.degrees) + 180 + self.start_deg
+        radians = math.radians(angle)
         val = self.f(math.radians(angle))
         y = math.ceil(val * (abs(self.y_max - self.y_min))) + self.y_min
         if modulate:
