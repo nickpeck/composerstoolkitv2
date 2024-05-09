@@ -688,7 +688,7 @@ def enforce_shared_pitch_class_set(seq: Sequence,
     for event in seq.events:
         pitches = event.pitches
         sequencer = get_context().sequencer
-        aggregate = set([p % 12 for p in pitches]).union(set([p % 12 for p, _c in sequencer.active_pitches]))
+        aggregate = set([p % 12 for p in pitches]).union(set([p % 12 for p, _c in sequencer.scheduler.active_pitches]))
         aggregate = pitchset.to_prime_form(aggregate)
         if aggregate.issubset(pitch_class_set):
             yield event

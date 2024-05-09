@@ -15,6 +15,7 @@ class Scheduler(Thread):
         self.lock_timeout = 1
         self.observers = []
         self.buffer_secs = buffer_secs
+        self.active_pitches = []
 
         def _iter():
             offset = 0
@@ -60,7 +61,7 @@ class Scheduler(Thread):
                 logging.getLogger().debug(f"Scheduler event loop sleeping for {wait_time} secs")
                 sleep(wait_time)
             else:
-                logging.getLogger().debug(f"Scheduler latency : {wait_time} secs")
+                logging.getLogger().debug(f"Scheduler latency : {abs(wait_time)} secs")
             for event in items:
                 self.on_event(event)
             time_elapsed = time_elapsed + wait_time
@@ -70,10 +71,15 @@ class Scheduler(Thread):
         for observer in self.observers:
             if event[0] == "note_on":
                 _, channel_no, pitch, velocity = event
+                self.active_pitches.append((pitch, channel_no))
                 observer.noteon(channel_no, pitch, velocity)
-            if event[0] == "note_off":
+            elif event[0] == "note_off":
                 _, channel_no, pitch = event
                 observer.noteoff(channel_no, pitch)
-            if event[0] == "cc":
+                try:
+                    self.active_pitches.remove((pitch, channel_no))
+                except ValueError:
+                    pass
+            elif event[0] == "cc":
                 _, channel_no, cc, value = event
                 observer.control_change(channel_no, cc, value)

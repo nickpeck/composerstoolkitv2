@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Optional
 import logging
 import importlib
+import itertools
 import time
 import sys
 
@@ -73,6 +74,9 @@ class Sequencer:
         self.sequences = []
         self.options.update(kwargs)
         self.playback_started_ts = None
+        self.scheduler = Scheduler(buffer_secs=1)
+        self.scheduler.daemon = True
+        self.scheduler.subscribe(self.options["synth"])
         logging.getLogger().info(f'Using synth {self.options["synth"]}')
 
     def _init_logger(self):
@@ -124,14 +128,11 @@ class Sequencer:
         return self
 
     def playback(self, to_midi=False):
-        scheduler = Scheduler(buffer_secs=5)
-        scheduler.daemon = True
-        scheduler.subscribe(self.options["synth"])
         channel_positions = {}
         playback_rate = self.options["playback_rate"]
         bpm = self.options["bpm"]
         time_scale_factor = (1 / (bpm / 60)) * (1 / playback_rate)
-        scheduler.start()
+        self.scheduler.start()
         self.playback_started_ts = time.time()
         with self.options["synth"]:
             while True:
@@ -142,15 +143,15 @@ class Sequencer:
                         channel_positions[channel_no] = 0
                         count = 0
                     event = next(seq.events)
-                    future_time = time.time() + (event.duration * time_scale_factor)
+                    future_time = count + (event.duration * time_scale_factor)
                     for pitch in event.pitches:
                         volume = event.meta.get("volume", 60)
                         if event.meta.get("realtime", None) != "note_off":
-                            scheduler.add_event(count, ("note_on", channel_no, pitch, volume))
+                            self.scheduler.add_event(count, ("note_on", channel_no, pitch, volume))
                         if event.meta.get("realtime", None) != "note_on":
-                            scheduler.add_event(count+event.duration, ("note_off", channel_no, pitch))
+                            self.scheduler.add_event(future_time, ("note_off", channel_no, pitch))
                         for cc, value in event.meta.get("cc", []):
-                            scheduler.add_event(count, ("cc", channel_no, cc, value))
+                            self.scheduler.add_event(count, ("cc", channel_no, cc, value))
                         channel_positions[channel_no] = count + event.duration
 
     def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:
