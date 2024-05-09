@@ -23,11 +23,10 @@ class Scheduler(Thread):
                 if self._events == {}:
                     raise StopIteration
                 next_slot = list(filter(lambda t: t >= offset, self._events.keys()))[0]
-                item = self._events[next_slot].pop(0)
-                if self._events[next_slot] == []:
-                    del self._events[next_slot]
+                items = self._events[next_slot]
+                del self._events[next_slot]
                 self._lock.release()
-                return next_slot, item
+                return next_slot, items
             return f
         self._it = _iter()
 
@@ -52,17 +51,18 @@ class Scheduler(Thread):
         time_elapsed = 0
         while self.is_running:
             try:
-                time, next_event = self._it()
+                time_pos, items = self._it()
             except StopIteration:
                 logging.getLogger().debug("Scheduler no more events.")
                 return
-            wait_time = time - time_elapsed
-            logging.getLogger().debug(f"Scheduler event loop sleeping for {wait_time} secs")
-            if wait_time >= 0:
+            wait_time = time_pos - time_elapsed
+            if wait_time > 0:
+                logging.getLogger().debug(f"Scheduler event loop sleeping for {wait_time} secs")
                 sleep(wait_time)
             else:
                 logging.getLogger().debug(f"Scheduler latency : {wait_time} secs")
-            self.on_event(next_event)
+            for event in items:
+                self.on_event(event)
             time_elapsed = time_elapsed + wait_time
 
     def on_event(self, event):

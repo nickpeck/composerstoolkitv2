@@ -133,25 +133,25 @@ class Sequencer:
         time_scale_factor = (1 / (bpm / 60)) * (1 / playback_rate)
         scheduler.start()
         self.playback_started_ts = time.time()
-
-        while True:
-            for channel_no, _, seq in self.sequences:
-                try:
-                    count = channel_positions[channel_no]
-                except KeyError:
-                    channel_positions[channel_no] = 0
-                    count = 0
-                event = next(seq.events)
-                future_time = time.time() + (event.duration * time_scale_factor)
-                for pitch in event.pitches:
-                    volume = event.meta.get("volume", 60)
-                    if event.meta.get("realtime", None) != "note_off":
-                        scheduler.add_event(count, ("note_on", channel_no, pitch, volume))
-                    if event.meta.get("realtime", None) != "note_on":
-                        scheduler.add_event(count, ("note_off", channel_no, pitch))
-                    for cc, value in event.meta.get("cc", []):
-                        scheduler.add_event(count, ("cc", channel_no, cc, value))
-                    channel_positions[channel_no] = count + event.duration
+        with self.options["synth"]:
+            while True:
+                for channel_no, _, seq in self.sequences:
+                    try:
+                        count = channel_positions[channel_no]
+                    except KeyError:
+                        channel_positions[channel_no] = 0
+                        count = 0
+                    event = next(seq.events)
+                    future_time = time.time() + (event.duration * time_scale_factor)
+                    for pitch in event.pitches:
+                        volume = event.meta.get("volume", 60)
+                        if event.meta.get("realtime", None) != "note_off":
+                            scheduler.add_event(count, ("note_on", channel_no, pitch, volume))
+                        if event.meta.get("realtime", None) != "note_on":
+                            scheduler.add_event(count+event.duration, ("note_off", channel_no, pitch))
+                        for cc, value in event.meta.get("cc", []):
+                            scheduler.add_event(count, ("cc", channel_no, cc, value))
+                        channel_positions[channel_no] = count + event.duration
 
     def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:
         """Convenience method for applying a transformation function globally to all
