@@ -58,7 +58,10 @@ class Scheduler(Thread):
                 return
             wait_time = time - time_elapsed
             logging.getLogger().debug(f"Scheduler event loop sleeping for {wait_time} secs")
-            sleep(wait_time)
+            if wait_time >= 0:
+                sleep(wait_time)
+            else:
+                logging.getLogger().debug(f"Scheduler latency : {wait_time} secs")
             self.on_event(next_event)
             time_elapsed = time_elapsed + wait_time
 

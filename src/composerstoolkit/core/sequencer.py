@@ -30,7 +30,7 @@ class Context:
     def time_offset(self) -> float:
         if self.sequencer is None:
             return 0
-        return time.time() - self.sequencer._playback_started_ts
+        return time.time() - self.sequencer.playback_started_ts
 
     @property
     def beat_offset(self) -> float:
@@ -72,6 +72,7 @@ class Sequencer:
         self._init_logger()
         self.sequences = []
         self.options.update(kwargs)
+        self.playback_started_ts = None
         logging.getLogger().info(f'Using synth {self.options["synth"]}')
 
     def _init_logger(self):
@@ -122,7 +123,7 @@ class Sequencer:
             self.add_sequence(sequence)
         return self
 
-    def playback(self):
+    def playback(self, to_midi=False):
         scheduler = Scheduler(buffer_secs=5)
         scheduler.daemon = True
         scheduler.subscribe(self.options["synth"])
@@ -131,6 +132,7 @@ class Sequencer:
         bpm = self.options["bpm"]
         time_scale_factor = (1 / (bpm / 60)) * (1 / playback_rate)
         scheduler.start()
+        self.playback_started_ts = time.time()
 
         while True:
             for channel_no, _, seq in self.sequences:
@@ -151,4 +153,12 @@ class Sequencer:
                         scheduler.add_event(count, ("cc", channel_no, cc, value))
                     channel_positions[channel_no] = count + event.duration
 
-
+    def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:
+        """Convenience method for applying a transformation function globally to all
+        sequences in the Sequencer.
+        """
+        for i, _seq in enumerate(self.sequences):
+            channel_no, offset, seq = self.sequences[i]
+            self.sequences[i] = (channel_no, offset, seq.extend(
+                events=transformer(seq)))
+        return self
