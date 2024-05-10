@@ -23,9 +23,10 @@ class Scheduler(Thread):
                 self._lock.acquire(timeout=self.lock_timeout)
                 if self._events == {}:
                     raise StopIteration
-                next_slot = list(filter(lambda t: t >= offset, self._events.keys()))[0]
+                keys = list(self._events.keys())
+                next_slot = list(filter(lambda t: t >= offset, keys))[0]
                 items = self._events[next_slot]
-                del self._events[next_slot]
+                #del self._events[next_slot]
                 self._lock.release()
                 return next_slot, items
             return f

@@ -70,14 +70,21 @@ class Sequencer:
             "log_level": logging.DEBUG
         }
 
+        self.options.update(kwargs)
         self._init_logger()
         self.sequences = []
-        self.options.update(kwargs)
         self.playback_started_ts = None
         self.scheduler = Scheduler(buffer_secs=1)
         self.scheduler.daemon = True
         self.scheduler.subscribe(self.options["synth"])
         logging.getLogger().info(f'Using synth {self.options["synth"]}')
+
+    @property
+    def time_scale_factor(self):
+        playback_rate = self.options["playback_rate"]
+        bpm = self.options["bpm"]
+        time_scale_factor = (1 / (bpm / 60)) * (1 / playback_rate)
+        return time_scale_factor
 
     def _init_logger(self):
         root = logging.getLogger()
@@ -87,7 +94,6 @@ class Sequencer:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         root.addHandler(handler)
-
 
     @staticmethod
     def get_default_synth() -> Playback:
@@ -129,21 +135,24 @@ class Sequencer:
 
     def playback(self, to_midi=False):
         channel_positions = {}
-        playback_rate = self.options["playback_rate"]
-        bpm = self.options["bpm"]
-        time_scale_factor = (1 / (bpm / 60)) * (1 / playback_rate)
         self.scheduler.start()
         self.playback_started_ts = time.time()
+        active_channels = len(self.sequences)
         with self.options["synth"]:
-            while True:
+            while active_channels > 0:
                 for channel_no, _, seq in self.sequences:
                     try:
                         count = channel_positions[channel_no]
                     except KeyError:
                         channel_positions[channel_no] = 0
                         count = 0
-                    event = next(seq.events)
-                    future_time = count + (event.duration * time_scale_factor)
+                    try:
+                        event = next(seq.events)
+                    except StopIteration:
+                        active_channels = active_channels - 1
+                        logging.getLogger(f"Channel {channel_no} playback has completed")
+                        continue
+                    future_time = count + (event.duration * self.time_scale_factor)
                     for pitch in event.pitches:
                         volume = event.meta.get("volume", 60)
                         if event.meta.get("realtime", None) != "note_off":
@@ -153,6 +162,7 @@ class Sequencer:
                         for cc, value in event.meta.get("cc", []):
                             self.scheduler.add_event(count, ("cc", channel_no, cc, value))
                         channel_positions[channel_no] = count + event.duration
+            logging.getLogger("All channels have completed. Playback will end")
 
     def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:
         """Convenience method for applying a transformation function globally to all

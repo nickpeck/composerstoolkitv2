@@ -50,30 +50,36 @@ class RTPMidi(Playback):
         self.midiout = rtmidi.MidiOut()
         available_ports = self.midiout.get_ports()
         self.port_no = get_port(available_ports)
+        self._is_active = False
     
     def noteon(self, channel: int, pitch: int, velocity: int):
         from rtmidi.midiconstants import NOTE_ON
         status = NOTE_ON | (channel - 1)  # bit-wise OR of NOTE_ON and channel (zero-based)
-        self.midiout.send_message([status, pitch, velocity])
+        if self._is_active:
+            self.midiout.send_message([status, pitch, velocity])
         
     def noteoff(self, channel: int, pitch: int):
         from rtmidi.midiconstants import NOTE_OFF
         status = NOTE_OFF | (channel - 1)
-        self.midiout.send_message([status, pitch, 0])
+        if self._is_active:
+            self.midiout.send_message([status, pitch, 0])
 
     def control_change(self, channel: int , cc: int, value: int):
         from rtmidi.midiconstants import CONTROL_CHANGE
         status = CONTROL_CHANGE | (channel - 1)
-        self.midiout.send_message([status, cc, value])
+        if self._is_active:
+            self.midiout.send_message([status, cc, value])
         
     def __enter__(self):
         self.midiout.open_port(self.port_no)
+        self._is_active = True
         logging.getLogger().debug("Opened connection to RTPMidi port")
         return self
         
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.midiout.close_port()
         time.sleep(0.1)
+        self._is_active = False
         del self.midiout
         logging.getLogger().debug("Closed connection to RTPMidi port")
 
