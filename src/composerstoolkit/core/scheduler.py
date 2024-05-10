@@ -1,6 +1,6 @@
 import logging
 from typing import Tuple, Iterator, List, Callable
-from threading import Lock, Thread
+from threading import Thread
 from time import sleep
 from queue import PriorityQueue
 
@@ -11,9 +11,7 @@ class Scheduler(Thread):
     def __init__(self, buffer_secs=1, queue_size=100):
         super().__init__()
         self.is_running = True
-        self._lock = Lock()
         self._events = PriorityQueue(maxsize=queue_size)
-        self.lock_timeout = 1
         self.observers = []
         self.buffer_secs = buffer_secs
         self.active_pitches = []
