@@ -1,7 +1,7 @@
 import logging
 from typing import Tuple, Iterator, List, Callable
 from threading import Thread
-from time import sleep
+from time import sleep, time
 from queue import PriorityQueue
 
 from  . synth import Playback
@@ -36,14 +36,17 @@ class Scheduler(Thread):
     def _main_event_loop(self):
         sleep(self.buffer_secs)
         logging.getLogger().info("Scheduler starting main event loop.")
+        time_started = time()
         time_elapsed = 0
         while self.is_running:
+            cur_time = time()
             logging.getLogger().debug(f"Main event loop, at time {time_elapsed}")
             time_pos, event = self._it()
-            if time_pos < time_elapsed:
-                logging.getLogger().info(f"Scheduler latency {abs(time_pos - time_elapsed)}")
+            latency = (cur_time-time_started) - time_elapsed
+            if latency > 0:
+                logging.getLogger().debug(f"Scheduler latency {abs(latency)}")
             if time_pos > time_elapsed:
-                wait_time = time_pos - time_elapsed
+                wait_time = (time_pos - time_elapsed) - latency
                 logging.getLogger().debug(f"Scheduler event loop sleeping for {wait_time} secs")
                 sleep(wait_time)
                 time_elapsed = time_pos
