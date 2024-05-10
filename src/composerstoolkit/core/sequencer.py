@@ -74,7 +74,7 @@ class Sequencer:
         self._init_logger()
         self.sequences = []
         self.playback_started_ts = None
-        self.scheduler = Scheduler(buffer_secs=1)
+        self.scheduler = Scheduler(buffer_secs=4)
         self.scheduler.daemon = True
         self.scheduler.subscribe(self.options["synth"])
         logging.getLogger().info(f'Using synth {self.options["synth"]}')
@@ -134,6 +134,7 @@ class Sequencer:
         return self
 
     def playback(self, to_midi=False):
+        logging.getLogger().info(f"Sequencer starting playback")
         channel_positions = {}
         self.scheduler.start()
         self.playback_started_ts = time.time()
@@ -142,16 +143,17 @@ class Sequencer:
             while active_channels > 0:
                 for channel_no, _, seq in self.sequences:
                     try:
+                        event = next(seq.events)
+                    except StopIteration:
+                        active_channels = active_channels - 1
+                        logging.getLogger().info(f"Channel {channel_no} playback has completed")
+                        continue
+                    try:
                         count = channel_positions[channel_no]
                     except KeyError:
                         channel_positions[channel_no] = 0
                         count = 0
-                    try:
-                        event = next(seq.events)
-                    except StopIteration:
-                        active_channels = active_channels - 1
-                        logging.getLogger(f"Channel {channel_no} playback has completed")
-                        continue
+                    logging.getLogger().debug(f"Channel {channel_no} playback has a new event {event} starting at {count}")
                     future_time = count + (event.duration * self.time_scale_factor)
                     for pitch in event.pitches:
                         volume = event.meta.get("volume", 60)
@@ -161,8 +163,8 @@ class Sequencer:
                             self.scheduler.add_event(future_time, ("note_off", channel_no, pitch))
                         for cc, value in event.meta.get("cc", []):
                             self.scheduler.add_event(count, ("cc", channel_no, cc, value))
-                        channel_positions[channel_no] = count + event.duration
-            logging.getLogger("All channels have completed. Playback will end")
+                        channel_positions[channel_no] = future_time
+            logging.getLogger().info("All channels have completed. Playback will end")
 
     def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:
         """Convenience method for applying a transformation function globally to all
