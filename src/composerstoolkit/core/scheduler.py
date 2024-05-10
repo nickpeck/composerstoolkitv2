@@ -8,7 +8,7 @@ from  . synth import Playback
 
 class Scheduler(Thread):
 
-    def __init__(self, buffer_secs=1, queue_size=100):
+    def __init__(self, buffer_secs=1, queue_size=0):
         super().__init__()
         self.is_running = True
         self._events = PriorityQueue(maxsize=queue_size)

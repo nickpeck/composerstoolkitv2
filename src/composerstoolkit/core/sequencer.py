@@ -67,14 +67,15 @@ class Sequencer:
             "playback_rate": 1,
             "meter": (4, 4),
             "dump_midi": False,
-            "log_level": logging.DEBUG
+            "log_level": logging.INFO,
+            "buffer_secs": 0
         }
 
         self.options.update(kwargs)
         self._init_logger()
         self.sequences = []
         self.playback_started_ts = None
-        self.scheduler = Scheduler(buffer_secs=4)
+        self.scheduler = Scheduler(buffer_secs=self.options["buffer_secs"])
         self.scheduler.daemon = True
         self.scheduler.subscribe(self.options["synth"])
         logging.getLogger().info(f'Using synth {self.options["synth"]}')
@@ -153,7 +154,7 @@ class Sequencer:
                     except KeyError:
                         channel_positions[channel_no] = 0
                         count = 0
-                    logging.getLogger().debug(f"Channel {channel_no} playback has a new event {event} starting at {count}")
+                    logging.getLogger().info(f"Channel {channel_no} event {event}")
                     future_time = count + (event.duration * self.time_scale_factor)
                     for pitch in event.pitches:
                         volume = event.meta.get("volume", 60)
