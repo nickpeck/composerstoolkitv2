@@ -68,14 +68,17 @@ class Sequencer:
             "meter": (4, 4),
             "dump_midi": False,
             "log_level": logging.INFO,
-            "buffer_secs": 0
+            "buffer_secs": 0,
+            "queue_size": 0
         }
 
         self.options.update(kwargs)
         self._init_logger()
         self.sequences = []
         self.playback_started_ts = None
-        self.scheduler = Scheduler(buffer_secs=self.options["buffer_secs"])
+        self.scheduler = Scheduler(
+            buffer_secs=self.options["buffer_secs"],
+            queue_size=self.options["queue_size"])
         self.scheduler.daemon = True
         self.scheduler.subscribe(self.options["synth"])
         logging.getLogger().info(f'Using synth {self.options["synth"]}')
