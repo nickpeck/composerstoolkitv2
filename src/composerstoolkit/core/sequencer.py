@@ -30,6 +30,8 @@ class Context:
     def time_offset(self) -> float:
         if self.sequencer is None:
             return 0
+        if self.sequencer.scheduler.playback_started_ts is None:
+            return 0
         return time.time() - self.sequencer.scheduler.playback_started_ts
 
     @property
