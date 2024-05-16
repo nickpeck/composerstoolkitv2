@@ -159,15 +159,8 @@ class Sequencer:
                         count = 0
                     logging.getLogger().info(f"Channel {channel_no} event {event}")
                     future_time = count + (event.duration * self.time_scale_factor)
-                    for pitch in event.pitches:
-                        volume = event.meta.get("volume", 60)
-                        if event.meta.get("realtime", None) != "note_off":
-                            self.scheduler.add_event(count, ("note_on", channel_no, pitch, volume))
-                        if event.meta.get("realtime", None) != "note_on":
-                            self.scheduler.add_event(future_time, ("note_off", channel_no, pitch))
-                        for cc, value in event.meta.get("cc", []):
-                            self.scheduler.add_event(count, ("cc", channel_no, cc, value))
-                        channel_positions[channel_no] = future_time
+                    self.scheduler.add_event(count, channel_no, event.extend(duration=event.duration * self.time_scale_factor))
+                    channel_positions[channel_no] = future_time
             logging.getLogger().info("All channels have completed. Playback will end")
 
     def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:

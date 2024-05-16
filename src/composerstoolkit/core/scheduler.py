@@ -4,7 +4,8 @@ from threading import Thread
 from time import sleep, time
 from queue import PriorityQueue
 
-from  . synth import Playback
+from . synth import Playback
+from . sequence import Event
 
 class Scheduler(Thread):
 
@@ -26,8 +27,16 @@ class Scheduler(Thread):
     def subscribe(self, observer: Playback):
         self.observers.append(observer)
 
-    def add_event(self, offset_secs: float, event: Tuple):
-        self._events.put((offset_secs, event))
+    def add_event(self, offset_secs: float, channel_no: int, event: Event):
+        for cc, value in event.meta.get("cc", []):
+            self._events.put((offset_secs, ("cc", channel_no, cc, value)))
+        for pitch in event.pitches:
+            volume = event.meta.get("volume", 60)
+            if event.meta.get("realtime", None) != "note_off":
+                self._events.put((offset_secs, ("note_on", channel_no, pitch, volume)))
+            if event.meta.get("realtime", None) != "note_on":
+                future_time = offset_secs + event.duration
+                self._events.put((future_time, ("note_off", channel_no, pitch)))
         logging.getLogger().debug(f"Scheduler queued event {event} at time {offset_secs}")
 
     def run(self):
