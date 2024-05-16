@@ -16,7 +16,6 @@ from . synth import Playback, DummyPlayback
 @dataclass
 class Context:
     sequencer: Optional[Sequencer] = None
-    playback_started_ts: Optional[int] = None
     _context: Optional[ClassVar['Context']] = None
 
     @property
@@ -31,7 +30,7 @@ class Context:
     def time_offset(self) -> float:
         if self.sequencer is None:
             return 0
-        return time.time() - self.sequencer.playback_started_ts
+        return time.time() - self.sequencer.scheduler.playback_started_ts
 
     @property
     def beat_offset(self) -> float:
@@ -69,13 +68,14 @@ class Sequencer:
             "dump_midi": False,
             "log_level": logging.INFO,
             "buffer_secs": 0,
-            "queue_size": 0
+            "queue_size": 0,
+            "window_size": 4
         }
 
         self.options.update(kwargs)
         self._init_logger()
         self.sequences = []
-        self.playback_started_ts = None
+        #self.playback_started_ts = None
         self.scheduler = Scheduler(
             buffer_secs=self.options["buffer_secs"],
             queue_size=self.options["queue_size"])
@@ -141,7 +141,6 @@ class Sequencer:
         logging.getLogger().info(f"Sequencer starting playback")
         channel_positions = {}
         self.scheduler.start()
-        self.playback_started_ts = time.time()
         active_channels = len(self.sequences)
         with self.options["synth"]:
             while active_channels > 0:

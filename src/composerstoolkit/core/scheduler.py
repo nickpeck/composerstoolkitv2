@@ -16,6 +16,7 @@ class Scheduler(Thread):
         self.observers = []
         self.buffer_secs = buffer_secs
         self.active_pitches = []
+        self.playback_started_ts = None
 
         def _iter():
             def f() -> Iterator[Tuple[int, Tuple]]:
@@ -45,13 +46,13 @@ class Scheduler(Thread):
     def _main_event_loop(self):
         sleep(self.buffer_secs)
         logging.getLogger().info("Scheduler starting main event loop.")
-        time_started = time()
+        self.playback_started_ts = time()
         time_elapsed = 0
         while self.is_running:
             cur_time = time()
             logging.getLogger().debug(f"Main event loop, at time {time_elapsed}")
             time_pos, event = self._it()
-            latency = (cur_time-time_started) - time_elapsed
+            latency = (cur_time-self.playback_started_ts) - time_elapsed
             if latency > 0:
                 logging.getLogger().debug(f"Scheduler latency {abs(latency)}")
             if time_pos > time_elapsed:
