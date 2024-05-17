@@ -12,7 +12,7 @@ class Scheduler(Thread):
     def __init__(self, buffer_secs=1, queue_size=0):
         super().__init__()
         self.is_running = True
-        self._events = PriorityQueue(maxsize=queue_size)
+        self._q = PriorityQueue(maxsize=queue_size)
         self.observers = []
         self.buffer_secs = buffer_secs
         self.active_pitches = []
@@ -20,7 +20,7 @@ class Scheduler(Thread):
 
         def _iter():
             def f() -> Iterator[Tuple[int, Tuple]]:
-                next_slot, event = self._events.get()
+                next_slot, event = self._q.get()
                 return next_slot, event
             return f
         self._it = _iter()
@@ -30,14 +30,14 @@ class Scheduler(Thread):
 
     def add_event(self, offset_secs: float, channel_no: int, event: Event):
         for cc, value in event.meta.get("cc", []):
-            self._events.put((offset_secs, ("cc", channel_no, cc, value)))
+            self._q.put((offset_secs, ("cc", channel_no, cc, value)))
         for pitch in event.pitches:
             volume = event.meta.get("volume", 60)
             if event.meta.get("realtime", None) != "note_off":
-                self._events.put((offset_secs, ("note_on", channel_no, pitch, volume)))
+                self._q.put((offset_secs, ("note_on", channel_no, pitch, volume)))
             if event.meta.get("realtime", None) != "note_on":
                 future_time = offset_secs + event.duration
-                self._events.put((future_time, ("note_off", channel_no, pitch)))
+                self._q.put((future_time, ("note_off", channel_no, pitch)))
         logging.getLogger().debug(f"Scheduler queued event {event} at time {offset_secs}")
 
     def run(self):

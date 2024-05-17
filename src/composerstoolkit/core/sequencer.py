@@ -70,14 +70,13 @@ class Sequencer:
             "dump_midi": False,
             "log_level": logging.INFO,
             "buffer_secs": 0,
-            "queue_size": 0,
+            "queue_size": 100,
             "window_size": 4
         }
 
         self.options.update(kwargs)
         self._init_logger()
         self.sequences = []
-        #self.playback_started_ts = None
         self.scheduler = Scheduler(
             buffer_secs=self.options["buffer_secs"],
             queue_size=self.options["queue_size"])
@@ -144,24 +143,30 @@ class Sequencer:
         channel_positions = {}
         self.scheduler.start()
         active_channels = len(self.sequences)
+        window_size = self.options["window_size"]
+        window = (0, window_size)
         with self.options["synth"]:
             while active_channels > 0:
+                start, end = window
                 for channel_no, _, seq in self.sequences:
-                    try:
-                        event = next(seq.events)
-                    except StopIteration:
-                        active_channels = active_channels - 1
-                        logging.getLogger().info(f"Channel {channel_no} playback has completed")
-                        continue
                     try:
                         count = channel_positions[channel_no]
                     except KeyError:
                         channel_positions[channel_no] = 0
                         count = 0
-                    logging.getLogger().info(f"Channel {channel_no} event {event}")
-                    future_time = count + (event.duration * self.time_scale_factor)
-                    self.scheduler.add_event(count, channel_no, event.extend(duration=event.duration * self.time_scale_factor))
+                    while count >= start and count <= end:
+                        try:
+                            event = next(seq.events) # TODO might not be an iterator if its a Finite Seq
+                        except StopIteration:
+                            active_channels = active_channels - 1
+                            logging.getLogger().info(f"Channel {channel_no} playback has completed")
+                            continue
+                        logging.getLogger().info(f"Channel {channel_no} event {event}")
+                        future_time = count + (event.duration * self.time_scale_factor)
+                        self.scheduler.add_event(count, channel_no, event.extend(duration=event.duration * self.time_scale_factor))
+                        count = future_time
                     channel_positions[channel_no] = future_time
+                window = (start + window_size, end + window_size)
             logging.getLogger().info("All channels have completed. Playback will end")
 
     def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:

@@ -1,6 +1,6 @@
 from composerstoolkit import *
 
-pf = PitchFactory()
+pf = pitches.PitchFactory()
 
 # sample probability matrix - choose notes from a chord
 # middle tones are statistically more likely
