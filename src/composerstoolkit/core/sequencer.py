@@ -139,6 +139,14 @@ class Sequencer:
         return self
 
     def playback(self, to_midi=False):
+        try:
+            self._do_playback()
+        except KeyboardInterrupt:
+            self.scheduler.is_running = False
+            self.scheduler.join()
+
+
+    def _do_playback(self):
         logging.getLogger().info(f"Sequencer starting playback")
         channel_positions = {}
         self.scheduler.start()
