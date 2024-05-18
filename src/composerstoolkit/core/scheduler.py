@@ -18,6 +18,10 @@ class Scheduler(Thread):
         self.active_pitches = []
         self.playback_started_ts = None
 
+    @property
+    def has_events(self):
+        return self._q.qsize() > 0
+
     def subscribe(self, observer: Playback):
         self.observers.append(observer)
 

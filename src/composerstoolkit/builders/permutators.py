@@ -33,7 +33,10 @@ class Permutations(Generic[T]):
             perms = itertools.permutations(a)
             if self.return_last_gen_only and i == self.n_generations-1:
                 return itertools.chain(set(perms))
-            generations.append(set(perms))
+            try:
+                generations.append(set(perms))
+            except TypeError:
+                generations.append(perms)
             if i < len(range(self.n_generations)):
                 self.starting_list = self.__class__._new_generation(b)
         return itertools.chain(*generations)
