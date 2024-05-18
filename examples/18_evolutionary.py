@@ -49,7 +49,7 @@ starting_transformations = [
         # (invert(), 0.5),
         (rotate(n_pitches=2), 0.5),
         (map_to_pulses(pulse), 0.5),
-        (explode_intervals(2), 0.5)
+        (explode_intervals(n_events=3, factor=2), 0.5)
     ]
 
 evo = Evolutionary(

@@ -12,20 +12,26 @@ and need to be restarted a few times before a solution is reached.
 from composerstoolkit import *
 from composerstoolkit.resources import scales
 
-seq = develop(
-    FiniteSequence(events=[
-        Event(pitches=[60], duration=QUARTER_NOTE),
-        Event(pitches=[62], duration=QUARTER_NOTE),
-        Event(pitches=[64], duration=QUARTER_NOTE)]),
-    mutators=[
-        transpose_diatonic(1, scales.C_major),
-        invert(),
-        retrograde(3)],
-    constraints=[
-        constraint_in_set(scales.C_major),
-        constraint_no_leaps_more_than(4)],
-    min_beats=16
-)
+while True:
+    try:
+        seq = develop(
+            FiniteSequence(events=[
+                Event(pitches=[60], duration=QUARTER_NOTE),
+                Event(pitches=[62], duration=QUARTER_NOTE),
+                Event(pitches=[64], duration=QUARTER_NOTE)]),
+            mutators=[
+                transpose_diatonic(1, scales.C_major),
+                invert(),
+                retrograde(3)],
+            constraints=[
+                constraint_in_set(scales.C_major),
+                constraint_no_leaps_more_than(4)],
+            min_beats=16
+        )
+        break
+    except DeadEndReached:
+        pass
+
 
 Context.get_context().new_sequencer(bpm=240, playback_rate=1)\
     .add_sequence(seq)\

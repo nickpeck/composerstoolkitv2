@@ -8,9 +8,12 @@ import itertools
 import time
 import sys
 
+import abjad
+
 from . sequence import Sequence, FiniteSequence, Event
 from . scheduler import Scheduler
 from . synth import Playback, DummyPlayback
+from .. resources.pitches import PitchFactory
 
 
 @dataclass
@@ -144,7 +147,7 @@ class Sequencer:
         except KeyboardInterrupt:
             logging.getLogger().info(f"Keyboard interupt received")
             self.scheduler.is_running = False
-            self.scheduler.join()
+            self.scheduler.join(1)
 
 
     def _do_playback(self):
@@ -192,4 +195,60 @@ class Sequencer:
             channel_no, offset, seq = self.sequences[i]
             self.sequences[i] = (channel_no, offset, seq.extend(
                 events=transformer(seq)))
+        return self
+
+    def show_notation(self):
+        pf = PitchFactory(output="abjad")
+        staves = []
+        for (channel_no, offset, seq) in self.sequences:
+            if not isinstance(seq, FiniteSequence):
+                raise Exception("Only FiniteSequence(s) are supported for notation output")
+            ly_str = []
+            for event in seq.events:
+                note = "r"  # rest
+                octave = "'"
+                duration = 4 / event.duration
+                if duration % 1 > 0:
+                    raise Exception("Tuplets are not currently supported in Sequencer.show_notation")
+                duration = int(duration)
+                if len(event.pitches) == 0:
+                    # rest
+                    ly_str.append("r" + str(duration))
+                elif len(event.pitches) == 1:
+                    # single note
+                    ly_str.append(pf(event.pitches[0]) + str(duration))
+                else:
+                    # multiple notes in a chord
+                    ly_str.append("<" + \
+                                  " ".join([pf(p) for p in event.pitches]) \
+                                  + ">" + str(duration))
+            voice = abjad.Voice(" ".join(ly_str), name="Voice " + str(channel_no))
+            staff = abjad.Staff([voice], name="Staff " + str(channel_no))
+            staves.append(staff)
+        score = abjad.Score(staves, name="Score")
+        abjad.show(score)
+        return self
+
+    def save_as_midi_file(self, filename):
+        """Save the contents of the sequencer as a MIDI file
+        """
+        midifile = MIDIFile(len(self.sequences), deinterleave=False)
+        midifile.addTempo(0, 0, self.options["bpm"])
+        for (channel_no, offset, seq) in self.sequences:
+            if not isinstance(seq, FiniteSequence):
+                raise Exception("Only FiniteSequence(s) are supported for midi file output")
+            midifile.addTrackName(channel_no - 1, offset, "Channel {}".format(channel_no))
+            count = offset
+            for event in seq.events:
+                for cc, value in event.meta.get("cc", []):
+                    midifile.addControllerEvent(channel_no - 1, 0, count, cc, value)
+                for pitch in event.pitches:
+                    try:
+                        dynamic = event.meta["dynamic"]
+                    except KeyError:
+                        dynamic = 100
+                    midifile.addNote(channel_no - 1, 0, pitch, count, event.duration, dynamic)
+                count = count + event.duration
+        with open(filename, 'wb') as outf:
+            midifile.writeFile(outf)
         return self

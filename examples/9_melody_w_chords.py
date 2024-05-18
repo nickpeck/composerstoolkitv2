@@ -23,21 +23,26 @@ def constraint_use_chord_tone_on_first_beat(
             return False
     return True
 
-melody = develop(
-    FiniteSequence(events=[
-        Event(pitches=[72], duration=QUARTER_NOTE),
-        Event(pitches=[74], duration=QUARTER_NOTE),
-        Event(pitches=[76], duration=QUARTER_NOTE)]),
-    mutators=[
-        transpose_diatonic(1, scales.C_major),
-        invert(),
-        retrograde(3)],
-    constraints=[
-        constraint_in_set(scales.C_major),
-        constraint_no_leaps_more_than(4),
-        constraint_use_chord_tone_on_first_beat()],
-    min_beats=16
-)
+while True:
+    try:
+        melody = develop(
+            FiniteSequence(events=[
+                Event(pitches=[72], duration=QUARTER_NOTE),
+                Event(pitches=[74], duration=QUARTER_NOTE),
+                Event(pitches=[76], duration=QUARTER_NOTE)]),
+            mutators=[
+                transpose_diatonic(1, scales.C_major),
+                invert(),
+                retrograde(3)],
+            constraints=[
+                constraint_in_set(scales.C_major),
+                constraint_no_leaps_more_than(4),
+                constraint_use_chord_tone_on_first_beat()],
+            min_beats=16
+        )
+        break
+    except DeadEndReached:
+        pass
 
 melody = Sequence(melody.events).transform(tie_repeated()).bake()
 

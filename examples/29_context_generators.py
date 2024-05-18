@@ -8,7 +8,7 @@ def my_generator(
     last_pitch = 60
     while True:
         context = get_context()
-        pitches = [p for p,_c in context.sequencer.active_pitches]
+        pitches = [p for p,_c in context.sequencer.scheduler.active_pitches]
         pf = pitchset.to_prime_form(pitches)
         diff = list(set - pf)
         available_notes = sorted(filter(lambda x: (x % 12) in diff, range(min, max)), key=lambda n: abs(last_pitch-n))
