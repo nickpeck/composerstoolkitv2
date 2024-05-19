@@ -142,50 +142,50 @@ class Sequencer:
         return self
 
     def playback(self, to_midi=False):
-        try:
-            self._do_playback()
-        except KeyboardInterrupt:
-            logging.getLogger().info(f"Keyboard interupt received")
-            self.scheduler.is_running = False
-            self.scheduler.join(1)
+        with self.options["synth"]:
+            try:
+                self._do_playback_loop()
+            except KeyboardInterrupt:
+                logging.getLogger().info(f"Keyboard interupt received")
+                self.scheduler.is_running = False
+                self.scheduler.join(1)
 
 
-    def _do_playback(self):
+    def _do_playback_loop(self):
         logging.getLogger().info(f"Sequencer starting playback")
         channel_positions = {}
         self.scheduler.start()
         active_channels = len(self.sequences)
         window_size = self.options["window_size"]
         window = (0, window_size)
-        with self.options["synth"]:
-            while active_channels > 0:
-                start, end = window
-                for channel_no, _, seq in self.sequences:
+        while active_channels > 0:
+            start, end = window
+            for channel_no, _, seq in self.sequences:
+                try:
+                    count = channel_positions[channel_no]
+                except KeyError:
+                    channel_positions[channel_no] = 0
+                    count = 0
+                while count >= start and count <= end:
                     try:
-                        count = channel_positions[channel_no]
-                    except KeyError:
-                        channel_positions[channel_no] = 0
-                        count = 0
-                    while count >= start and count <= end:
-                        try:
-                            if isinstance(seq, Sequence):
-                                event = next(seq.events)
-                            elif isinstance(seq, FiniteSequence):
-                                event = seq.events.pop()
-                        except (StopIteration, IndexError):
-                            active_channels = active_channels - 1
-                            logging.getLogger().info(f"Channel {channel_no} playback has completed")
-                            break
-                        logging.getLogger().info(f"Channel {channel_no} event {event}")
-                        future_time = count + (event.duration * self.time_scale_factor)
-                        self.scheduler.add_event(count, channel_no, event.extend(duration=event.duration * self.time_scale_factor))
-                        count = future_time
-                    channel_positions[channel_no] = future_time
-                window = (start + window_size, end + window_size)
-            logging.getLogger().info("All channels have completed. Waiting for scheduler to finish playback")
-            while self.scheduler.has_events:
-                time.sleep(1)
-            logging.getLogger().info("Playback complete")
+                        if isinstance(seq, Sequence):
+                            event = next(seq.events)
+                        elif isinstance(seq, FiniteSequence):
+                            event = seq.events.pop()
+                    except (StopIteration, IndexError):
+                        active_channels = active_channels - 1
+                        logging.getLogger().info(f"Channel {channel_no} playback has completed")
+                        break
+                    logging.getLogger().info(f"Channel {channel_no} event {event}")
+                    future_time = count + (event.duration * self.time_scale_factor)
+                    self.scheduler.enqueue(count, channel_no, event.extend(duration=event.duration * self.time_scale_factor))
+                    count = future_time
+                channel_positions[channel_no] = future_time
+            window = (start + window_size, end + window_size)
+        logging.getLogger().info("All channels have completed. Waiting for scheduler to finish playback")
+        while self.scheduler.has_events:
+            time.sleep(1)
+        logging.getLogger().info("Playback complete")
 
     def add_transformer(self, transformer: Callable[[Sequence], Iterator[Event]]) -> Sequencer:
         """Convenience method for applying a transformation function globally to all

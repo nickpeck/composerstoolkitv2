@@ -25,7 +25,7 @@ class Scheduler(Thread):
     def subscribe(self, observer: Playback):
         self.observers.append(observer)
 
-    def add_event(self, offset_secs: float, channel_no: int, event: Event):
+    def enqueue(self, offset_secs: float, channel_no: int, event: Event):
         for cc, value in event.meta.get("cc", []):
             self._q.put((offset_secs, ("cc", channel_no, cc, value)))
         for pitch in event.pitches:
@@ -57,11 +57,11 @@ class Scheduler(Thread):
                 logging.getLogger().debug(f"Scheduler event loop sleeping for {wait_time} secs")
                 sleep(wait_time)
                 time_elapsed = time_pos
-            self.on_event(event)
+            self._on_event(event)
         logging.getLogger().info("Scheduler exited main event loop.")
 
 
-    def on_event(self, event):
+    def _on_event(self, event):
         logging.getLogger().debug(f"Scheduler pushing to event observers {event}")
         for observer in self.observers:
             if event[0] == "note_on":
