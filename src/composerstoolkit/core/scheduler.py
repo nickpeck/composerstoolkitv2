@@ -64,7 +64,7 @@ class Scheduler(Thread):
         except (StopIteration, IndexError) as e:
             return None
 
-    def enqueue(self, channel_no: int, sequence: Sequence, offset_secs=0):
+    def enqueue(self, channel_no: int, sequence: Sequence, offset_secs=0) -> bool:
         """
         Grab the next event off the sequence and enqueue it for playback if it is in the future.
         If a noteon/cc event needs to be actioned immediately, route it directly to the observers.
@@ -72,7 +72,7 @@ class Scheduler(Thread):
         event = self._get_next_event(sequence)
         if event is None:
             logging.getLogger().info(f"Scheduler playback for channel {channel_no} has ended")
-            return
+            return False
         logging.getLogger().info(f"Scheduler channel {channel_no} new event {event} at {offset_secs}")
         future_time = offset_secs + (event.duration * self.time_scale_factor)
         for cc, value in event.meta.get("cc", []):
@@ -93,6 +93,7 @@ class Scheduler(Thread):
                 self._pq.put_nowait((future_time, ("note_off", channel_no, pitch)))
         self._pq.put_nowait((future_time, ("eval", channel_no, sequence)))
         logging.getLogger().debug(f"Scheduler queued event {event} at time {offset_secs}")
+        return True
 
     def run(self):
         self._main_event_loop()

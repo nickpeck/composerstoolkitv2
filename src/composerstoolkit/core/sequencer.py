@@ -158,13 +158,14 @@ class Sequencer:
                 self.scheduler.join(0.1)
 
     def _do_playback_loop(self):
+        n_active_channels = len(self.sequences)
         logging.getLogger().info(f"Sequencer starting playback")
         for channel_no, _, seq in self.sequences:
             # enqueue each sound event. The playback thread will wait until the scheduled event time
             self.scheduler.enqueue(channel_no= channel_no, sequence=seq)
         self.scheduler.start()
         it = iter(self.scheduler)
-        while True:
+        while n_active_channels > 0:
             # as events are performed, the playback thread will yield when it is time to evaluate the next
             # item for each channel
             try:
@@ -172,7 +173,8 @@ class Sequencer:
             except StopIteration:
                 break
             # re-enqueue the seq. Evaluation happens on this thread (the main thread).
-            self.scheduler.enqueue(channel_no=channel_no, sequence=seq, offset_secs=offset_secs)
+            if not self.scheduler.enqueue(channel_no=channel_no, sequence=seq, offset_secs=offset_secs):
+                n_active_channels = n_active_channels - 1
         logging.getLogger().info("Waiting for scheduler to finish playback")
         while self.scheduler.has_events:
             time.sleep(1)
