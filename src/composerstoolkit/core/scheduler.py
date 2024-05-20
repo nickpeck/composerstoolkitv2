@@ -13,6 +13,12 @@ from . pitch_tracker import PitchTracker
 class Scheduler(Thread):
     """
     Maintains a single thread for scheduling playback of sound events across multiple channels.
+    It can be run in two evaluation modes:
+     - ahead of time (default) - the next note for each channel is calculated and enqeued on the
+     main thread. This means that the scheduler is soley responsible for playback.
+     - just in time (jit=True), this is used where transformers are being used that rely upon the
+     realtime context (ie active pitches), and requires musical events to be evaluted on the playback thread.
+     The scheduler will try to compensate for latency, but might result in glitches if the tempo/density is too rapid.
     Usage:
         The evaluation thread (sequencer) should call Scheduler.enqueue(channel_no, seq) for each seq.
         the schedular object is an iterator, which yields (channel_no, seq, offset) each time we are
@@ -68,6 +74,8 @@ class Scheduler(Thread):
         """
         Grab the next event off the sequence and enqueue it for playback if it is in the future.
         If a noteon/cc event needs to be actioned immediately, route it directly to the observers.
+        return True if enqueued, False if no more events.
+        Queue.Full might be raised  - in which case you need to set a higher queue_size in the constructor
         """
         event = self._get_next_event(sequence)
         if event is None:
@@ -129,11 +137,12 @@ class Scheduler(Thread):
             if event[0] == "eval" and self.jit:
                 # in JIT mode, next-note-evaluation happens on the scheduler thread
                 # This is important if transformations need access to the context, but may
-                # result in glitches if the sheduller cannot keep up
+                # result in glitches if the scheduler cannot keep up
                 _, channel_no, seq = event
                 self.enqueue(channel_no, seq, time_pos)
                 continue
             self._on_event(event)
+        self.is_running = False
         logging.getLogger().info("Scheduler exited main event loop.")
 
 
