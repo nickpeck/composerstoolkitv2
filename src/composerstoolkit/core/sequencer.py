@@ -9,10 +9,12 @@ import time
 import sys
 
 import abjad
+from midiutil import MIDIFile
 
 from . sequence import Sequence, FiniteSequence, Event
 from . scheduler import Scheduler
 from . synth import Playback, DummyPlayback
+from . pitch_tracker import PitchTracker
 from .. resources.pitches import PitchFactory
 
 
@@ -57,9 +59,12 @@ class Context:
 class Sequencer:
     def __init__(self, **kwargs):
         """Optional args:
-        synth - a synthesier function (defaults to DummyPlayback)
+        synth - a synthesier function (defaults to DummyPlayback - no sound)
         bpm - int
         playback_rate - defaults to 1
+        log_level - (int) logging level
+        queue_size - int
+        jit  - enable just in time evaluation (required if the composition uses the context.active_pitches data)
         """
         super().__init__()
 
@@ -72,17 +77,19 @@ class Sequencer:
             "meter": (4, 4),
             "dump_midi": False,
             "log_level": logging.INFO,
-            "buffer_secs": 0,
             "queue_size": 100,
-            "window_size": 4
+            "jit": False
         }
 
         self.options.update(kwargs)
         self._init_logger()
         self.sequences = []
+        self.active_pitches = PitchTracker()
         self.scheduler = Scheduler(
-            buffer_secs=self.options["buffer_secs"],
-            queue_size=self.options["queue_size"])
+            queue_size=self.options["queue_size"],
+            time_scale_factor=self.time_scale_factor,
+            pitch_tracker=self.active_pitches,
+            jit=self.options["jit"])
         self.scheduler.daemon = True
         self.scheduler.subscribe(self.options["synth"])
         logging.getLogger().info(f'Using synth {self.options["synth"]}')
@@ -142,47 +149,31 @@ class Sequencer:
         return self
 
     def playback(self, to_midi=False):
-        with self.options["synth"]:
+        with self.options["synth"], self.active_pitches:
             try:
                 self._do_playback_loop()
             except KeyboardInterrupt:
                 logging.getLogger().info(f"Keyboard interupt received")
                 self.scheduler.is_running = False
-                self.scheduler.join(1)
-
+                self.scheduler.join(0.1)
 
     def _do_playback_loop(self):
         logging.getLogger().info(f"Sequencer starting playback")
-        channel_positions = {}
+        for channel_no, _, seq in self.sequences:
+            # enqueue each sound event. The playback thread will wait until the scheduled event time
+            self.scheduler.enqueue(channel_no= channel_no, sequence=seq)
         self.scheduler.start()
-        active_channels = len(self.sequences)
-        window_size = self.options["window_size"]
-        window = (0, window_size)
-        while active_channels > 0:
-            start, end = window
-            for channel_no, _, seq in self.sequences:
-                try:
-                    count = channel_positions[channel_no]
-                except KeyError:
-                    channel_positions[channel_no] = 0
-                    count = 0
-                while count >= start and count <= end:
-                    try:
-                        if isinstance(seq, Sequence):
-                            event = next(seq.events)
-                        elif isinstance(seq, FiniteSequence):
-                            event = seq.events.pop()
-                    except (StopIteration, IndexError):
-                        active_channels = active_channels - 1
-                        logging.getLogger().info(f"Channel {channel_no} playback has completed")
-                        break
-                    logging.getLogger().info(f"Channel {channel_no} event {event}")
-                    future_time = count + (event.duration * self.time_scale_factor)
-                    self.scheduler.enqueue(count, channel_no, event.extend(duration=event.duration * self.time_scale_factor))
-                    count = future_time
-                channel_positions[channel_no] = future_time
-            window = (start + window_size, end + window_size)
-        logging.getLogger().info("All channels have completed. Waiting for scheduler to finish playback")
+        it = iter(self.scheduler)
+        while True:
+            # as events are performed, the playback thread will yield when it is time to evaluate the next
+            # item for each channel
+            try:
+                channel_no, seq, offset_secs = next(it)
+            except StopIteration:
+                break
+            # re-enqueue the seq. Evaluation happens on this thread (the main thread).
+            self.scheduler.enqueue(channel_no=channel_no, sequence=seq, offset_secs=offset_secs)
+        logging.getLogger().info("Waiting for scheduler to finish playback")
         while self.scheduler.has_events:
             time.sleep(1)
         logging.getLogger().info("Playback complete")

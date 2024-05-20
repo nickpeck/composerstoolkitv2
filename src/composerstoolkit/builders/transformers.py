@@ -679,19 +679,27 @@ def shape_sine(seq: Sequence,
 @Transformer
 def enforce_shared_pitch_class_set(seq: Sequence,
     pitch_class_set: Set[int],
-    get_context = lambda: Context.get_context()):
+    get_context = lambda: Context.get_context(),
+    max_events=100):
     """Only allow events to pass where the
     aggregate of all pitches in the context is a subset
     of the given pitch class (or vice versa).
+    max_events is the max number of events to pass before emitting a pause.
     """
     pitch_class_set = pitchset.to_prime_form(pitch_class_set)
+    n_events = 0
     for event in seq.events:
         pitches = event.pitches
         sequencer = get_context().sequencer
-        aggregate = set([p % 12 for p in pitches]).union(set([p % 12 for p, _c in sequencer.scheduler.active_pitches]))
+        aggregate = set([p % 12 for p in pitches]).union(set([p % 12 for p, _c in sequencer.active_pitches]))
         aggregate = pitchset.to_prime_form(aggregate)
         if aggregate.issubset(pitch_class_set):
             yield event
+        else:
+            n_events = n_events + 1
+            if n_events >= max_events:
+                yield event.extend(pitches=[])
+                n_events = 0
 
 @Transformer
 def rhythmic_time_points(seq: Sequence,

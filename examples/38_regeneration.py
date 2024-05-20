@@ -32,4 +32,4 @@ seq3 = seq3.transform(rhythmic_augmentation(multiplier=9))\
     .transform(transpose(-12))
 
 sequencer = Sequencer(bpm=80, debug=True).add_sequences(seq1, seq2, seq3)
-sequencer.save_as_midi_file("sample.midi")
+sequencer.playback()
