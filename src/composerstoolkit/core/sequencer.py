@@ -43,7 +43,9 @@ class Context:
     def beat_offset(self) -> float:
         if self.sequencer is None:
             return 0
-        return self.time_offset * ((self.bpm / 60) * self.rate)
+        if self.sequencer.scheduler.playback_started_ts is None:
+            return 0
+        return self.sequencer.scheduler.time_elapsed * ((self.bpm / 60) * self.rate)
 
     @staticmethod
     def get_context(*args, **kwargs):
