@@ -92,13 +92,16 @@ class Scheduler(Thread):
         for pitch in event.pitches:
             volume = event.meta.get("volume", 60)
             if event.meta.get("realtime", None) != "note_off":
-                if self.time_elapsed >= offset_secs:
+                if self.time_elapsed >= offset_secs or event.meta.get("realtime", None) == "note_on":
                     # if an event needs to happen immediately, bypass the queue
                     self._on_event(("note_on", channel_no, pitch, volume))
                 else:
                     self._pq.put_nowait((offset_secs, ("note_on", channel_no, pitch, volume)))
             if event.meta.get("realtime", None) != "note_on":
-                self._pq.put_nowait((future_time, ("note_off", channel_no, pitch)))
+                if event.meta.get("realtime", None) == "note_off":
+                    self._on_event(("note_off", channel_no, pitch))
+                else:
+                    self._pq.put_nowait((future_time, ("note_off", channel_no, pitch)))
         self._pq.put_nowait((future_time, ("eval", channel_no, sequence)))
         logging.getLogger().debug(f"Scheduler queued event {event} at time {offset_secs}")
         return True

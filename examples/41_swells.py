@@ -43,5 +43,4 @@ pad2 = create_pad("Cmaj9", period=80, starting_deg=0)
 pad3 = create_pad("Fmaj9/A", period=100, starting_deg=180).transform(transpose(-12))
 
 sequencer = Sequencer(bpm=50, debug=True, dump_midi=True).add_sequences(pad1, pad2, pad3)
-#sequencer.playback()
-sequencer.save_as_midi_file("ambient.midi")
+sequencer.playback()

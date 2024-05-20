@@ -90,6 +90,7 @@ def loop_capture(seq: Sequence, toggle=lambda: True, debug=False):
                     if stored_event is not None:
                         bpm = seq.meta.get("bpm", 60)
                         stored_event.duration = (time.time() - start_time) * (bpm / 60)
+                        del stored_event.meta["realtime"]
                         buffer.events.append(stored_event)
                         del holding[pitch]
 
