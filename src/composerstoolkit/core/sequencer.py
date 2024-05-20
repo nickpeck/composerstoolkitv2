@@ -92,7 +92,7 @@ class Sequencer:
             jit=self.options["jit"])
         self.scheduler.daemon = True
         self.scheduler.subscribe(self.options["synth"])
-        logging.getLogger().info(f'Using synth {self.options["synth"]}')
+        logging.getLogger().debug(f'Using synth {self.options["synth"]}')
 
     @property
     def time_scale_factor(self):
@@ -100,6 +100,10 @@ class Sequencer:
         bpm = self.options["bpm"]
         time_scale_factor = (1 / (bpm / 60)) * (1 / playback_rate)
         return time_scale_factor
+
+    @property
+    def voices(self):
+        return [seq for (channel_no, offset, seq) in self.sequences]
 
     def _init_logger(self):
         root = logging.getLogger()
