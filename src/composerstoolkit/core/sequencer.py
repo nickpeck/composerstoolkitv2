@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 from contextlib import ExitStack
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 import logging
 import importlib
 import itertools
@@ -61,14 +61,24 @@ class Context:
 
 
 class Sequencer:
+    """
+    Used to group multiple sequences together as tracks. They can then be used to compose a midi file, produce
+    musical notation, or inform real-time playback.
+    """
     def __init__(self, **kwargs):
         """Optional args:
         synth - a synthesier function (defaults to DummyPlayback - no sound)
         bpm - int
         playback_rate - defaults to 1
-        log_level - (int) logging level
-        queue_size - int
-        jit  - enable just in time evaluation (required if the composition uses the context.active_pitches data)
+        log_level - (int) logging level (ie logging.DEBUG, logging.INFO)
+        queue_size - int (default 100). Scheduler queue size. Limits the number of events that can be submitted to the
+         scheduler ahead of time, capping memory usage. Might need to be higher for extreme polyphony - which would
+         result in Queue.Full exceptions being raised in the scheduler.
+        jit - (default False). enable just in time evaluation (required if the composition uses the
+            context.active_pitches data to inform pitch selections). Default is ahead-of-time evaluation.
+        dump_midi - (default False) used to collect and dump midi to a timestamped file when the process is terminated.
+            This is used for recording infinate duration real-time generative music
+            (where save_as_midi_file() cannot be used), or just to store samples for future use.
         """
         super().__init__()
 
@@ -99,14 +109,14 @@ class Sequencer:
         logging.getLogger().debug(f'Using synth {self.options["synth"]}')
 
     @property
-    def time_scale_factor(self):
+    def time_scale_factor(self) -> float:
         playback_rate = self.options["playback_rate"]
         bpm = self.options["bpm"]
         time_scale_factor = (1 / (bpm / 60)) * (1 / playback_rate)
         return time_scale_factor
 
     @property
-    def voices(self):
+    def voices(self) -> List[Sequence]:
         return [seq for (track_no, offset, seq) in self.sequences]
 
     def _init_logger(self):
@@ -128,7 +138,6 @@ class Sequencer:
         module_path = path[:last_dot]
         cls = getattr(importlib.import_module(module_path), class_name)
         return cls()
-
 
     def add_sequence(self, seq: Sequence, **kwargs):
         """Add a sequence to the playback sequencer.
@@ -154,11 +163,16 @@ class Sequencer:
         return self
 
     def add_sequences(self, *sequences):
+        """Helper method to add multiple sequences at once"""
         for sequence in sequences:
             self.add_sequence(sequence)
         return self
 
     def playback(self, to_midi=False):
+        """Commence playback.
+        This will schedule each event for playback using your active synth.
+        This is either defined as env variable DEFAULT_SYNTH, or using constructor arg 'synth'.
+        Playback will terminate once each sequence runs out of events, or is terminated (ie via CTRL-C)"""
         ctx_managers = [self.options["synth"], self.active_pitches]
         if self.options["dump_midi"]:
             mc = MidiCapture(bpm=self.options["bpm"], playback_rate=self.options["playback_rate"])
@@ -208,6 +222,11 @@ class Sequencer:
         return self
 
     def show_notation(self):
+        """
+        Create a crude musical notation for debug purposes.
+        Requires lilypond to be installed.
+        Only FiniteSequences can be turned into notation - otherwise an Exception will be raised.
+        """
         pf = PitchFactory(output="abjad")
         staves = []
         for (track_no, offset, seq) in self.sequences:
@@ -241,6 +260,7 @@ class Sequencer:
 
     def save_as_midi_file(self, filename):
         """Save the contents of the sequencer as a MIDI file
+        Only FiniteSequences can be written - otherwise an Exception will be raised.
         """
         midifile = MIDIFile(len(self.sequences), deinterleave=False)
         midifile.addTempo(0, 0, self.options["bpm"])
