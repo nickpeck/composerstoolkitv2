@@ -1,15 +1,28 @@
 # Composers Toolkit (V2)
 
-This package contains a suite of tools and experiments towards the goal of discovering how technology might play a supporting role in assisting and enriching the process of musical composition - (specifically, in terms of what that means to me on an artistic and aesthetic level). As far as possible, they are agnostic with respect to any one given approach, culture, theory, or style, and it is up to the end-user to define the parameters specific to their intended outcome (keys, chords, structures, rows, cycles etc.). It deals with manipulating discrete note events (such as represented by MIDI) rather than pure sound synthesis. Some of the techniques may be familiar to Schillinger composition students, however in many cases I have adopted my own approaches to these transformations.
+This package contains a suite of tools and experiments towards discovering how technology might play a supporting role in assisting and enriching the process of musical composition - (specifically, in terms of what that means to me on an artistic and aesthetic level). The use of partially algorithmic processes alongside freely composed material is nothing new, and examples abound in the historical and contemporary musical traditions of both East and West.
 
-A brief overview of the features I am working towards:
-- Ability to freely declare events, sequences of events and playback containers to which multiple sequences can be added, thus enabling polyphonic playback using a synth library, DAW or external MIDI device. Examples can be saved or loaded in from MIDI files.
-- Ability to quickly generate raw materials and permutations thereof (i.e., permutations of a note row, rhythmic cycle, pitches or chords within a given scale or tonal axis).
-- Infinite or finite-length sequences of events can be generated using algorithmic techniques. Different transformations and operations can be applied to these sequences. Transformations can be controlled using ‘higher-order’ transformations that enable gating, looping, or batching in response to external logic.
-- Ability to perform statistical analysis of an existing work, to extract key musical motives, patterns and sequences using data-mining techniques.
-- Different algorithmic processes that provide a complete compositional output, driven by user-defined constraints, or heuristics discovered through analysis of an existing corpus of works.
-- Investigation of biologically inspired and deep-learning techniques and how these might be trained using the previously mentioned analytical processes, and then guided using interaction with the end-user.
+It deals with manipulating discrete note and controller events (as represented by MIDI) rather than pure sound synthesis and is intended to serve as the back-end for external sound synthesis via MIDI, or generating MIDI output that can then be imported into external score notation software. It does not currently use live or stored digital sound data (ie WAV) as in input source. It is possible to manipulate sound modification parameters (using controller events) using the techniques within. Some of the techniques may be familiar to Schillinger practitioners or users of Max/OpenMusic/Ableton, however in many cases I have adopted my own approaches to these transformations. I enjoy to taking 'longer road' of developing my own tools and building a more personal connection with the results.
 
+This project is primarily geared towards serving the needs of my own shifting artistic and research goals, rather than something I would want to promote for general consumption. Composition is for me, usually a solitary pursuite, and code is being used as 'craft' that serves a purpose (not an art in itself). With that in mind, occasionally best technical practices may have been overlooked in order to serve the chaotic and sometimes exploratory whims of artistic inspiration.
+
+The ordered experiments in the 'examples' folder serve as a document of the approaches and ideas I have investigated. Some of the outputs of this have found their way into my actual music-making - often interwoven with, or serving as the initial seed for material that I have then developed using more traditional means.
+
+As far as possible, it is agnostic with respect to any one given approach, culture, theory, or style, popular or art-music and it is up to the end-user to define the parameters specific to their intended outcome (keys, chords, structures, rows, cycles etc.). However, given the current scope of MIDI, it is currently limited to the Western 12-EDO pitch system.
+
+Broadly speaking, the techniques I have use so far fall into these categories:
+- Generating real-time or ahead-of-time music, using randomized or predetermined transformations of various input materials. These transformations might be toggled or modulated as a function of time, or of the real time 'context' (i.e. which notes are actually being sounded at the present time).
+- Ability to capture live MIDI input, either for control purposes, or as a source of musical material that might be stored and manipulated.
+- Using basic machine-learning techniques such as tree-search, evolutionary or constraint logic programming techniques to compose music according a predetermined set of criteria.
+- Generating a corpus of material (ie all possibilities of a given chord/scale relationship or musical pattern) or temporal structures that might serve as reference material for a future composition.
+- Analyzing an existing corpus of works for specific musical patterns, structures or statistical data that might then serve to drive further composition.
+
+## Package structure:
+- analysis: Tools for analyzing an existing corpus of music.
+- builders: Tools for creating music using algorithmic processes. Specifically 'generators' which create musical materials and 'transformers' which modify them. The framework allows for lazy (real-time) evaluation.
+- composers: Tools for generating music using machine learning techniques.
+- core: Basic framework for organizing music into events, sequences of events, sequencers (which group multiple sequences), creating rudimentary notation, MIDI files and the scheduler (which enables real-time playback via any MIDI interfaces or external synths). It should be possible to create an interface to any sound synthesis engine that supports note on/off and cc-style data.
+- resources: convenience methods and definitions of common western musical patterns (scales, durations, chords, pitches).
 
 ## Quickstart
 
@@ -18,7 +31,8 @@ git clone https://github.com/nickpeck/composerstoolkitv2.git
 cd composerstoolkitv2
 python3 -m venv .
 source bin/activate
-export PYTHONPATH=${PYTHONPATH}:path_to_src_folder
+pip install -r requirements.txt
+python setup.py develop
 python examples/1_random_slicing.py
 ~~~
 
@@ -49,7 +63,7 @@ export DEFAULT_SYNTH=MySynth.LocalSynth
 
 You can now run the examples and you should get playback on the configured interface.
 (n.b. on Windows, it is a known issue that the default WINDOWS_MM api blocks rtmidi calls until each message is sent. This causes
-playbac to drift out of sync - try using a different interface or Linux/Mac over a RTP Midi network configuration for the best results).
+playback to drift out of sync - try using a different interface or Linux/Mac over a RTP Midi network configuration for the best results).
 
 
 Practical examples are given in the examples directory.
@@ -186,6 +200,8 @@ melody = Sequence.from_generator(
 )).transform(loop(
 ))
 ~~~
+
+A sequence can be used is various ways to drive the input of another sequence, leading to complex 'signal-chains' that feed into each other.
 
 In addition, there are several 'higher-order' transformations that control the application of different transformations.
 ~~~
