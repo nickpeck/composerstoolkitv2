@@ -80,7 +80,7 @@ harp = Sequence(events=[Event(pitches=[], duration=1)]
 )
 
 
-mysequencer = Context.get_context().new_sequencer(bpm=100, playback_rate=1, debug=True)\
+mysequencer = Context.get_context().new_sequencer(bpm=100, playback_rate=1, jit=True, debug=True)\
     .add_sequence(flute, channel_no=1)\
     .add_sequence(harp, channel_no=2)\
 

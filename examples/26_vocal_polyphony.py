@@ -9,12 +9,18 @@ from composerstoolkit import *
 @Transformer
 def enforce_pitch_range(seq: Sequence,
     min_pitch, max_pitch):
+    n_events = 0
     for event in seq.events:
-        if not Context.get_context().sequencer.is_playing:
+        if not Context.get_context().sequencer.scheduler.is_running:
             yield event
         if event.pitches[0] <= max_pitch \
             and event.pitches[0] >= min_pitch:
             yield event
+        else:
+            n_events = n_events + 1
+            if n_events >= 100:
+                yield event.extend(pitches=[])
+                n_events = 0
 
 @Transformer
 def rest(seq: Sequence):
@@ -95,7 +101,7 @@ soprano = Sequence.from_generator(random_slice(
     harmony_gate
 )
 
-mysequencer = Context.get_context().new_sequencer(bpm=35, playback_rate=1, debug=True)\
+mysequencer = Context.get_context().new_sequencer(bpm=35, playback_rate=1, jit=True, debug=True)\
     .add_sequence(tenor, channel_no=3)\
     .add_sequence(alto, channel_no=2)\
     .add_sequence(soprano, channel_no=1)\
@@ -118,4 +124,4 @@ mysequencer = Context.get_context().new_sequencer(bpm=35, playback_rate=1, debug
 
     
 
-mysequencer.playback(to_midi=True)
+mysequencer.playback()

@@ -42,8 +42,8 @@ tenor = Sequence(events=[Event([p], 0) for p in tenor_melody]).transform(
 )
 
 mysequencer = Context.get_context().new_sequencer(bpm=140, playback_rate=1, debug=True) \
-    .add_sequence(tenor, channel_no=3, offset=9) \
-    .add_sequence(alto, channel_no=2, offset=3) \
-    .add_sequence(soprano, channel_no=1)
+    .add_sequence(tenor.bake(), channel_no=3, offset=9) \
+    .add_sequence(alto.bake(), channel_no=2, offset=3) \
+    .add_sequence(soprano.bake(), channel_no=1)
 
 mysequencer.save_as_midi_file("tintinnabulation.midi")

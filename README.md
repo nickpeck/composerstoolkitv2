@@ -102,7 +102,7 @@ seq.bake() # evalutes the whole sequence - be careful you are not trying to eval
 fin_seq.to_sequence()
 ~~~
 
-Implementation-wise, the difference is that Sequences makes use of lazy-evaluated sequences (generators), and are useful for live applications & algorithmic music generation. FiniteSequence does not, and is useful for operations where we need to perform list-style operations upon it, for example:
+Implementation-wise, the difference is that Sequences makes use of lazy-evaluation (generators), and are useful for live applications & algorithmic music generation. FiniteSequence does not, and is useful for operations where we need to perform list-style operations upon it, for example:
 
 ~~~
 # it behaves like a list:
@@ -113,8 +113,8 @@ fin_seq.time_slice(0, 2)
 ... FiniteSequence(events=[Event(pitches=[48], duration=QUARTER_NOTE), Event(pitches=[43], duration=QUARTER_NOTE)])
 ~~~
 
-### Sequencers
-Sequencers are analogous to a MIDI sequencer, and allow us to cue multiple sequences together for playback on a given engine. By default, we use composerstoolkit.core.synth.DummyPlayback (which just logs the noteon/noteoff events), but we could save to MIDI, send to a MIDI device, or write our own playback engine that implements composerstoolkit.core.synth.Playback
+### Sequencer
+The Sequencer is analogous to a MIDI sequencer, and allow us to cue multiple sequences together for playback on a given engine. By default, we use composerstoolkit.core.synth.DummyPlayback (which just logs the noteon/noteoff events), but we could save to MIDI, send to a MIDI device, or write our own playback engine that implements composerstoolkit.core.synth.Playback
 
 ~~~
 Context.get_context().new_sequencer(bpm=240, playback_rate=1)\
@@ -129,12 +129,20 @@ If you want to define a synth engine to be used globally, then set the environme
 $export DEFAULT_SYNTH=MySynth.Synth
 ~~~
 
-If you have Lilypond installed on your system, you can generate basic notation output from your container. (Note, only FiniteSequences are supported and the system does not currently handle tuplet durations).
+If you have Lilypond installed on your system, you can generate rough-and-ready notation output from your container. (Note, only FiniteSequences are supported and the system does not currently handle tuplet durations).
 
 ~~~
 Context.get_context().new_sequencer(bpm=240, playback_rate=1)\
     .add_sequence(fin_seq)\
     .show_notation()
+~~~
+
+You can, alternatively export to midi and import into a DAW/notation software of your choice.
+
+~~~
+Context.get_context().new_sequencer(bpm=240, playback_rate=1)\
+    .add_sequence(fin_seq)\
+    .save_as_midi_file("output.midi")
 ~~~
 
 ### Generators

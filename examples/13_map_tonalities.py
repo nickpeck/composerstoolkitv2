@@ -37,14 +37,14 @@ chords = Sequence(events=[
     )
 ).transform(
     gated(
-        # maps the pattern to D major between 40-60 secs
+        # maps the pattern to Db major between 40-60 secs
         modal_quantize(scales.Db_major),
         cyclic_time_gate(60,40,60)
     )
 )
 
 bassline = Sequence(events=[
-        Event([pf("C1")], duration=EIGHTH_NOTE)]
+        Event([pf("C1")], duration=20)]
 ).transform(
     loop()
 ).transform(
@@ -55,12 +55,10 @@ bassline = Sequence(events=[
     )
 ).transform(
     gated(
-        # maps the pattern to D major between 40-60 secs
+        # maps the pattern to Db major between 40-60 secs
         modal_quantize(scales.Db_major),
         cyclic_time_gate(60,40,60)
     )
-).transform(
-    tie_repeated()
 )
 
 backing_figure = Sequence(events=[
@@ -82,7 +80,7 @@ backing_figure = Sequence(events=[
     )
 ).transform(
     gated(
-        # maps the pattern to D major between 40-60 secs
+        # maps the pattern to Db major between 40-60 secs
         modal_quantize(scales.Db_major),
         cyclic_time_gate(60,40,60)
     )
@@ -124,10 +122,7 @@ melody = Sequence.from_generator(
     )
 )
 
-mysequencer = Context.get_context().new_sequencer(bpm=95, playback_rate=1, debug=True)\
-    .add_sequence(melody)\
-    .add_sequence(backing_figure)\
-    .add_sequence(chords)\
-    .add_sequence(bassline)
+mysequencer = Context.get_context().new_sequencer(bpm=95, playback_rate=1)\
+    .add_sequences(melody, backing_figure, chords, bassline)
 
 mysequencer.playback()

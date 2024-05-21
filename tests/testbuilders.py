@@ -696,6 +696,7 @@ class TransformerTests(unittest.TestCase):
         seq4 = Sequence()
         events = [Event([1,2,3], 1), Event([4,5],2), Event([], 1)]
         seq = Sequence(events).transform(split_voices(seq1, seq2, seq3, seq4))
+        list(seq.events)
         assert list(seq1.events) == [Event([1], 1), Event([4], 2), Event([], 1)]
         assert list(seq2.events) == [Event([2], 1), Event([5], 2), Event([], 1)]
         assert list(seq3.events) == [Event([3], 1), Event([], 2), Event([], 1)]
@@ -708,6 +709,7 @@ class TransformerTests(unittest.TestCase):
         seq4 = Sequence()
         events = [Event([1,2,3], 1), Event([4,5],2), Event([], 1)]
         seq = Sequence(events).transform(split_voices(seq1, seq2, seq3, seq4, mode="doublelead"))
+        list(seq.events)
         assert list(seq1.events) == [Event([1], 1), Event([4], 2), Event([], 1)]
         assert list(seq2.events) == [Event([1], 1), Event([4], 2), Event([], 1)]
         assert list(seq3.events) == [Event([2], 1), Event([4], 2), Event([], 1)]

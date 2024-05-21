@@ -64,7 +64,7 @@ basses = Sequence.from_generator(
     rhythmic_augmentation(10)
 )
 
-mysequencer = Context.get_context().new_sequencer(bpm=220, playback_rate=1, debug=True)\
+mysequencer = Context.get_context().new_sequencer(bpm=220, playback_rate=1, jit=True)\
     .add_sequence(glock, channel_no=1)\
     .add_sequence(oboe, channel_no=2)\
     .add_sequence(strings, channel_no=3)\

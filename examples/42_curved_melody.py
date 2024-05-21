@@ -13,7 +13,7 @@ from composerstoolkit import *
 
 pitch_domain = list(scales.C_major)
 rhythm_domain = list(range(1,12))
-pf = PitchFactory()
+pf = pitches.PitchFactory()
 N_EVENTS = 20
 
 def my_generator():
