@@ -15,44 +15,44 @@ class MidiCapture(Playback):
         self.time_started = None
         self.note_events = []
         self.cc_events = []
-        self.channels = set()
+        self.tracks = set()
 
     def _time_to_beats(self, time):
         return (time * (self.bpm / 60)) * self.playback_rate
 
-    def noteon(self, channel: int, pitch: int, velocity: int):
-        self.active_pitches[(pitch, channel)] = time(), velocity
+    def noteon(self, track: int, pitch: int, velocity: int):
+        self.active_pitches[(pitch, track)] = time(), velocity
 
-    def noteoff(self, channel: int, pitch: int):
-        self.channels.add(channel)
+    def noteoff(self, track: int, pitch: int):
+        self.tracks.add(track)
         cur_time = time()
         try:
-            note_started_time, volume = self.active_pitches[(pitch, channel)]
+            note_started_time, volume = self.active_pitches[(pitch, track)]
         except KeyError:
-            logging.getLogger().error(f"MidiCapture error - no stored pitch event: {(pitch, channel)}")
+            logging.getLogger().error(f"MidiCapture error - no stored pitch event: {(pitch, track)}")
             return
         duration = self._time_to_beats(cur_time - note_started_time)
         time_offset = self._time_to_beats(cur_time - self.time_started)
-        event = (channel - 1, 0, pitch, time_offset, duration, volume)
+        event = (track - 1, 0, pitch, time_offset, duration, volume)
         self.note_events.append(event)
 
-    def control_change(self, channel: int, cc: int, value: int):
+    def control_change(self, track: int, cc: int, value: int):
         time_offset = self._time_to_beats(cur_time - self.time_started)
-        event = (channel - 1, 0, time_offset, cc, value)
+        event = (track - 1, 0, time_offset, cc, value)
         self.cc_events.append(event)
 
     def _write_midi(self):
         filename = str(int(time())) + ".midi"
         logging.getLogger().info(f"writing midi data to file")
-        channels = sorted(list(self.channels))
+        tracks = sorted(list(self.tracks))
         midifile = midiutil.MIDIFile(
-            channels[-1],
+            tracks[-1],
             deinterleave=False)  # https://github.com/MarkCWirt/MIDIUtil/issues/24
         midifile.addTempo(0, 0, self.bpm)
         i = 1
-        for channel_no in channels:
-            while i <= channel_no:
-                midifile.addTrackName(i - 1, 0, "Channel {}".format(i))
+        for track_no in tracks:
+            while i <= track_no:
+                midifile.addTrackName(i - 1, 0, "Track {}".format(i))
                 i = i + 1
         for track, channel, pitch, offset, duration, volume in self.note_events:
             midifile.addNote(track=track, channel=channel, pitch=pitch, time=offset, duration=duration, volume=volume)

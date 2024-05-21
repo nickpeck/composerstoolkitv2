@@ -61,8 +61,8 @@ accompaniment = Sequence.from_generator(
 )).transform(loop(
 ))
 
-Context.get_context().new_sequencer(bpm=120, playback_rate=1)\
-    .add_sequence(melody, offset=EIGHTH_NOTE, channel_no=1)\
-    .add_sequence(accompaniment, channel_no=2)\
-    .add_sequence(baseline, channel_no=3)\
-    .playback(to_midi=True)
+Context.get_context().new_sequencer(bpm=120, playback_rate=1, dump_midi=True)\
+    .add_sequence(melody, offset=EIGHTH_NOTE, track_no=1)\
+    .add_sequence(accompaniment, track_no=2)\
+    .add_sequence(baseline, track_no=3)\
+    .playback()

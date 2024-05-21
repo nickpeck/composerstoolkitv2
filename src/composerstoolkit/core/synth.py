@@ -7,13 +7,13 @@ import logging
 import time
 
 class Playback(ABC):
-    def noteon(self, channel: int, pitch: int, velocity: int):
+    def noteon(self, track: int, pitch: int, velocity: int):
         raise NotImplementedError("noteon")
         
-    def noteoff(self, channel: int, pitch: int):
+    def noteoff(self, track: int, pitch: int):
         raise NotImplementedError("noteoff")
 
-    def control_change(self, channel: int, cc: int, value: int):
+    def control_change(self, track: int, cc: int, value: int):
         raise NotImplementedError("control_change")
         
     def __enter__(self):
@@ -26,14 +26,14 @@ class DummyPlayback(Playback):
     """
     Just logs the noteon/noteoff event
     """
-    def noteon(self, channel: int, pitch: int, velocity: int):
-        logging.getLogger().info(f"NOTE ON channel:{channel} pitch:{pitch} velocity:{velocity}")
+    def noteon(self, track: int, pitch: int, velocity: int):
+        logging.getLogger().info(f"NOTE ON track:{track} pitch:{pitch} velocity:{velocity}")
         
-    def noteoff(self, channel: int, pitch: int):
-        logging.getLogger().info(f"NOTE OFF channel:{channel} pitch:{pitch}")
+    def noteoff(self, track: int, pitch: int):
+        logging.getLogger().info(f"NOTE OFF track:{track} pitch:{pitch}")
 
-    def control_change(self, channel: int, cc: int, value: int):
-        logging.getLogger().info(f"NOTE OFF channel:{channel} cc:{cc} value:{value}")
+    def control_change(self, track: int, cc: int, value: int):
+        logging.getLogger().info(f"NOTE OFF track:{track} cc:{cc} value:{value}")
 
 class RTPMidi(Playback):
     """
@@ -52,21 +52,21 @@ class RTPMidi(Playback):
         self.port_no = get_port(available_ports)
         self._is_active = False
     
-    def noteon(self, channel: int, pitch: int, velocity: int):
+    def noteon(self, track: int, pitch: int, velocity: int):
         from rtmidi.midiconstants import NOTE_ON
-        status = NOTE_ON | (channel - 1)  # bit-wise OR of NOTE_ON and channel (zero-based)
+        status = NOTE_ON | (track - 1)  # bit-wise OR of NOTE_ON and channel (zero-based)
         if self._is_active:
             self.midiout.send_message([status, pitch, velocity])
         
-    def noteoff(self, channel: int, pitch: int):
+    def noteoff(self, track: int, pitch: int):
         from rtmidi.midiconstants import NOTE_OFF
-        status = NOTE_OFF | (channel - 1)
+        status = NOTE_OFF | (track - 1)
         if self._is_active:
             self.midiout.send_message([status, pitch, 0])
 
-    def control_change(self, channel: int , cc: int, value: int):
+    def control_change(self, track: int , cc: int, value: int):
         from rtmidi.midiconstants import CONTROL_CHANGE
-        status = CONTROL_CHANGE | (channel - 1)
+        status = CONTROL_CHANGE | (track - 1)
         if self._is_active:
             self.midiout.send_message([status, cc, value])
         
@@ -93,11 +93,11 @@ class FluidsynthPlayback(Playback):
         self.synth = fluidsynth.Synth()
         self.sf_file = sf_file
         
-    def noteon(self, channel: int, pitch: int, velocity: int):
-        self.synth.noteon(channel, pitch, velocity)
+    def noteon(self, track: int, pitch: int, velocity: int):
+        self.synth.noteon(track, pitch, velocity)
         
-    def noteoff(self, channel: int, pitch: int):
-        self.synth.noteoff(channel, pitch)
+    def noteoff(self, track: int, pitch: int):
+        self.synth.noteoff(track, pitch)
         
     def __enter__(self):
         self.synth.start()

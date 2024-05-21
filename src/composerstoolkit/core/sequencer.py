@@ -107,7 +107,7 @@ class Sequencer:
 
     @property
     def voices(self):
-        return [seq for (channel_no, offset, seq) in self.sequences]
+        return [seq for (track_no, offset, seq) in self.sequences]
 
     def _init_logger(self):
         root = logging.getLogger()
@@ -134,7 +134,7 @@ class Sequencer:
         """Add a sequence to the playback sequencer.
         optional args:
             offset (default 0)
-            channel_no (defaults to the next available channel)
+            track_no (defaults to the next available track)
         """
         try:
             offset = kwargs["offset"]
@@ -144,11 +144,13 @@ class Sequencer:
             seq = seq.extend(
                 events=itertools.chain([Event(duration=offset)], seq.events))
         try:
-            channel_no = kwargs["channel_no"]
+            track_no = kwargs["track_no"]
         except KeyError:
-            channel_no = len(self.sequences) + 1
-        seq.meta["channel_no"] = channel_no
-        self.sequences.append((channel_no, offset, seq))
+            track_no = len(self.sequences) + 1
+        if track_no <= 0:
+            raise Exception("add_sequence() track_no should be 1 or greater")
+        seq.meta["track_no"] = track_no
+        self.sequences.append((track_no, offset, seq))
         return self
 
     def add_sequences(self, *sequences):
@@ -173,23 +175,23 @@ class Sequencer:
                 self.scheduler.join(0.1)
 
     def _do_playback_loop(self):
-        n_active_channels = len(self.sequences)
+        n_active_tracks = len(self.sequences)
         logging.getLogger().info(f"Sequencer starting playback")
-        for channel_no, _, seq in self.sequences:
+        for track_no, _, seq in self.sequences:
             # enqueue each sound event. The playback thread will wait until the scheduled event time
-            self.scheduler.enqueue(channel_no= channel_no, sequence=seq)
+            self.scheduler.enqueue(track_no= track_no, sequence=seq)
         self.scheduler.start()
         it = iter(self.scheduler)
-        while n_active_channels > 0:
+        while n_active_tracks > 0:
             # as events are performed, the playback thread will yield when it is time to evaluate the next
-            # item for each channel
+            # item for each track
             try:
-                channel_no, seq, offset_secs = next(it)
+                track_no, seq, offset_secs = next(it)
             except StopIteration:
                 break
             # re-enqueue the seq. Evaluation happens on this thread (the main thread).
-            if not self.scheduler.enqueue(channel_no=channel_no, sequence=seq, offset_secs=offset_secs):
-                n_active_channels = n_active_channels - 1
+            if not self.scheduler.enqueue(track_no=track_no, sequence=seq, offset_secs=offset_secs):
+                n_active_tracks = n_active_tracks - 1
         logging.getLogger().info("Waiting for scheduler to finish playback")
         while self.scheduler.has_events:
             time.sleep(1)
@@ -200,15 +202,15 @@ class Sequencer:
         sequences in the Sequencer.
         """
         for i, _seq in enumerate(self.sequences):
-            channel_no, offset, seq = self.sequences[i]
-            self.sequences[i] = (channel_no, offset, seq.extend(
+            track_no, offset, seq = self.sequences[i]
+            self.sequences[i] = (track_no, offset, seq.extend(
                 events=transformer(seq)))
         return self
 
     def show_notation(self):
         pf = PitchFactory(output="abjad")
         staves = []
-        for (channel_no, offset, seq) in self.sequences:
+        for (track_no, offset, seq) in self.sequences:
             if not isinstance(seq, FiniteSequence):
                 raise Exception("Only FiniteSequence(s) are supported for notation output")
             ly_str = []
@@ -230,8 +232,8 @@ class Sequencer:
                     ly_str.append("<" + \
                                   " ".join([pf(p) for p in event.pitches]) \
                                   + ">" + str(duration))
-            voice = abjad.Voice(" ".join(ly_str), name="Voice " + str(channel_no))
-            staff = abjad.Staff([voice], name="Staff " + str(channel_no))
+            voice = abjad.Voice(" ".join(ly_str), name="Voice " + str(track_no))
+            staff = abjad.Staff([voice], name="Staff " + str(track_no))
             staves.append(staff)
         score = abjad.Score(staves, name="Score")
         abjad.show(score)
@@ -242,20 +244,20 @@ class Sequencer:
         """
         midifile = MIDIFile(len(self.sequences), deinterleave=False)
         midifile.addTempo(0, 0, self.options["bpm"])
-        for (channel_no, offset, seq) in self.sequences:
+        for (track_no, offset, seq) in self.sequences:
             if not isinstance(seq, FiniteSequence):
                 raise Exception("Only FiniteSequence(s) are supported for midi file output")
-            midifile.addTrackName(channel_no - 1, offset, "Channel {}".format(channel_no))
+            midifile.addTrackName(track_no - 1, offset, "Track {}".format(track_no))
             count = offset
             for event in seq.events:
                 for cc, value in event.meta.get("cc", []):
-                    midifile.addControllerEvent(channel_no - 1, 0, count, cc, value)
+                    midifile.addControllerEvent(track_no - 1, 0, count, cc, value)
                 for pitch in event.pitches:
                     try:
                         dynamic = event.meta["dynamic"]
                     except KeyError:
                         dynamic = 100
-                    midifile.addNote(channel_no - 1, 0, pitch, count, event.duration, dynamic)
+                    midifile.addNote(track_no - 1, 0, pitch, count, event.duration, dynamic)
                 count = count + event.duration
         with open(filename, 'wb') as outf:
             midifile.writeFile(outf)

@@ -5,16 +5,16 @@ class PitchTracker(Playback):
         super().__init__(*args, **kwargs)
         self.active_pitches = []
 
-    def noteon(self, channel: int, pitch: int, velocity: int):
-        self.active_pitches.append((pitch, channel))
+    def noteon(self, track: int, pitch: int, velocity: int):
+        self.active_pitches.append((pitch, track))
 
-    def noteoff(self, channel: int, pitch: int):
+    def noteoff(self, track: int, pitch: int):
         try:
-            self.active_pitches.remove((pitch, channel))
+            self.active_pitches.remove((pitch, track))
         except ValueError:
             pass
 
-    def control_change(self, channel: int, cc: int, value: int):
+    def control_change(self, track: int, cc: int, value: int):
         pass
 
     def __iter__(self):

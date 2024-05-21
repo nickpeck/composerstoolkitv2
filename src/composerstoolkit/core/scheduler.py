@@ -12,17 +12,17 @@ from . pitch_tracker import PitchTracker
 
 class Scheduler(Thread):
     """
-    Maintains a single thread for scheduling playback of sound events across multiple channels.
+    Maintains a single thread for scheduling playback of sound events across multiple tracks.
     It can be run in two evaluation modes:
-     - ahead of time (default) - the next note for each channel is calculated and enqeued on the
+     - ahead of time (default) - the next note for each track is calculated and enqeued on the
      main thread. This means that the scheduler is soley responsible for playback.
      - just in time (jit=True), this is used where transformers are being used that rely upon the
      realtime context (ie active pitches), and requires musical events to be evaluted on the playback thread.
      The scheduler will try to compensate for latency, but might result in glitches if the tempo/density is too rapid.
     Usage:
-        The evaluation thread (sequencer) should call Scheduler.enqueue(channel_no, seq) for each seq.
-        the schedular object is an iterator, which yields (channel_no, seq, offset) each time we are
-        ready to evaluate the next item for each channel
+        The evaluation thread (sequencer) should call Scheduler.enqueue(track_no, seq) for each seq.
+        the schedular object is an iterator, which yields (track_no, seq, offset) each time we are
+        ready to evaluate the next item for each track
     """
 
     def __init__(self, queue_size=0, time_scale_factor=1, jit=False, pitch_tracker=PitchTracker()):
@@ -46,15 +46,15 @@ class Scheduler(Thread):
         self.observers.append(observer)
 
     def __iter__(self):
-        """Returns an iterator that yields channel_no, seq, offset each time we are ready to
-        evaluate the next item from each channel"""
+        """Returns an iterator that yields track_no, seq, offset each time we are ready to
+        evaluate the next item from each track"""
         def f():
             if self.jit:
                 return []
             while True:
                 offset, work_item = self._eq.get()
-                channel_no, seq = work_item
-                yield channel_no, seq, offset
+                track_no, seq = work_item
+                yield track_no, seq, offset
         return f()
 
     def _get_next_event(self, seq: Union[Sequence, FiniteSequence]) -> Event:
@@ -70,7 +70,7 @@ class Scheduler(Thread):
         except (StopIteration, IndexError) as e:
             return None
 
-    def enqueue(self, channel_no: int, sequence: Sequence, offset_secs=0) -> bool:
+    def enqueue(self, track_no: int, sequence: Sequence, offset_secs=0) -> bool:
         """
         Grab the next event off the sequence and enqueue it for playback if it is in the future.
         If a noteon/cc event needs to be actioned immediately, route it directly to the observers.
@@ -79,30 +79,30 @@ class Scheduler(Thread):
         """
         event = self._get_next_event(sequence)
         if event is None:
-            logging.getLogger().info(f"Scheduler playback for channel {channel_no} has ended")
+            logging.getLogger().info(f"Scheduler playback for track {track_no} has ended")
             return False
-        logging.getLogger().info(f"Scheduler channel {channel_no} new event {event} at {offset_secs}")
+        logging.getLogger().info(f"Scheduler track {track_no} new event {event} at {offset_secs}")
         future_time = offset_secs + (event.duration * self.time_scale_factor)
         for cc, value in event.meta.get("cc", []):
             if self.time_elapsed >= offset_secs:
                 # if an event needs to happen immediately, bypass the queue
-                self._on_event(("cc", channel_no, cc, value))
+                self._on_event(("cc", track_no, cc, value))
                 continue
-            self._pq.put_nowait((offset_secs, ("cc", channel_no, cc, value)))
+            self._pq.put_nowait((offset_secs, ("cc", track_no, cc, value)))
         for pitch in event.pitches:
             volume = event.meta.get("volume", 60)
             if event.meta.get("realtime", None) != "note_off":
                 if self.time_elapsed >= offset_secs or event.meta.get("realtime", None) == "note_on":
                     # if an event needs to happen immediately, bypass the queue
-                    self._on_event(("note_on", channel_no, pitch, volume))
+                    self._on_event(("note_on", track_no, pitch, volume))
                 else:
-                    self._pq.put_nowait((offset_secs, ("note_on", channel_no, pitch, volume)))
+                    self._pq.put_nowait((offset_secs, ("note_on", track_no, pitch, volume)))
             if event.meta.get("realtime", None) != "note_on":
                 if event.meta.get("realtime", None) == "note_off":
-                    self._on_event(("note_off", channel_no, pitch))
+                    self._on_event(("note_off", track_no, pitch))
                 else:
-                    self._pq.put_nowait((future_time, ("note_off", channel_no, pitch)))
-        self._pq.put_nowait((future_time, ("eval", channel_no, sequence)))
+                    self._pq.put_nowait((future_time, ("note_off", track_no, pitch)))
+        self._pq.put_nowait((future_time, ("eval", track_no, sequence)))
         logging.getLogger().debug(f"Scheduler queued event {event} at time {offset_secs}")
         return True
 
@@ -130,10 +130,10 @@ class Scheduler(Thread):
             if latency > 0:
                 logging.getLogger().debug(f"Scheduler latency {abs(latency)}")
             if event[0] == "eval" and not self.jit:
-                # "eval" items are used to signal back to pull the next event for each channel
-                _, channel_no, seq = event
+                # "eval" items are used to signal back to pull the next event for each track
+                _, track_no, seq = event
                 # if jit==False, evaluation tasks are queued for execution on the main thread
-                self._eq.put((time_pos, (channel_no, seq)))
+                self._eq.put((time_pos, (track_no, seq)))
                 continue
             if time_pos > self.time_elapsed:
                 wait_time = (time_pos - self.time_elapsed) - latency
@@ -145,8 +145,8 @@ class Scheduler(Thread):
                 # in JIT mode, next-note-evaluation happens on the scheduler thread
                 # This is important if transformations need access to the context, but may
                 # result in glitches if the scheduler cannot keep up
-                _, channel_no, seq = event
-                self.enqueue(channel_no, seq, time_pos)
+                _, track_no, seq = event
+                self.enqueue(track_no, seq, time_pos)
                 continue
             self._on_event(event)
         self.is_running = False
@@ -157,11 +157,11 @@ class Scheduler(Thread):
         logging.getLogger().debug(f"Scheduler pushing to event observers {event}")
         for observer in self.observers:
             if event[0] == "note_on":
-                _, channel_no, pitch, velocity = event
-                observer.noteon(channel_no, pitch, velocity)
+                _, track_no, pitch, velocity = event
+                observer.noteon(track_no, pitch, velocity)
             elif event[0] == "note_off":
-                _, channel_no, pitch = event
-                observer.noteoff(channel_no, pitch)
+                _, track_no, pitch = event
+                observer.noteoff(track_no, pitch)
             elif event[0] == "cc":
-                _, channel_no, cc, value = event
-                observer.control_change(channel_no, cc, value)
+                _, track_no, cc, value = event
+                observer.control_change(track_no, cc, value)

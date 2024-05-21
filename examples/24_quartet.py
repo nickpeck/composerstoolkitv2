@@ -128,9 +128,9 @@ soprano = Sequence.from_generator(random_slice(
 # note need to use the JIT scheduler to make use of the context data, otherwise
 # events are evaluated ahead of time
 mysequencer = Context.get_context().new_sequencer(bpm=100, jit=True)\
-    .add_sequence(tenor, channel_no=3)\
-    .add_sequence(bass, offset=5, channel_no=4)\
-    .add_sequence(alto, offset=10, channel_no=2)\
-    .add_sequence(soprano, offset=15, channel_no=1)
+    .add_sequence(tenor, track_no=3)\
+    .add_sequence(bass, offset=5, track_no=4)\
+    .add_sequence(alto, offset=10, track_no=2)\
+    .add_sequence(soprano, offset=15, track_no=1)
 
 mysequencer.playback(to_midi=True)

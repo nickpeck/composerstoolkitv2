@@ -70,11 +70,11 @@ ostinato = Sequence.from_generator(random_slice(
 )
 
 mysequencer = Context.get_context().new_sequencer(bpm=80, debug=True)\
-    .add_sequence(drone_c, channel_no=1)\
-    .add_sequence(drone_g, offset=30, channel_no=2)\
-    .add_sequence(chords, offset=5, channel_no=2)\
-    .add_sequence(spectral_melody, offset=15, channel_no=3)\
-    .add_sequence(ostinato, offset=80, channel_no=4)\
+    .add_sequence(drone_c, track_no=1)\
+    .add_sequence(drone_g, offset=30, track_no=2)\
+    .add_sequence(chords, offset=5, track_no=2)\
+    .add_sequence(spectral_melody, offset=15, track_no=3)\
+    .add_sequence(ostinato, offset=80, track_no=4)\
     .add_transformer(gated(
         modal_quantize(scales.E_major),
         cyclic_time_gate(300,100,200)))\

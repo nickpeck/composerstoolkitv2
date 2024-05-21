@@ -34,6 +34,6 @@ live_seq = Sequence.from_generator(midi_realtime_input(), meta={"realtime": True
     .transform(loop_capture(toggle=toggle_capture_mode, debug=True))
 
 mysequencer = Context.get_context().new_sequencer(bpm=live_seq.meta["bpm"]) \
-    .add_sequence(live_seq, channel_no=1)
+    .add_sequence(live_seq, track_no=1)
 
 mysequencer.playback()

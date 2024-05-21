@@ -26,6 +26,6 @@ line = Sequence.from_generator(random_noise()).transform(fit_to_range(
 ))
 
 mysequencer = Context.get_context().new_sequencer(bpm=300, debug=True) \
-    .add_sequence(line, channel_no=1)
+    .add_sequence(line, track_no=1)
 
 mysequencer.playback()

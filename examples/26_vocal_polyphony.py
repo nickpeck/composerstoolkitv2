@@ -102,10 +102,10 @@ soprano = Sequence.from_generator(random_slice(
 )
 
 mysequencer = Context.get_context().new_sequencer(bpm=35, playback_rate=1, jit=True, debug=True)\
-    .add_sequence(tenor, channel_no=3)\
-    .add_sequence(alto, channel_no=2)\
-    .add_sequence(soprano, channel_no=1)\
-    .add_sequence(bass, channel_no=4)\
+    .add_sequence(tenor, track_no=3)\
+    .add_sequence(alto, track_no=2)\
+    .add_sequence(soprano, track_no=1)\
+    .add_sequence(bass, track_no=4)\
     .add_transformer(
         gated( # cycle ends on a major or min triad
             condition = cyclic_time_gate(20, 16, 18),

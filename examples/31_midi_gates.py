@@ -47,7 +47,7 @@ ostinato = Sequence(events=[
 )
     
 mysequencer = Context.get_context().new_sequencer(bpm=80, debug=False)\
-    .add_sequence(ostinato, channel_no=1)\
+    .add_sequence(ostinato, track_no=1)\
     .add_transformer(gated(
         modal_quantize(scales.E_major),
         my_gate1))\

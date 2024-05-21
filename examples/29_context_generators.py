@@ -65,9 +65,9 @@ basses = Sequence.from_generator(
 )
 
 mysequencer = Context.get_context().new_sequencer(bpm=220, playback_rate=1, jit=True)\
-    .add_sequence(glock, channel_no=1)\
-    .add_sequence(oboe, channel_no=2)\
-    .add_sequence(strings, channel_no=3)\
-    .add_sequence(basses, channel_no=4)
+    .add_sequence(glock, track_no=1)\
+    .add_sequence(oboe, track_no=2)\
+    .add_sequence(strings, track_no=3)\
+    .add_sequence(basses, track_no=4)
 
 mysequencer.playback()

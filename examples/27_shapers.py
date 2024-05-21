@@ -40,7 +40,7 @@ oboe = Sequence.from_generator(random_slice(
 
 
 mysequencer = Context.get_context().new_sequencer(bpm=120, playback_rate=1, jit=True)\
-    .add_sequence(flute, channel_no=1)\
-    .add_sequence(oboe, channel_no=2)
+    .add_sequence(flute, track_no=1)\
+    .add_sequence(oboe, track_no=2)
 
 mysequencer.playback()

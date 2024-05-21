@@ -93,5 +93,5 @@ solver.add_constraint(constraint_all_different_pitches())
 for solution in solver:
     print(solution)
     solution.show_notation().playback()
-    for channel_no, offset, seq in solution.sequences:
+    for track_no, offset, seq in solution.sequences:
         print(list(seq.events))
