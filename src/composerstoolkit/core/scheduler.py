@@ -40,7 +40,7 @@ class Scheduler(Thread):
 
     @property
     def has_events(self):
-        return self._pq.qsize() > 0
+        return self._pq.qsize() > 0 and self.is_running
 
     def subscribe(self, observer: Playback):
         self.observers.append(observer)
@@ -107,7 +107,11 @@ class Scheduler(Thread):
         return True
 
     def run(self):
-        self._main_event_loop()
+        try:
+            self._main_event_loop()
+        except:
+            traceback.print_exc()
+            self.is_running = False
 
     def _main_event_loop(self):
         """Pull chronological items off the playback queue, and wait until their

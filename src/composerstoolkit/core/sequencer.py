@@ -171,8 +171,6 @@ class Sequencer:
                 logging.getLogger().info(f"Keyboard interupt received")
                 self.scheduler.is_running = False
                 self.scheduler.join(0.1)
-        #if self.options["dump_midi"]:
-        #    mc._write_midi()
 
     def _do_playback_loop(self):
         n_active_channels = len(self.sequences)
