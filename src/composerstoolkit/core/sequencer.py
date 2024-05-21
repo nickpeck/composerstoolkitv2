@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import Optional
 import logging
@@ -15,6 +16,7 @@ from . sequence import Sequence, FiniteSequence, Event
 from . scheduler import Scheduler
 from . synth import Playback, DummyPlayback
 from . pitch_tracker import PitchTracker
+from . midicapture import MidiCapture
 from .. resources.pitches import PitchFactory
 
 
@@ -155,13 +157,22 @@ class Sequencer:
         return self
 
     def playback(self, to_midi=False):
-        with self.options["synth"], self.active_pitches:
+        ctx_managers = [self.options["synth"], self.active_pitches]
+        if self.options["dump_midi"]:
+            mc = MidiCapture(bpm=self.options["bpm"], playback_rate=self.options["playback_rate"])
+            ctx_managers.append(mc)
+            self.scheduler.subscribe(mc)
+        with ExitStack() as stack:
+            for mgr in ctx_managers:
+                stack.enter_context(mgr)
             try:
                 self._do_playback_loop()
             except KeyboardInterrupt:
                 logging.getLogger().info(f"Keyboard interupt received")
                 self.scheduler.is_running = False
                 self.scheduler.join(0.1)
+        #if self.options["dump_midi"]:
+        #    mc._write_midi()
 
     def _do_playback_loop(self):
         n_active_channels = len(self.sequences)
