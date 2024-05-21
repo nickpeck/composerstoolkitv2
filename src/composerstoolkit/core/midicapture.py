@@ -44,13 +44,16 @@ class MidiCapture(Playback):
     def _write_midi(self):
         filename = str(int(time())) + ".midi"
         logging.getLogger().info(f"writing midi data to file")
+        channels = sorted(list(self.channels))
         midifile = midiutil.MIDIFile(
-            len(self.channels),
+            channels[-1],
             deinterleave=False)  # https://github.com/MarkCWirt/MIDIUtil/issues/24
         midifile.addTempo(0, 0, self.bpm)
-        channels = sorted(list(self.channels))
+        i = 1
         for channel_no in channels:
-            midifile.addTrackName(channel_no - 1, 0, "Channel {}".format(channel_no))
+            while i <= channel_no:
+                midifile.addTrackName(i - 1, 0, "Channel {}".format(i))
+                i = i + 1
         for track, channel, pitch, offset, duration, volume in self.note_events:
             midifile.addNote(track=track, channel=channel, pitch=pitch, time=offset, duration=duration, volume=volume)
         for track, channel, offset, controller_number, parameter in self.cc_events:
