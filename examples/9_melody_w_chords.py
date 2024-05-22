@@ -10,7 +10,7 @@ chords = Sequence.from_generator(
         scale=scales.C_major,
         start=Event(pitches=[60,64,67,71], duration=WHOLE_NOTE),
         cycle_of=-4,
-        max_len=16)).bake()
+        max_len=16)).bake(n_events=7)
 
 @Constraint
 def constraint_use_chord_tone_on_first_beat(
@@ -44,7 +44,7 @@ while True:
     except DeadEndReached:
         pass
 
-melody = Sequence(melody.events).transform(tie_repeated()).bake()
+melody = Sequence(melody.events).transform(tie_repeated()).bake(n_events=16)
 
 Context.get_context().new_sequencer(bpm=60, playback_rate=1)\
     .add_sequence(melody[:16])\

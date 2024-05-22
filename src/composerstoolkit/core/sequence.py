@@ -131,15 +131,22 @@ class Sequence:
             events = transformer(self))
         return new_seq
 
-    def bake(self, n_beats=None) -> FiniteSequence:
-        """Convert a sequence into a FiniteSequence
+    def bake(self, n_beats=None, n_events=None) -> FiniteSequence:
+        """Convert a sequence into a FiniteSequence, up to a max length n_beats or n_events
         """
-        if n_beats is None:
-            return FiniteSequence(list(self.events))
+        if n_events is None and n_beats is None:
+            raise Exception("FiniteSequence.bake() expects args n_beats or n_events")
         _events = []
-        for i in range(n_beats):
-            _events.append(next(self.events))
-        return FiniteSequence(list(self.events))
+        while True:
+            if n_events is not None and len(_events) == n_events:
+                break
+            if n_beats is not None and sum([e.duration for e in _events]) >= n_beats:
+                break
+            try:
+                _events.append(next(self.events))
+            except StopIteration:
+                break
+        return FiniteSequence(_events)
 
     def tap(self) -> Sequence:
         """Returns a copy of the sequence.

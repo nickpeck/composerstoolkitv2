@@ -7,10 +7,12 @@ def pulse_pattern():
 
 t_voice_pcs = [0,4,9] # minor triad
 
+duration_beats = 100
+
 sop_melody = list(reversed([i + (12 * 7) for i in scales.MAJ_SCALE_PITCH_CLASSES]))
 
 soprano = Sequence(events=[Event([p], 0) for p in sop_melody]).transform(
-    loop(9)
+    loop()
 ).transform(
     map_to_pulses(Sequence.from_generator(pulses(pulse_pattern())))
 ).transform(
@@ -20,7 +22,7 @@ soprano = Sequence(events=[Event([p], 0) for p in sop_melody]).transform(
 alto_melody = list(reversed([i + (12 * 5) for i in scales.MAJ_SCALE_PITCH_CLASSES]))
 
 alto = Sequence(events=[Event([p], 0) for p in alto_melody]).transform(
-    loop(6)
+    loop()
 ).transform(
     map_to_pulses(Sequence.from_generator(pulses(pulse_pattern())))
 ).transform(
@@ -32,7 +34,7 @@ alto = Sequence(events=[Event([p], 0) for p in alto_melody]).transform(
 tenor_melody = list(reversed([i + (12 * 3) for i in scales.MAJ_SCALE_PITCH_CLASSES]))
 
 tenor = Sequence(events=[Event([p], 0) for p in tenor_melody]).transform(
-    loop(3)
+    loop()
 ).transform(
     map_to_pulses(Sequence.from_generator(pulses(pulse_pattern())))
 ).transform(
@@ -42,8 +44,8 @@ tenor = Sequence(events=[Event([p], 0) for p in tenor_melody]).transform(
 )
 
 mysequencer = Context.get_context().new_sequencer(bpm=140, playback_rate=1, debug=True) \
-    .add_sequence(tenor.bake(), track_no=3, offset=9) \
-    .add_sequence(alto.bake(), track_no=2, offset=3) \
-    .add_sequence(soprano.bake(), track_no=1)
+    .add_sequence(tenor.bake(n_beats=duration_beats), track_no=3, offset=9) \
+    .add_sequence(alto.bake(n_beats=duration_beats), track_no=2, offset=3) \
+    .add_sequence(soprano.bake(n_beats=duration_beats), track_no=1)
 
 mysequencer.save_as_midi_file("tintinnabulation.midi")

@@ -300,7 +300,7 @@ class SequenceTests(unittest.TestCase):
             Event(pitches=[60], duration=1),
             Event(pitches=[62], duration=2),
             Event(pitches=[64], duration=1),
-            Event(pitches=[60], duration=1)]).bake()
+            Event(pitches=[60], duration=1)]).bake(n_events=5)
 
         assert isinstance(seq.events, list)
 

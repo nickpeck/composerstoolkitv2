@@ -43,7 +43,7 @@ voice2 = backtracking_markov_solver(
     n_events=12,
 )
 
-voice2 = Sequence(voice2.events).transform(tie_repeated()).bake()
+voice2 = Sequence(voice2.events).transform(tie_repeated()).bake(n_events=12)
 
 voice3 = backtracking_markov_solver(
         Event(pitches=[59], duration=QUARTER_NOTE),
@@ -61,7 +61,7 @@ voice3 = backtracking_markov_solver(
     n_events=12,
 )
 
-voice3 = Sequence(voice3.events).transform(tie_repeated()).bake()
+voice3 = Sequence(voice3.events).transform(tie_repeated()).bake(n_events=12)
 
 voice4 = backtracking_markov_solver(
         Event(pitches=[55], duration=QUARTER_NOTE),
@@ -80,7 +80,7 @@ voice4 = backtracking_markov_solver(
     n_events=12,
 )
 
-voice4 = Sequence(voice4.events).transform(tie_repeated()).bake()
+voice4 = Sequence(voice4.events).transform(tie_repeated()).bake(n_events=12)
 
 Context.get_context().new_sequencer(bpm=60, playback_rate=1)\
     .add_sequence(voice1)\

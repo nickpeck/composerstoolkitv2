@@ -22,7 +22,7 @@ voice1 = backtracking_solver(
     n_events=16,
 )
 
-voice1 = Sequence(voice1.events).transform(tie_repeated()).bake()
+voice1 = Sequence(voice1.events).transform(tie_repeated()).bake(n_events=16)
 
 voice2 = backtracking_solver(
         Event(pitches=[52], duration=QUARTER_NOTE),
@@ -45,7 +45,7 @@ voice2 = backtracking_solver(
     n_events=16,
 )
 
-voice2 = Sequence(voice2.events).transform(tie_repeated()).bake()
+voice2 = Sequence(voice2.events).transform(tie_repeated()).bake(n_events=16)
 
 Context.get_context().new_sequencer(bpm=60, playback_rate=1)\
     .add_sequence(voice1)\

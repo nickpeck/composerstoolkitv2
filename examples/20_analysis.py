@@ -58,7 +58,7 @@ found_chords = chordal_analysis(sequence,chord_lexicon=chord_lexicon,window_size
 found_chords = [Event(list(pitches), 2) for pitches in found_chords]
 found_chords = Sequence(found_chords).transform(
     transpose(12 * 5)
-).bake()
+).bake(n_events=100)
 
 common_chords = common_subsequences([e.pitches for e in found_chords.events])
 for count, progression in common_chords:

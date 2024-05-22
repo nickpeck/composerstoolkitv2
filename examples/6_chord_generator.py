@@ -5,7 +5,7 @@ of 3 different integers.
 from composerstoolkit import *
 
 artificial_scale = Sequence.from_generator(
-    resultant_pitches(counters=[3,4,9], start_at=40)).bake()
+    resultant_pitches(counters=[3,4,9], start_at=40)).bake(n_events=100)
 
 chords = Sequence.from_generator(artificial_scale)\
     .transform(loop())\
