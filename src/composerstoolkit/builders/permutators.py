@@ -61,7 +61,7 @@ class Permutations(Generic[T]):
             for item in _list:
                 yield item
 
-class SerialMatrix(Generic[T]):
+class PermutationMatrix(Generic[T]):
     """
     Generate a Stockhausen-like array of permutations.
     for each item in the input list, return a new order, which is shifting of the

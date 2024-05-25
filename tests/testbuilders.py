@@ -57,15 +57,48 @@ class PermutationsTests(unittest.TestCase):
                  return_last_gen_only=True)
         assert list(perms) == [(1, 1, 1, 1, 1, 1)]
 
-class SerialMatrixTests(unittest.TestCase):
+class PermutationMatrixTests(unittest.TestCase):
     def test_generate_permutations_is_iterable(self):
-        matrix = SerialMatrix([2,1,3])
+        matrix = PermutationMatrix([2,1,3])
         permutations = [p for p in matrix]
         assert permutations == [[2,1,3], [1,3,2], [3,2,1]]
 
     def test_can_return_numpy_array(self):
-        matrix = SerialMatrix([2,1,3]).as_matrix()
+        matrix = PermutationMatrix([2,1,3]).as_matrix()
         assert np.array_equal(matrix, np.array([[2,1,3], [1,3,2], [3,2,1]]))
+
+class SerialMatrixTests(unittest.TestCase):
+    def test_can_generate_p0(self):
+        s = SerialMatrix(list(range(0, 12)))
+        assert list(s.p0) == [Event([i]) for i in range(0,12)]
+
+    def test_input_is_transposed_to_p0(self):
+        s = SerialMatrix([1,2,3])
+        assert list(s.p0) == [Event([0]), Event([1]), Event([2])]
+
+    def test_can_generate_p_forms(self):
+        s = SerialMatrix(list(range(0, 12)))
+        for i in range(0, 12):
+            form = getattr(s, f"p{i}")
+
+    def test_can_generate_i_forms(self):
+        s = SerialMatrix(list(range(0, 12)))
+        for i in range(0, 12):
+            form = getattr(s, f"i{i}")
+
+    def test_can_generate_r_forms(self):
+        s = SerialMatrix(list(range(0, 12)))
+        for i in range(0, 12):
+            form = getattr(s, f"r{i}")
+
+    def test_can_generate_ri_forms(self):
+        s = SerialMatrix(list(range(0, 12)))
+        for i in range(0, 12):
+            form = getattr(s, f"ri{i}")
+
+    def test_can_return_numpy_array(self):
+        matrix = SerialMatrix([1,2,3]).as_matrix()
+        assert np.array_equal(matrix, np.array([[0,1,2], [11,0,1], [10,11,0]]))
 
 class TransformerTests(unittest.TestCase):
     def setUp(self):

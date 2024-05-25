@@ -5,7 +5,9 @@ import itertools
 import math
 from typing import Iterator, Optional, Set, List, Dict, Callable, Tuple
 import random
+import re
 
+import numpy as np
 import more_itertools
 
 from ..core import Event, Sequence, FiniteSequence
@@ -429,3 +431,39 @@ def probability_matrix(choices=List[Tuple[int, float]], window=1, monody=False):
                 choice_pitch = random.choices([[pitch], []], [probability, 1.0-probability])[0]
                 resultant_pitches = resultant_pitches + choice_pitch
             yield Event(resultant_pitches, duration=window)
+
+class SerialMatrix:
+    def __init__(self, pc_row: List[int]):
+        t = (pc_row[0] % 12) - 0
+        self._p0 = [(p % 12) - t for p in pc_row]
+        self.schema = re.compile(
+            "^([pri]*)([0-9]*)?$",
+            flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+
+    def __getattr__(self, name):
+        if name == "p0":
+            return (Event([p]) for p in self._p0)
+        match = self.schema.match(name)
+        if match is None:
+            raise Exception(f"Unrecognised row form: {name}")
+        groups = match.groups()
+        form,t = groups
+        if form == "p":
+            return (Event([(p + int(t)) % 12]) for p in self._p0)
+        elif form == "r":
+            return (Event([(p + int(t)) % 12]) for p in reversed(self._p0))
+        elif form == "i":
+            i0 = [12-p for p in self._p0]
+            return (Event([(p + int(t)) % 12]) for p in i0)
+        elif form == "ri":
+            i0 = [12-p for p in self._p0]
+            return (Event([(p + int(t)) % 12]) for p in reversed(i0))
+        else:
+            raise Exception(f"Unrecognised row form: {name}")
+
+    def as_matrix(self) -> np.array:
+        transpositions = []
+        for i in self.i0:
+            events = getattr(self, f"p{i.pitches[0]}")
+            transpositions.append([e.pitches[0] for e in events])
+        return np.array(transpositions)
