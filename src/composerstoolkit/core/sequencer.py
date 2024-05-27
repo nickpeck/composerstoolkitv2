@@ -79,6 +79,7 @@ class Sequencer:
         dump_midi - (default False) used to collect and dump midi to a timestamped file when the process is terminated.
             This is used for recording infinate duration real-time generative music
             (where save_as_midi_file() cannot be used), or just to store samples for future use.
+            Compared to save_as_midi_file, notes may not be perfectly in sync if the sequencer has latency.
         """
         super().__init__()
 
