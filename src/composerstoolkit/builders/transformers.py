@@ -686,12 +686,16 @@ def enforce_shared_pitch_class_set(seq: Sequence,
     aggregate of all pitches in the context is a subset
     of the given pitch class (or vice versa).
     max_events is the max number of events to pass before emitting a pause.
+    if there are no other voices sounding, then pass the event
     """
     pitch_class_set = pitchset.to_prime_form(pitch_class_set)
     n_events = 0
     for event in seq.events:
         pitches = event.pitches
         sequencer = get_context().sequencer
+        if sequencer.active_pitches == []:
+            yield event
+            continue
         aggregate = set([p % 12 for p in pitches]).union(set([p % 12 for p, _c in sequencer.active_pitches]))
         aggregate = pitchset.to_prime_form(aggregate)
         if aggregate.issubset(pitch_class_set):
