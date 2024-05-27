@@ -135,6 +135,12 @@ class Scheduler(Thread):
                 # if jit==False, evaluation tasks are queued for execution on the main thread
                 self._eq.put((time_pos, (track_no, seq)))
                 continue
+            if time_pos > self.time_elapsed:
+                wait_time = (time_pos - self.time_elapsed) - latency
+                logging.getLogger().debug(f"Scheduler event loop sleeping for {wait_time} secs")
+                if wait_time > 0:
+                    sleep(wait_time) # block until event is ready to be actioned
+                self.time_elapsed = time_pos
             if event[0] == "eval" and self.jit:
                 # in JIT mode, next-note-evaluation happens on the scheduler thread
                 # This is important if transformations need access to the context, but may
@@ -142,12 +148,6 @@ class Scheduler(Thread):
                 _, track_no, seq = event
                 self.enqueue(track_no, seq, time_pos)
                 continue
-            if time_pos > self.time_elapsed:
-                wait_time = (time_pos - self.time_elapsed) - latency
-                logging.getLogger().debug(f"Scheduler event loop sleeping for {wait_time} secs")
-                if wait_time > 0:
-                    sleep(wait_time) # block until event is ready to be actioned
-                self.time_elapsed = time_pos
             self._on_event(event)
         self.is_running = False
         logging.getLogger().info("Scheduler exited main event loop.")
