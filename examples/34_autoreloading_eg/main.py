@@ -15,6 +15,6 @@ from track1 import track1
 init_reloader()
 
 mysequencer = Sequencer(bpm=120, debug=True)\
-    .add_sequence(track1)
+    .add_sequence(track1, track_no=10)
     
 mysequencer.playback()

@@ -128,7 +128,7 @@ class Scheduler(Thread):
             logging.getLogger().debug(f"Main event loop, at time {self.time_elapsed}")
             latency = (cur_time-self.playback_started_ts) - self.time_elapsed
             if latency > 0:
-                logging.getLogger().info(f"Scheduler latency {abs(latency)}")
+                logging.getLogger().debug(f"Scheduler latency {abs(latency)}")
             if event[0] == "eval" and not self.jit:
                 # "eval" items are used to signal back to pull the next event for each track
                 _, track_no, seq = event

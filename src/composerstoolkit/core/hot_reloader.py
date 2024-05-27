@@ -2,6 +2,7 @@ from importlib import reload
 import sys
 import os
 import logging
+import traceback
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -20,7 +21,11 @@ class MyHandler(FileSystemEventHandler):
                 module = sys.modules[modulename]
             except KeyError:
                 return
-            reload(module)
+            try:
+                reload(module)
+            except:
+                traceback.print_exc()
+                return
             imported = getattr(module, modulename)
             import __main__
             to_replace = getattr(__main__, modulename)
