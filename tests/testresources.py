@@ -136,6 +136,23 @@ class PitchClassSetTests(unittest.TestCase):
         assert list(pitchset.complete_set(pitches={0,5}, target_pcs={0, 1, 3, 5, 7, 8, 10}))\
             == [{1, 3, 7, 8, 10}, {1, 3, 6, 8, 10}, {2, 4, 7, 9, 11}]
 
+class ForteSetTests(unittest.TestCase):
+    def test_can_lookup_by_name(self):
+        f_set = pitchset.ForteSet.as_dict()["4-z15"]
+        assert f_set.prime == (0,1,4,6)
+
+    def test_can_lookup_by_prime(self):
+        f_set = pitchset.ForteSet.as_dict()[(0,1,4,6)]
+        assert f_set.name == "4-z15"
+
+    def test_can_lookup_by_vector(self):
+        f_sets = pitchset.ForteSet.as_dict()[(1, 1, 1, 1, 1, 1)]
+        assert len(f_sets) == 2
+
+    def test_has_cardinality(self):
+        f_set = pitchset.ForteSet.as_dict()["4-z15"]
+        assert f_set.cardinality == 4
+
 
 if __name__ == "__main__":
     unittest.main()

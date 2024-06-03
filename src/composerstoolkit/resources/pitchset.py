@@ -99,20 +99,20 @@ class ForteSet:
         name, prime or interval vector.
         (Interval vector may point to one or more set instances).
         """
-        if Forte.__data__ is None:
-            Forte.__data__ = {}
+        if ForteSet.__data__ is None:
+            ForteSet.__data__ = {}
             path = os.path.dirname(__file__)
             with open(os.path.join(path, "forte_sets.csv")) as csvfile:
                 reader = csv.reader(csvfile, delimiter=",", quotechar='"')
                 for name, prime, vector in reader:
                     prime = tuple(int(i) for i in prime.split(","))
                     vector = tuple(int(i) for i in vector.split(","))
-                    f_set = Forte(name, prime, vector)
-                    Forte.__data__[name] = f_set
-                    Forte.__data__[prime] = f_set
+                    f_set = ForteSet(name, prime, vector)
+                    ForteSet.__data__[name] = f_set
+                    ForteSet.__data__[prime] = f_set
                     # a few vectors are shared, so this is a list
-                    if vector not in Forte.__data__:
-                        Forte.__data__[vector] = [f_set]
+                    if vector not in ForteSet.__data__:
+                        ForteSet.__data__[vector] = [f_set]
                     else:
-                        Forte.__data__[vector].append(f_set)
-        return Forte.__data__
+                        ForteSet.__data__[vector].append(f_set)
+        return ForteSet.__data__
