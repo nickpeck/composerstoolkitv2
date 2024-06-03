@@ -3,9 +3,13 @@ Some helpers for dealing with pitch class sets
 Based upon discussion here https://www.thecodingforums.com/threads/algorithm-for-generating-pitch-class-sets-in-prime-form.742728/
 with ammendments for considering inversions as well as improved width calculation.
 """
+import csv
+from dataclasses import dataclass
 from functools import reduce
 from itertools import groupby
+import os
 from typing import Set, List, Union
+from ..core.sequence import Event
 
 def to_interval_vectors(pcs: Union[Set[int],List[int]]) -> List[int]:
     pcs = list(pcs)
@@ -69,3 +73,46 @@ def complete_set(pitches: Set, target_pcs=set(range(0,11))):
         if aggregate == target_pcs and transposed_compliment not in visited:
             visited.append(transposed_compliment)
             yield transposed_compliment
+
+@dataclass
+class ForteSet:
+    name: str
+    prime: tuple
+    vector: tuple
+    cardinality: int
+    """convenience class for looking up Forte sets"""
+    __data__ = None
+    def __init__(self, name, prime, vector):
+        self.name = name
+        self.prime = prime
+        self.vector = vector
+        self.cardinality = len(prime)
+
+    def as_event(self, transposition=0):
+        pitches = [p + transposition for p in self.prime]
+        return Event(pitches=pitches)
+
+    @staticmethod
+    def as_dict():
+        """
+        Return the list of forte sets, indexed as a multi-key dictionary to enable lookup by
+        name, prime or interval vector.
+        (Interval vector may point to one or more set instances).
+        """
+        if Forte.__data__ is None:
+            Forte.__data__ = {}
+            path = os.path.dirname(__file__)
+            with open(os.path.join(path, "forte_sets.csv")) as csvfile:
+                reader = csv.reader(csvfile, delimiter=",", quotechar='"')
+                for name, prime, vector in reader:
+                    prime = tuple(int(i) for i in prime.split(","))
+                    vector = tuple(int(i) for i in vector.split(","))
+                    f_set = Forte(name, prime, vector)
+                    Forte.__data__[name] = f_set
+                    Forte.__data__[prime] = f_set
+                    # a few vectors are shared, so this is a list
+                    if vector not in Forte.__data__:
+                        Forte.__data__[vector] = [f_set]
+                    else:
+                        Forte.__data__[vector].append(f_set)
+        return Forte.__data__
