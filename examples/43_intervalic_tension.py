@@ -44,5 +44,5 @@ def compare_intervalic_tension(chord1, chord2):
 chords = sorted(chords, key=cmp_to_key(compare_intervalic_tension))
 
 pprint(chords, indent=4)
-s = FiniteSequence(events=[c.as_event(transposition=70).extend(duration=1) for c in chords])
+s = FiniteSequence(events=[c.as_event(transposition=60).extend(duration=1) for c in chords])
 Sequencer(bpm=60, dump_midi=True).add_sequence(s).show_notation()

@@ -54,10 +54,12 @@ class PitchFactory:
     def _midi_no_to_name(self, i: int):
         octave = int(i / 12) - 1
         if self.opts["output"] == "abjad":
-            if i >= 60:
-                octave = "'" * (round((i-60) /  12))
+            if i >= 60 and i <= 71:
+                octave = "'"
+            elif i > 71:
+                octave = "'" * (math.ceil((i-59) /  12))
             else:
-                octave = "," * (round((60-i) /  12))
+                octave = "," * (math.floor((59-i) /  12))
         remainder = i % 12
         _notes = {pitch: name for name, pitch in self.__class__.notes.items()}
         accidental = ""
