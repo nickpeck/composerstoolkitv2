@@ -33,7 +33,7 @@ class TestPitchFactory(unittest.TestCase):
         assert pitch(69) == "a'"
         assert pitch(70) == "as'"
         assert pitch(127) == "g''''''"
-        assert pitch(0) == "c,,,,,"
+        assert pitch(0) == "c,,,,"
 
 ChordBuilder = chords.ChordBuilder
 
