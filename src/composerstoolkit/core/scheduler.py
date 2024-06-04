@@ -62,7 +62,7 @@ class Scheduler(Thread):
             if isinstance(seq, Sequence):
                 event = next(seq.events)
             elif isinstance(seq, FiniteSequence):
-                event = seq.events.pop()
+                event = seq.events.pop(0)
             else:
                 logging.getLogger().error(f"{seq} is not a Sequence or FiniteSequence")
                 return None
