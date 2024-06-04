@@ -299,5 +299,32 @@ class TestGenerators(unittest.TestCase):
         assert next(my_variations.events).pitches == [62]
         assert next(my_variations.events).pitches == [62]
 
+class TestChordWindow(unittest.TestCase):
+    def test_chord_window(self):
+        row = [1,2,3,4,5]
+        g = chord_window(row, window_size=4)
+        assert list(g) == [
+            Event(pitches=[1,2,3,4]),
+            Event(pitches=[2,3,4,5]),
+            Event(pitches=[3,4,5,1]),
+            Event(pitches=[4,5,1,2]),
+            Event(pitches=[5,1,2,3])
+        ]
+
+    def test_chord_window_non_overlap(self):
+        row = [1,2,3,4,5]
+        g = chord_window(row, window_size=4, overlap=False)
+        assert list(g) == [
+            Event(pitches=[1,2,3,4]),
+            Event(pitches=[5,1,2,3])
+        ]
+
+    def test_exception_raised_if_window_larger_than_row(self):
+        row = [1,2,3,4,5]
+        next(chord_window(row, window_size=5))
+        with self.assertRaises(Exception) as e:
+            next(chord_window(row, window_size=6))
+
+
 if __name__ == "__main__":
     unittest.main()

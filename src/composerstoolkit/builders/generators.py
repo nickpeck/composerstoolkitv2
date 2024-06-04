@@ -467,3 +467,17 @@ class SerialMatrix:
             events = getattr(self, f"p{i.pitches[0]}")
             transpositions.append([e.pitches[0] for e in events])
         return np.array(transpositions)
+
+def chord_window(row: List[int], window_size: int = 3, overlap=True):
+    """
+    Useful technique to derive a series of chords from a linear pitch row.
+    Use a shifting (cyclic) window to return overlapping
+    """
+    if window_size > len(row):
+        raise Exception("chord_window - the window_size cannot be bigger than the row length")
+    for i in range(0, len(row), 1 if overlap else window_size):
+        if i <= len(row) - window_size:
+            pitches = row[i : i + window_size]
+        else:
+            pitches = row[i : i + window_size] + row[0: window_size-abs(i-len(row))]
+        yield Event(pitches=pitches)
