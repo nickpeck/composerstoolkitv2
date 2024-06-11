@@ -170,5 +170,47 @@ class ForteSetTests(unittest.TestCase):
             assert pitchset.to_prime_form(i.prime) == set(i.prime)
 
 
+class TonnezTests(unittest.TestCase):
+
+    def test_p_transformation(self):
+        t = tonnez.Tonnez()
+        assert t.p.pitch_classes == [0,3,7] # Cminor
+
+    def test_r_transformation(self):
+        t = tonnez.Tonnez()
+        assert t.r.pitch_classes == [9,0,4] # Aminor
+
+    def test_l_transformation(self):
+        t = tonnez.Tonnez()
+        assert t.l.pitch_classes == [4,7,11] # Eminor
+
+    def test_pl_transformation(self):
+        t = tonnez.Tonnez()
+        assert t.pl.pitch_classes == [8,0,3] # Ab maj
+
+    def test_pr_transformation(self):
+        t = tonnez.Tonnez()
+        assert t.pr.pitch_classes == [3,7,10] # Eb maj
+
+    def test_lp_transformation(self):
+        t = tonnez.Tonnez()
+        assert t.lp.pitch_classes == [4,8,11] # E maj
+
+    def test_rp_transformation(self):
+        t = tonnez.Tonnez()
+        assert t.rp.pitch_classes == [9,1,4] # A maj
+
+    def test_child_nodes(self):
+        t = tonnez.Tonnez()
+        children = t.child_nodes()
+        assert t.p in children
+        assert t.r in children
+        assert t.l in children
+        assert t.pl in children
+        assert t.pr in children
+        assert t.lp in children
+        assert t.rp in children
+
+
 if __name__ == "__main__":
     unittest.main()
