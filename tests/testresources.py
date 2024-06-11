@@ -153,6 +153,22 @@ class ForteSetTests(unittest.TestCase):
         f_set = pitchset.ForteSet.as_dict()["4-z15"]
         assert f_set.cardinality == 4
 
+    # can now use the forte list to cross-check our helper functions:
+    def test_to_interval_vectors(self):
+        all_sets = pitchset.ForteSet.as_dict()
+        for _,i in all_sets.items():
+            if isinstance(i, list):
+                continue
+            assert pitchset.to_interval_vectors(i.prime) == list(i.vector)
+
+    def test_to_prime_form(self):
+        all_sets = pitchset.ForteSet.as_dict()
+        for _,i in all_sets.items():
+            if isinstance(i, list):
+                continue
+            # each of these should be identical
+            assert pitchset.to_prime_form(i.prime) == set(i.prime)
+
 
 if __name__ == "__main__":
     unittest.main()

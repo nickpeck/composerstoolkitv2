@@ -4,32 +4,70 @@ Based upon discussion here https://www.thecodingforums.com/threads/algorithm-for
 with ammendments for considering inversions as well as improved width calculation.
 """
 import csv
+import itertools
 from dataclasses import dataclass
 from functools import reduce
 from itertools import groupby
 import os
 from typing import Set, List, Union
+
+import more_itertools
+
 from ..core.sequence import Event
 
 def to_interval_vectors(pcs: Union[Set[int],List[int]]) -> List[int]:
+    """Get the Forte interval vectors (ie count of each interval class)
+    across the whole set. Returns a list of length 6
+    """
+    pcs = list(pcs)
+    vectors = [0,0,0,0,0,0]
+    if len(pcs) == 0:
+        return vectors
+    for i1 in range(len(pcs)):
+        for i2 in range(len(pcs)):
+            if i2 <= i1:
+                continue
+            interval = abs(pcs[i2] - pcs[i1])
+            if interval > 6:
+                interval = abs(interval - 12)
+            vectors[interval-1] = vectors[interval-1] + 1
+    return vectors
+
+def get_linear_vector(pcs: Union[Set[int],List[int]]) -> List[int]:
+    """
+    Get the interval vector reading from L to R across the ordered pcs
+    """
     pcs = list(pcs)
     if len(pcs) == 0:
-        return []
+        return vectors
     return [pcs[i + 1] - pcs[i] for i in range(len(pcs) - 1)] + [12 + min(pcs) - pcs[-1]]
-    
+
 def get_compact_form(rotations: List[List[int]]) -> List[int]:
     # find the rotations with the smallest left-right width
     # there will probably be a tie, so group these.
     def width(r):
         return sum(r[:-1])
     sorted_by_width = sorted(rotations, key=width)
-    grouped_by_width = [list(it) for k, it in groupby(sorted_by_width, width)] 
+    grouped_by_width = [list(it) for k, it in groupby(sorted_by_width, width)]
     narrowest = grouped_by_width[0]
     if len(narrowest) == 1:
         return narrowest[0]
     # if there is a tie, select the form that has the smallest intervals to the left
-    left_compact_form = sorted(narrowest, key=lambda r: reduce((lambda x, y: pow(x+1,y-1)), r), reverse=True)
-    return left_compact_form[0]
+    candidates = narrowest
+    set_len = len(rotations[0])
+    for i in range(1, set_len):
+        # look at the leftmost items in each candidate - which has the smallest sum (interval distance)
+        # on each iteration, reduce the size of the list head under examination until a winner emerges
+        candidates = [(sum(c[:-i]), c) for c in candidates]
+        candidates = sorted(candidates, key=lambda c: c[0], reverse=False)
+        if len(candidates) == 1:
+            return candidates[0][1]
+        # highest ranking candidates proceed to next round.
+        candidates = itertools.groupby(candidates, lambda c: c[0])
+        k, g = next(candidates)
+        candidates = [c for _, c in list(g)]
+    return candidates[0]
+
 
     
 def get_rotations(intervals: List[int]) -> List[List[int]]:
@@ -43,7 +81,7 @@ def to_prime_form(s: Union[Set[int],List[int]]) -> Set[int]:
     if len(s) == 1:
         return set([0])
     pcs = sorted(list(set(s)))
-    intervals_p0 = to_interval_vectors(pcs)
+    intervals_p0 = get_linear_vector(pcs)
     intervals_i0 = intervals_p0[:]
     intervals_i0.reverse()
     intervals_i0 = intervals_i0[1:] + intervals_i0[:1]
