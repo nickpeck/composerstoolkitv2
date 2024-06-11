@@ -211,6 +211,13 @@ class TonnezTests(unittest.TestCase):
         assert t.lp in children
         assert t.rp in children
 
+    def test_equality(self):
+        assert tonnez.Tonnez(0,4,7) == tonnez.Tonnez(0,4,7)
+        assert tonnez.Tonnez(0, 4, 7) == [0, 4, 7]
+        assert tonnez.Tonnez(0, 4, 7) != tonnez.Tonnez(7, 0, 4)
+        assert tonnez.Tonnez(0, 4, 7) != {0, 4, 7}
+
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import List, Optional
 
+from ..core.sequence import Event
+
 class Tonnez:
     """Tonnez triad-relations calculator. Is node-based, so can be used as part of a search tree"""
 
