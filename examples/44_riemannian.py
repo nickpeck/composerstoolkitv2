@@ -39,7 +39,7 @@ while solutions < n_routes:
             explored_routes.append(route)
             solutions = solutions + 1
             continue
-        candidate_routes = candidate_routes + [(route + [t], getattr(node, t)) for t in transformations]
+        current_paths = current_paths + [(route + [t], getattr(node, t)) for t in transformations]
         explored_routes.append(route)
 
     current_paths = current_paths + candidate_routes
