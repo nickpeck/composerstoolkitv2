@@ -17,12 +17,11 @@ from composerstoolkit import *
 def rest(seq: Sequence):
     for event in seq.events:
         yield event.extend(pitches=[])
-    
-NEXUS_SET = {0,1,6}
-#NEXUS_SET = {0,2,5}
+
+NEXUS_SET = pitchset.ForteSet.as_dict()["3-5"] # 2nd Viennese trichord
     
 harmony_gate = enforce_shared_pitch_class_set(
-            pitch_class_set=NEXUS_SET,
+            pitch_class_set=NEXUS_SET.prime,
             get_context = lambda: Context.get_context())
 
 ##################### Tenor #######################
