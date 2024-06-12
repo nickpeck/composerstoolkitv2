@@ -172,33 +172,56 @@ class ForteSetTests(unittest.TestCase):
 
 class TonnezTests(unittest.TestCase):
 
+    def test_chord_quality(self):
+        t = tonnez.Tonnez(0,4,7)
+        assert t.quality == tonnez.Tonnez.MAJOR
+        t = tonnez.Tonnez(0,3,7)
+        assert t.quality == tonnez.Tonnez.MINOR
+        with self.assertRaises(Exception):
+            t = tonnez.Tonnez(0, 3, 6)
+            t.quality
+        with self.assertRaises(Exception):
+            t = tonnez.Tonnez(0, 2, 8)
+            t.quality
+
     def test_p_transformation(self):
         t = tonnez.Tonnez()
         assert t.p.pitch_classes == [0,3,7] # Cminor
+        assert t.p.p.pitch_classes == [0,4,7] # Cmaj
 
     def test_r_transformation(self):
         t = tonnez.Tonnez()
         assert t.r.pitch_classes == [9,0,4] # Aminor
+        assert t.r.r.pitch_classes == [0,4,7]  # Cmaj
 
     def test_l_transformation(self):
         t = tonnez.Tonnez()
         assert t.l.pitch_classes == [4,7,11] # Eminor
+        assert t.l.l.pitch_classes == [0,4,7]  # Cmaj
 
     def test_pl_transformation(self):
         t = tonnez.Tonnez()
         assert t.pl.pitch_classes == [8,0,3] # Ab maj
+        t = tonnez.Tonnez(0,3,7)
+        assert t.pl.pitch_classes == [8, 11, 3]  # Ab min
 
     def test_pr_transformation(self):
         t = tonnez.Tonnez()
         assert t.pr.pitch_classes == [3,7,10] # Eb maj
+        t = tonnez.Tonnez(0,3,7)
+        assert t.pr.pitch_classes == [3,6,10]  # Eb min
 
     def test_lp_transformation(self):
         t = tonnez.Tonnez()
         assert t.lp.pitch_classes == [4,8,11] # E maj
+        t = tonnez.Tonnez(0,3,7)
+        assert t.lp.pitch_classes == [4,7,11]  # E min
 
     def test_rp_transformation(self):
         t = tonnez.Tonnez()
         assert t.rp.pitch_classes == [9,1,4] # A maj
+        t = tonnez.Tonnez(0,3,7)
+        assert t.rp.pitch_classes == [9,0,4]  # A min
 
     def test_child_nodes(self):
         t = tonnez.Tonnez()
@@ -216,7 +239,6 @@ class TonnezTests(unittest.TestCase):
         assert tonnez.Tonnez(0, 4, 7) == [0, 4, 7]
         assert tonnez.Tonnez(0, 4, 7) != tonnez.Tonnez(7, 0, 4)
         assert tonnez.Tonnez(0, 4, 7) != {0, 4, 7}
-
 
 
 if __name__ == "__main__":
