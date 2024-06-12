@@ -11,9 +11,10 @@ n_routes = 5
 def play_route(route):
     print("ROUTE ", "->".join(route))
     events = [start.as_event().extend(duration=1)]
+    current_node = start
     for r in route:
-        events.append(getattr(start, r).as_event().extend(duration=1))
-    events.append(target.as_event().extend(duration=1))
+        current_node = getattr(current_node, r)
+        events.append(current_node.as_event().extend(duration=1))
     Sequencer(log_level=logging.WARNING, bpm=60)\
         .add_sequence(
             Sequence(events)
