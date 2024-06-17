@@ -92,6 +92,30 @@ def to_prime_form(s: Union[Set[int],List[int]]) -> Set[int]:
     
 def get_compliment(pcs, base_set=set(range(0,11))):
     return base_set - pcs
+
+def get_intervallic_compliments(pcs):
+    """
+    Yield all sets that have interval vectors that are the compliment of the
+    vector of pcs in its prime form.
+    """
+    all_sets = ForteSet.as_dict()
+    prime_a = tuple(to_prime_form(set(pcs)))
+    try:
+        vector_a = all_sets[prime_a].vector
+    except KeyError:
+        raise Exception(f"Invalid set {pcs}")
+    has_intervals_a = list(filter(lambda i: vector_a[i-1] > 0, range(0,6)))
+    solutions = []
+    for _,sets in all_sets.items():
+        if not isinstance(sets, list):
+            sets = [sets]
+        for s in sets:
+            vector_b = s.vector
+            has_intervals_b = list(filter(lambda i: vector_b[i-1] > 0, range(0,6)))
+            if set(has_intervals_a).intersection(set(has_intervals_b)) == set() and s not in solutions:
+                solutions.append(s)
+                yield s
+
     
 def complete_set(pitches: Set, target_pcs=set(range(0,11))):
     """Return combinations of pitch classes, that when added to 
@@ -129,6 +153,12 @@ class ForteSet:
     def as_event(self, transposition=0):
         pitches = [p + transposition for p in self.prime]
         return Event(pitches=pitches)
+
+    def __eq__(self, other):
+        if isinstance(other, ForteSet):
+            return self.prime == other.prime
+        return False
+
 
     @staticmethod
     def as_dict():

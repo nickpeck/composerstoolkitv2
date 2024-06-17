@@ -169,6 +169,11 @@ class ForteSetTests(unittest.TestCase):
             # each of these should be identical
             assert pitchset.to_prime_form(i.prime) == set(i.prime)
 
+    def test_intervallic_compliment(self):
+        source_set = {0,3,7}
+        all_sets = pitchset.ForteSet.as_dict()
+        assert list(pitchset.get_intervallic_compliments(source_set)) == [all_sets[(0,1,2)]]
+
 
 class TonnezTests(unittest.TestCase):
 

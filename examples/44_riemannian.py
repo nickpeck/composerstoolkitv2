@@ -26,22 +26,24 @@ def play_route(route):
 explored_routes = []
 transformations = ["p", "l", "r", "pl", "pr", "lp", "rp"]
 current_paths = [([t], getattr(start, t)) for t in transformations]
-solutions = 0
+solutions = []
 
-while solutions < n_routes:
+while len(solutions) < n_routes:
     candidate_routes = []
     for route, node in current_paths:
-        if solutions > n_routes - 1:
+        if len(solutions) > n_routes - 1:
             break
         if route in explored_routes:
             continue
         if target == node:
-            play_route(route)
+            solutions.append(route)
             explored_routes.append(route)
-            solutions = solutions + 1
             continue
         current_paths = current_paths + [(route + [t], getattr(node, t)) for t in transformations]
         explored_routes.append(route)
 
     current_paths = current_paths + candidate_routes
+
+for route in solutions:
+    play_route(route)
 
