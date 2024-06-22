@@ -5,6 +5,8 @@ Some intefaces for different playback engines.
 from abc import ABC
 import logging
 import time
+from ..resources import NOTE_MIN, NOTE_MAX
+
 
 class Playback(ABC):
     def noteon(self, track: int, pitch: int, velocity: int):
@@ -53,12 +55,16 @@ class RTPMidi(Playback):
         self._is_active = False
     
     def noteon(self, track: int, pitch: int, velocity: int):
+        if pitch > NOTE_MAX or pitch < NOTE_MIN:
+            return
         from rtmidi.midiconstants import NOTE_ON
         status = NOTE_ON | (track - 1)  # bit-wise OR of NOTE_ON and channel (zero-based)
         if self._is_active:
             self.midiout.send_message([status, pitch, velocity])
         
     def noteoff(self, track: int, pitch: int):
+        if pitch > NOTE_MAX or pitch < NOTE_MIN:
+            return
         from rtmidi.midiconstants import NOTE_OFF
         status = NOTE_OFF | (track - 1)
         if self._is_active:
