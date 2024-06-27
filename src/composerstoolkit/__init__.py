@@ -9,5 +9,6 @@ from composerstoolkit.resources import chords as chords
 from composerstoolkit.resources import pitchset as pitchset
 from composerstoolkit.resources import shapes as shapes
 from composerstoolkit.resources import tonnez as tonnez
+from composerstoolkit.resources import pulselabyrinth as pulselabyrinth
 from composerstoolkit.composers.heuristics import *
 from composerstoolkit.builders.permutators import *

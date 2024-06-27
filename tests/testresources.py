@@ -245,6 +245,31 @@ class TonnezTests(unittest.TestCase):
         assert tonnez.Tonnez(0, 4, 7) != tonnez.Tonnez(7, 0, 4)
         assert tonnez.Tonnez(0, 4, 7) != {0, 4, 7}
 
+class TestPulseLabyrinth(unittest.TestCase):
+    def setUp(self) -> None:
+        n = pulselabyrinth.ModulationMonad()
+        aug2 = pulselabyrinth.ModulationMonad(factor=2, transform=pulselabyrinth.aug)
+        dim2 = pulselabyrinth.ModulationMonad(factor=2, transform=pulselabyrinth.dim)
+        plus_aug2 = aug2 + n
+        aug2_dim2 = aug2 + dim2
+        transformations = {"n": n, "aug2": aug2, "dim2": dim2, "plus_aug2": plus_aug2, "aug2_dim2": aug2_dim2}
+        self.pl = pulselabyrinth.PulseLabyrinth(100, **transformations)
+
+    def test_simple_augmentation(self):
+        assert self.pl.aug2.bpm == 50
+
+    def test_simple_diminution(self):
+        assert self.pl.dim2.bpm == 200
+
+    def test_compound_modulation(self):
+        assert self.pl.plus_aug2.bpm == 150
+
+    def test_search_for_routes(self):
+        routes = self.pl.search_for_route(keep_route=lambda pl: pl.bpm > 400 and pl.bpm < 450, n_routes=1)
+        assert len(routes) == 1
+        for op in routes[0]:
+            self.pl = getattr(self.pl, op)
+        assert int(self.pl.bpm) > 400 and int(self.pl.bpm) < 450
 
 if __name__ == "__main__":
     unittest.main()
