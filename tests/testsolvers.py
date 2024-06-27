@@ -2,6 +2,10 @@ import unittest
 
 from composerstoolkit import *
 
+
+Fmajor = scales.mode("F", scales.MAJOR)
+EMajor = scales.mode("E", scales.MAJOR)
+
 class TestCLPSolver(unittest.TestCase):
     def test_we_can_derive_a_solution(self):
         solver = CLP(
@@ -44,6 +48,7 @@ class TestCLPSolver(unittest.TestCase):
                [solution2.voices[0].pitches, solution2.voices[1].pitches]
 
     def test_clp_solver_global_constraints(self):
+        FMajor = scales.mode("F", scales.MAJOR)
         solver = CLP(
             source_material = [
                 FiniteSequence([
@@ -65,17 +70,20 @@ class TestCLPSolver(unittest.TestCase):
         solver.add_constraint(
             constraint_range(minimum=55, maximum=65))
         solver.add_constraint(
-            constraint_in_set(scales.F_major))
+            constraint_in_set(FMajor))
 
         solution = next(solver)
         assert len(solution.voices) == 1
         for part in solution.voices:
             assert min(part.pitches) >= 55
             assert max(part.pitches) <= 65
-            assert set(part.pitches).difference(scales.F_major) == set()
+            assert set(part.pitches).difference(Fmajor) == set()
             assert part.duration ==16
 
     def test_clp_solver_per_voice_constraints(self):
+        Emajor = scales.mode("E", scales.MAJOR)
+        Fmajor = scales.mode("F", scales.MAJOR)
+
         solver = CLP(
             source_material = [
                 FiniteSequence([
@@ -95,14 +103,14 @@ class TestCLPSolver(unittest.TestCase):
         )
 
         solver.voices[0].add_constraint(
-            constraint_in_set(scales.F_major))
+            constraint_in_set(Fmajor))
         solver.voices[1].add_constraint(
-            constraint_in_set(scales.E_major))
+            constraint_in_set(Emajor))
 
         solution = next(solver)
         assert len(solution.voices) == 2
-        assert set(solution.voices[0].pitches).difference(scales.F_major) == set()
-        assert set(solution.voices[1].pitches).difference(scales.E_major) == set()
+        assert set(solution.voices[0].pitches).difference(Fmajor) == set()
+        assert set(solution.voices[1].pitches).difference(Emajor) == set()
 
     # def test_clp_solver_with_heuristics_minimise(self):
         # solver = CLP(

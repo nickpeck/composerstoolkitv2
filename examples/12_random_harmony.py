@@ -12,21 +12,21 @@ pf = pitches.PitchFactory()
 
 # arbitary selection of scales
 modes = [set(m) for m in [
-    scales.D_major,
-    scales.E_har_minor,
-    scales.C_mel_minor,
-    scales.B_major,
-    scales.Bb_har_minor
+    scales.mode("D", scales.MAJOR),
+    scales.mode("E", scales.HAR_MINOR),
+    scales.mode("C", scales.MEL_MINOR),
+    scales.mode("B", scales.MAJOR),
+    scales.mode("Bb", scales.HAR_MINOR)
 ]]
 
 spacing = 3
 
 # library of 5-note quartal voicings from each scale
-chord_lexicon = list(chords_from_scale(scales.D_major, n_voices=5, spacing=spacing))\
-    + list(chords_from_scale(scales.E_har_minor, n_voices=5, spacing=spacing))\
-    + list(chords_from_scale(scales.B_major, n_voices=5, spacing=spacing))\
-    + list(chords_from_scale(scales.C_mel_minor, n_voices=5, spacing=spacing))\
-    + list(chords_from_scale(scales.Bb_har_minor, n_voices=5, spacing=spacing))
+chord_lexicon = list(chords_from_scale(scales.mode("D", scales.MAJOR), n_voices=5, spacing=spacing))\
+    + list(chords_from_scale(scales.mode("E", scales.HAR_MINOR), n_voices=5, spacing=spacing))\
+    + list(chords_from_scale(scales.mode("B", scales.MAJOR), n_voices=5, spacing=spacing))\
+    + list(chords_from_scale(scales.mode("C", scales.MEL_MINOR), n_voices=5, spacing=spacing))\
+    + list(chords_from_scale(scales.mode("Bb", scales.HAR_MINOR), n_voices=5, spacing=spacing))
 
 random.shuffle(modes)
 

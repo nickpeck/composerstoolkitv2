@@ -13,7 +13,7 @@ seq = backtracking_solver(
         Event(pitches=[60], duration=QUARTER_NOTE),
     n_events=16,
     constraints=[
-        constraint_in_set(scales.C_major),
+        constraint_in_set(scales.mode("C", scales.MAJOR)),
         constraint_no_leaps_more_than(4)],
 )
 

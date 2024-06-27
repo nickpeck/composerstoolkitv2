@@ -157,14 +157,14 @@ class TransformerTests(unittest.TestCase):
 
     def test_transpose_diatonic(self):
         transformed = self.test_seq.transform(
-            transpose_diatonic(steps=1, scale=scales.C_major)
+            transpose_diatonic(steps=1, scale=scales.mode("C", scales.MAJOR))
         ).bake(n_events=5)
         assert transformed.pitches == [62,64,65,67,69]
 
     def test_transpose_diatonic_pass_on_error(self):
         transformed = self.test_seq.transform(
             transpose_diatonic(steps=1,
-                scale=scales.D_major,
+                scale=scales.mode("D", scales.MAJOR),
                 pass_on_error=True)
         ).bake(n_events=5)
         assert transformed.pitches == [60,64,66,65,69]
@@ -181,7 +181,7 @@ class TransformerTests(unittest.TestCase):
         with self.assertRaises(ValueError) as ve:
             transformed = self.test_seq.transform(
                 transpose_diatonic(steps=1,
-                    scale=scales.D_major,
+                    scale=scales.mode("D", scales.MAJOR),
                     pass_on_error=False)
             ).bake(n_events=5)
 
@@ -295,7 +295,7 @@ class TransformerTests(unittest.TestCase):
     def test_concertize_upwards(self):
         transformed = self.test_seq.transform(
             concertize(
-                scale=scales.C_major,
+                scale=scales.mode("C", scales.MAJOR),
                 voicing=[2,4],
                 direction="up")
         ).bake(n_events=5)
@@ -311,7 +311,7 @@ class TransformerTests(unittest.TestCase):
     def test_concertize_with_rests(self):
         transformed = Sequence([Event([], 1)]).transform(
             concertize(
-                scale=scales.C_major,
+                scale=scales.mode("C", scales.MAJOR),
                 voicing=[2,4],
                 direction="up")
         ).bake(n_events=5)
@@ -321,7 +321,7 @@ class TransformerTests(unittest.TestCase):
     def test_concertize_downwards(self):
         transformed = self.test_seq.transform(
             concertize(
-                scale=scales.C_major,
+                scale=scales.mode("C", scales.MAJOR),
                 voicing=[2,4],
                 direction="down")
         ).bake(n_events=5)
@@ -385,7 +385,7 @@ class TransformerTests(unittest.TestCase):
 
     def test_modal_quantize(self):
         transformed = self.test_seq.transform(
-            modal_quantize(scale=scales.D_major)
+            modal_quantize(scale=scales.mode("D", scales.MAJOR))
         ).bake(n_events=5)
         assert transformed.pitches == [
             59,62,64,64,67]
@@ -583,7 +583,7 @@ class TransformerTests(unittest.TestCase):
         transformed = seq.transform(
             linear_interpolate(
                 steps=2,
-                constrain_to_scale=scales.C_major)
+                constrain_to_scale=scales.mode("C", scales.MAJOR))
         ).bake(n_events=5)
         assert transformed.pitches == [60,60,62,62,64]
 

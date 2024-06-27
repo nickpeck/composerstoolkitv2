@@ -7,7 +7,7 @@ from composerstoolkit.resources import scales
 
 chords = Sequence.from_generator(
     chord_cycle(
-        scale=scales.C_major,
+        scale=scales.mode("C", scales.MAJOR),
         start=Event(pitches=[60,64,67,71], duration=WHOLE_NOTE),
         cycle_of=-4,
         max_len=16)).bake(n_events=7)
@@ -31,11 +31,11 @@ while True:
                 Event(pitches=[74], duration=QUARTER_NOTE),
                 Event(pitches=[76], duration=QUARTER_NOTE)]),
             mutators=[
-                transpose_diatonic(1, scales.C_major),
+                transpose_diatonic(1, scales.mode("C", scales.MAJOR)),
                 invert(),
                 retrograde(3)],
             constraints=[
-                constraint_in_set(scales.C_major),
+                constraint_in_set(scales.mode("C", scales.MAJOR)),
                 constraint_no_leaps_more_than(4),
                 constraint_use_chord_tone_on_first_beat()],
             min_beats=16

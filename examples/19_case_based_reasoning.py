@@ -38,10 +38,10 @@ solver = CaseBasedSolver(source=source,
     target_duration_beats = 2,
     constraints = [
         constraint_in_set(
-            scales.G_major,
+            scales.mode("G", scales.MAJOR),
             lookback_n_beats=1
             ) | constraint_in_set(
-            scales.C_major,
+            scales.mode("C", scales.MAJOR),
             lookback_n_beats=1),
         constraint_range(minimum=30,maximum=70)
     ])

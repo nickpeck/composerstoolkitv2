@@ -39,7 +39,7 @@ source = FiniteSequence(events=[
 
 
 constraints = [
-    constraint_in_set(scales.C_major),
+    constraint_in_set(scales.mode("C", scales.MAJOR)),
     #constraint_restrict_to_intervals(upper_voice=source, allow_intervals = [2,3,4,5,7]),
     constraint_no_consecutives(upper_voice=source, deny_intervals = [2,5,7])
 ]

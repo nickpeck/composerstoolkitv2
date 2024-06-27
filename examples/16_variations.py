@@ -37,12 +37,12 @@ melodic_variations1 = Sequence.from_generator(
         ]),
         repeats_per_var=2
     )).transform(
-        modal_quantize(scale=scales.Bb_major)
+        modal_quantize(scale=scales.mode("Bb", scales.MAJOR))
     )
 
 chords = Sequence.from_generator(
     chord_cycle(
-        scale=scales.Bb_major,
+        scale=scales.mode("Bb", scales.MAJOR),
         start=Event(pitches=[pf("F2"),pf("Eb3"),pf("G3"), pf("Bb3"), pf("D4")], duration=12),
         cycle_of=-3)
 ).transform(

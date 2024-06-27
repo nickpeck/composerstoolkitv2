@@ -28,7 +28,7 @@ def silence(seq: Sequence) -> Iterator[Event]:
 
 chords = Sequence.from_generator(
     chord_cycle(
-        scale=scales.C_major,
+        scale=scales.mode("C", scales.MAJOR),
         start=Event(pitches=[pf("C4"), pf("E4"), pf("G4"), pf("B4"), pf("D5")], duration=1),
         cycle_of=-3)
 ).transform(
@@ -44,11 +44,11 @@ chords = Sequence.from_generator(
 spectral_melody = Sequence.from_generator(
     axis_melody(
         axis_pitch = pf("G6"),
-        scale = scales.D_major,
+        scale = scales.mode("D", scales.MAJOR),
         max_steps = 20,
         direction="contract"
 )).transform(
-    modal_quantize(scale=scales.C_major)
+    modal_quantize(scale=scales.mode("C", scales.MAJOR))
 ).transform(
     map_to_pulses(
         Sequence.from_generator(collision_pattern(3,5)).transform(loop())
@@ -76,10 +76,10 @@ mysequencer = Context.get_context().new_sequencer(bpm=80, debug=True)\
     .add_sequence(spectral_melody, offset=15, track_no=3)\
     .add_sequence(ostinato, offset=80, track_no=4)\
     .add_transformer(gated(
-        modal_quantize(scales.E_major),
+        modal_quantize(scales.mode("E", scales.MAJOR)),
         cyclic_time_gate(300,100,200)))\
     .add_transformer(gated(
-        modal_quantize(scales.Ab_major),
+        modal_quantize(scales.mode("Ab", scales.MAJOR)),
         cyclic_time_gate(300,200,300)))
 
 mysequencer.playback()

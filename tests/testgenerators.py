@@ -91,7 +91,7 @@ class TestGenerators(unittest.TestCase):
         pf = pitches.PitchFactory()
         events = axis_melody(
             axis_pitch=pf("Db4"),
-            scale=scales.C_major,
+            scale=scales.mode("C", scales.MAJOR),
             max_steps=2)
         with self.assertRaises(Exception) as e:
             next(events)
@@ -204,7 +204,7 @@ class TestGenerators(unittest.TestCase):
         pf = pitches.PitchFactory()
         gen = chord_cycle(
             start = Event([pf("C4"),pf("E4"),pf("G4")]),
-            scale = scales.C_major,
+            scale = scales.mode("C", scales.MAJOR),
             cycle_of = -3,
             voice_lead = False,
             max_len = 3
@@ -219,7 +219,7 @@ class TestGenerators(unittest.TestCase):
         pf = pitches.PitchFactory()
         gen = chord_cycle(
             start = Event([pf("C4"),pf("E4"),pf("G4")]),
-            scale = scales.C_major,
+            scale = scales.mode("C", scales.MAJOR),
             cycle_of = -3,
             voice_lead = True,
             max_len = 3
@@ -234,7 +234,7 @@ class TestGenerators(unittest.TestCase):
         pf = pitches.PitchFactory()
         gen = chord_cycle(
             start = Event([pf("Db4"),pf("Gb4"),pf("Bb4")]),
-            scale = scales.C_major,
+            scale = scales.mode("C", scales.MAJOR),
             cycle_of = -3,
             voice_lead = False,
             max_len = 3
@@ -258,18 +258,20 @@ class TestGenerators(unittest.TestCase):
         assert next(gen).pitches == [pf("G-1"),pf("B-1"),pf("D0")]
 
     def test_select_chords(self):
+        CMajor = scales.mode("C", scales.MAJOR)
+        DMajor = scales.mode("D", scales.MAJOR)
         pf = pitches.PitchFactory()
-        lexicon = list(chords_from_scale(scales.C_major, n_voices=3, spacing=2)) +\
-            list(chords_from_scale(scales.D_major, n_voices=3, spacing=2))
+        lexicon = list(chords_from_scale(CMajor, n_voices=3, spacing=2)) +\
+            list(chords_from_scale(DMajor, n_voices=3, spacing=2))
         gen = select_chords(event=Event([pf("C4"),pf("E4"),pf("G4")]),
-                scales=[scales.D_major],
+                scales=[DMajor],
                 chord_lexicon = lexicon)
         evt1 = next(gen)
         assert evt1 in lexicon
-        assert {* evt1.pitches}.difference(scales.C_major) == set()
+        assert {* evt1.pitches}.difference(CMajor) == set()
         evt2 = next(gen)
         assert evt2 in lexicon
-        assert {* evt2.pitches}.difference(scales.D_major) == set()
+        assert {* evt2.pitches}.difference(DMajor) == set()
         with self.assertRaises(StopIteration):
             assert next(gen)
 

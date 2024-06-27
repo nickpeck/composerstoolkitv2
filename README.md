@@ -187,7 +187,7 @@ We can chain together multiple transformational operations onto a sequence. Skil
 melody = Sequence.from_generator(
     axis_melody(
         axis_pitch = pf("C6"),
-        scale = scales.C_mel_minor,
+        scale = scales.mode("C", scales.MEL_MINOR),
         max_steps = 14,
         direction="contract"
 )).transform(map_to_pulses(

@@ -11,7 +11,7 @@ import math
 
 from composerstoolkit import *
 
-pitch_domain = list(scales.C_major)
+pitch_domain = list(scales.mode("C", scales.MAJOR))
 rhythm_domain = list(range(1,12))
 pf = pitches.PitchFactory()
 N_EVENTS = 20

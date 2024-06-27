@@ -12,7 +12,7 @@ from composerstoolkit.resources import scales
 seq = backtracking_solver(
         Event(pitches=[60], duration=QUARTER_NOTE),
     constraints=[
-        constraint_in_set(scales.C_major),
+        constraint_in_set(scales.mode("C", scales.MAJOR)),
         constraint_no_leaps_more_than(4)],
     heuristics=[
         heuristic_trend_upwards(60, 10)],

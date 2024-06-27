@@ -32,13 +32,13 @@ chords = Sequence(events=[
 ).transform(
     gated(
         # maps the pattern to D major between 20-40 secs
-        modal_quantize(scales.D_major),
+        modal_quantize(scales.mode("D", scales.MAJOR)),
         cyclic_time_gate(60,20,40)
     )
 ).transform(
     gated(
         # maps the pattern to Db major between 40-60 secs
-        modal_quantize(scales.Db_major),
+        modal_quantize(scales.mode("Db", scales.MAJOR)),
         cyclic_time_gate(60,40,60)
     )
 )
@@ -50,13 +50,13 @@ bassline = Sequence(events=[
 ).transform(
     gated(
         # maps the pattern to D major between 20-40 secs
-        modal_quantize(scales.D_major),
+        modal_quantize(scales.mode("D", scales.MAJOR)),
         cyclic_time_gate(60,20,40)
     )
 ).transform(
     gated(
         # maps the pattern to Db major between 40-60 secs
-        modal_quantize(scales.Db_major),
+        modal_quantize(scales.mode("Db", scales.MAJOR)),
         cyclic_time_gate(60,40,60)
     )
 )
@@ -68,20 +68,20 @@ backing_figure = Sequence(events=[
     loop()
 ).transform(
     concertize(
-        scale=list(scales.F_major),
+        scale=list(scales.mode("F", scales.MAJOR)),
         voicing=[4,4,3,4,4],
         direction="down"
     )
 ).transform(
     gated(
         # maps the pattern to D major between 20-40 secs
-        modal_quantize(scales.D_major),
+        modal_quantize(scales.mode("D", scales.MAJOR)),
         cyclic_time_gate(60,20,40)
     )
 ).transform(
     gated(
         # maps the pattern to Db major between 40-60 secs
-        modal_quantize(scales.Db_major),
+        modal_quantize(scales.mode("Db", scales.MAJOR)),
         cyclic_time_gate(60,40,60)
     )
 )
@@ -103,7 +103,7 @@ melody = Sequence.from_generator(
 ).transform(
     linear_interpolate(
         steps = 4,
-        constrain_to_scale = list(scales.F_major))
+        constrain_to_scale = list(scales.mode("F", scales.MAJOR)))
 ).transform(
     rhythmic_augmentation(0.6)
 ).transform(
@@ -111,13 +111,13 @@ melody = Sequence.from_generator(
 ).transform(
     gated(
         # maps the pattern to D major between 20-40 secs
-        modal_quantize(scales.D_major),
+        modal_quantize(scales.mode("D", scales.MAJOR)),
         cyclic_time_gate(60,20,40)
     )
 ).transform(
     gated(
         # maps the pattern to D major between 40-60 secs
-        modal_quantize(scales.Db_major),
+        modal_quantize(scales.mode("Db", scales.MAJOR)),
         cyclic_time_gate(60,40,60)
     )
 )

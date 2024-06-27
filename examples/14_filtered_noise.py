@@ -24,7 +24,7 @@ seq = Sequence.from_generator(
 ).transform(
     rhythmic_augmentation(2)
 ).transform(
-    modal_quantize(scales.C_mel_minor)
+    modal_quantize(scales.mode("C", scales.MEL_MINOR))
 ).transform(
     rhythmic_quantize(0.25)
 ).transform(

@@ -20,11 +20,11 @@ while True:
                 Event(pitches=[62], duration=QUARTER_NOTE),
                 Event(pitches=[64], duration=QUARTER_NOTE)]),
             mutators=[
-                transpose_diatonic(1, scales.C_major),
+                transpose_diatonic(1, scales.mode("C", scales.MAJOR)),
                 invert(),
                 retrograde(3)],
             constraints=[
-                constraint_in_set(scales.C_major),
+                constraint_in_set(scales.mode("C", scales.MAJOR)),
                 constraint_no_leaps_more_than(4)],
             min_beats=16
         )

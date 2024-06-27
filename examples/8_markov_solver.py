@@ -32,7 +32,7 @@ voice2 = backtracking_markov_solver(
         Event(pitches=[62], duration=QUARTER_NOTE),
        graph.to_markov_table(),
     constraints=[
-        constraint_in_set(scales.G_major),
+        constraint_in_set(scales.mode("G", scales.MAJOR)),
         constraint_no_voice_crossing(voice1),
         constraint_no_leaps_more_than(4),
 
@@ -49,7 +49,7 @@ voice3 = backtracking_markov_solver(
         Event(pitches=[59], duration=QUARTER_NOTE),
        graph.to_markov_table(),
     constraints=[
-        constraint_in_set(scales.G_major),
+        constraint_in_set(scales.mode("G", scales.MAJOR)),
         constraint_no_voice_crossing(voice2),
         constraint_no_leaps_more_than(4),
 
@@ -67,7 +67,7 @@ voice4 = backtracking_markov_solver(
         Event(pitches=[55], duration=QUARTER_NOTE),
        graph.to_markov_table(),
     constraints=[
-        constraint_in_set(scales.G_major),
+        constraint_in_set(scales.mode("G", scales.MAJOR)),
         constraint_no_voice_crossing(voice3),
         constraint_no_leaps_more_than(12),
 

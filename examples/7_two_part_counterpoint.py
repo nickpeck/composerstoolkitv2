@@ -11,7 +11,7 @@ voice1 = backtracking_solver(
         Event(pitches=[60], duration=QUARTER_NOTE),
     constraints=[
         constraint_range(55, 127),
-        constraint_in_set(scales.C_major),
+        constraint_in_set(scales.mode("C", scales.MAJOR)),
         constraint_no_leaps_more_than(2),
         # enforce a V-I cadence at the end :
         constraint_notes_are(15, [59]),
@@ -29,7 +29,7 @@ voice2 = backtracking_solver(
     constraints=[
         constraint_range(0, 65),
         probability_gate(
-            constraint_in_set(scales.C_major),
+            constraint_in_set(scales.mode("C", scales.MAJOR)),
             probability=0.08),
         constraint_no_leaps_more_than(4),
         constraint_no_voice_crossing(voice1),

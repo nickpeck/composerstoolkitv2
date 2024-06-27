@@ -15,7 +15,7 @@ pf = pitches.PitchFactory()
 melody = Sequence.from_generator(
     axis_melody(
         axis_pitch = pf("C6"),
-        scale = scales.C_mel_minor,
+        scale = scales.mode("C", scales.MEL_MINOR),
         max_steps = 14,
         direction="contract"
 )).transform(map_to_pulses(
@@ -38,21 +38,21 @@ baseline = melody.transform(loop(
 
 melody = melody.transform(linear_interpolate(
     steps = 8,
-    constrain_to_scale = list(scales.C_mel_minor)
+    constrain_to_scale = list(scales.mode("C", scales.MEL_MINOR))
 )).transform(tie_repeated(
 ))
 
 accompaniment = Sequence.from_generator(
     axis_melody(
         axis_pitch = pf("C3"),
-        scale = scales.C_mel_minor,
+        scale = scales.mode("C", scales.MEL_MINOR),
         max_steps = 14,
         direction="contract"
 )).transform(map_to_pulses(
      Sequence.from_generator(pulses([WHOLE_NOTE])).transform(loop())
 )).transform(concertize(
     voicing = [2,4,6],
-    scale = scales.C_mel_minor,
+    scale = scales.mode("C", scales.MEL_MINOR),
     direction="up"
 )).transform(fit_to_range(
     min_pitch = pf("G3"),
