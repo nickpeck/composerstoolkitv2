@@ -110,7 +110,7 @@ fin_seq = FiniteSequence(
         Event(pitches=[41], duration=QUARTER_NOTE)])
 
 # you can covert from one to another:
-seq.bake() # evalutes the whole sequence - be careful you are not trying to evaluate an infinate sequence!
+seq.bake(n_beats=..., n_events=...) # evalutes the sequence up to n_beats or n_events (whichever is shorter).
 
 # and vice-versa
 fin_seq.to_sequence()
