@@ -78,7 +78,8 @@ class Curve:
         val = sum(values) / len(values)
         if len(self.amplitude_modulators) == 0:
             return val
-        values = [mod.y(x) * val for mod in self.amplitude_modulators]
+        x_range = self.x_max - self.x_min
+        values = [(mod.y(x)/x_range) * val for mod in self.amplitude_modulators]
         return sum(values) / len(values)
 
     def plot(self, x_label="Time (Beats)", y_label=""):
