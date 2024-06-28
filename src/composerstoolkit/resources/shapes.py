@@ -8,7 +8,8 @@ class Curve:
                  bounds_y: Tuple[int, int],
                  bounds_deg: Tuple[int, int] = (0, 360),
                  f=math.sin,
-                 modulators: Optional[List[Curve]] = None):
+                 modulators: Optional[List[Curve]] = None,
+                 amplitude_modulators: Optional[List[Curve]] = None):
         """
         Used to modulate a musical parameter (y) as a function of time on a sine wave
         For example, pitch, duration, dynamic
@@ -25,6 +26,9 @@ class Curve:
         self.modulators = []
         if modulators is not None:
             self.modulators = modulators
+        self.amplitude_modulators = []
+        if amplitude_modulators is not None:
+            self.amplitude_modulators = amplitude_modulators
 
     @property
     def x_min(self):
@@ -71,6 +75,10 @@ class Curve:
 
     def _apply_modulators(self, x, y):
         values = [y] + [mod.y(x) for mod in self.modulators]
+        val = sum(values) / len(values)
+        if len(self.amplitude_modulators) == 0:
+            return val
+        values = [mod.y(x) * val for mod in self.amplitude_modulators]
         return sum(values) / len(values)
 
     def plot(self, x_label="Time (Beats)", y_label=""):
