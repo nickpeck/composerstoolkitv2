@@ -174,6 +174,39 @@ class ForteSetTests(unittest.TestCase):
         all_sets = pitchset.ForteSet.as_dict()
         assert list(pitchset.get_intervallic_compliments(source_set)) == [all_sets[(0,1,2)]]
 
+    def test_transpositions(self):
+        source_set = {0,1,2}
+        transpositions = pitchset.transpositions(source_set)
+        assert transpositions == {
+            'p0': {0, 1, 2},
+            'p1': {1, 2, 3},
+            'p2': {2, 3, 4},
+            'p3': {3, 4, 5},
+            'p4': {4, 5, 6},
+            'p5': {5, 6, 7},
+            'p6': {8, 6, 7},
+            'p7': {8, 9, 7},
+            'p8': {8, 9, 10},
+            'p9': {9, 10, 11},
+            'p10': {0, 10, 11},
+            'p11': {0, 1, 11}}
+
+    def test_inversions(self):
+        source_set = {0,1,2}
+        inversions = pitchset.inversions(source_set)
+        assert inversions == {
+            'i0': {0, 10, 11},
+            'i1': {0, 1, 11},
+            'i2': {0, 1, 2},
+            'i3': {1, 2, 3},
+            'i4': {2, 3, 4},
+            'i5': {3, 4, 5},
+            'i6': {4, 5, 6},
+            'i7': {5, 6, 7},
+            'i8': {8, 6, 7},
+            'i9': {8, 9, 7},
+            'i10': {8, 9, 10}}
+
 
 class TonnezTests(unittest.TestCase):
 
@@ -244,6 +277,22 @@ class TonnezTests(unittest.TestCase):
         assert tonnez.Tonnez(0, 4, 7) == [0, 4, 7]
         assert tonnez.Tonnez(0, 4, 7) != tonnez.Tonnez(7, 0, 4)
         assert tonnez.Tonnez(0, 4, 7) != {0, 4, 7}
+
+
+class TestSetTonnez(unittest.TestCase):
+
+    def test_min_pitch_intersections(self):
+        st = settonnez.SetTonnez({0,1,2}, n_shared_pitches=2)
+        nodes = st.child_nodes()
+        assert nodes == [{1, 2, 3}, {0, 1, 11}, {0, 1, 11}, {1, 2, 3}]
+
+    def test_no_pitch_intersections(self):
+        st = settonnez.SetTonnez({0,1,2}, n_shared_pitches=0)
+        nodes = st.child_nodes()
+        assert nodes == [{3, 4, 5}, {4, 5, 6}, {5, 6, 7}, {8, 6, 7}, {8, 9, 7}, {8, 9, 10}, {9, 10, 11},
+                          {3, 4, 5}, {4, 5, 6}, {5, 6, 7}, {8, 6, 7}, {8, 9, 7}, {8, 9, 10}]
+
+
 
 class TestPulseLabyrinth(unittest.TestCase):
     def setUp(self) -> None:

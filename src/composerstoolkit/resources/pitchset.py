@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from functools import reduce
 from itertools import groupby
 import os
-from typing import Set, List, Union
+from typing import Set, List, Union, Dict
 
 import more_itertools
 
@@ -68,6 +68,30 @@ def get_compact_form(rotations: List[List[int]]) -> List[int]:
         candidates = [c for _, c in list(g)]
     return candidates[0]
 
+
+def transpositions(s: Union[Set[int],List[int]]) -> Dict[str, Set[int]]:
+    results = {}
+    ls = list(s)
+    for i in range(0,12):
+        results[f"p{i}"] = set([(p+i) % 12 for p in ls])
+    return results
+
+
+def inversions(s: Union[Set[int],List[int]]) -> Dict[str, Set[int]]:
+    results = {}
+    ls = list(s)
+    i0 = []
+    for e in ls:
+        delta = e - ls[0]
+        if delta < 0: # note is below axis
+            i0.append((12 - abs(ls[0]-delta)) % 12)
+        elif delta > 0: # note is above axis
+            i0.append((12 - abs(ls[0]-delta)) % 12)
+        else: #its the axis, so stays the same
+            i0.append(e % 12)
+    for i in range(0,11):
+        results[f"i{i}"] = set([(p+i) % 12 for p in i0])
+    return results
 
     
 def get_rotations(intervals: List[int]) -> List[List[int]]:

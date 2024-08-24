@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from composerstoolkit import *
-from testcore import MockContext
+from . testcore import MockContext
 
 class PermutationsTests(unittest.TestCase):
 
