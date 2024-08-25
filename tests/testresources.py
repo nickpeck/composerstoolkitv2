@@ -282,12 +282,29 @@ class TonnezTests(unittest.TestCase):
 class TestSetTonnez(unittest.TestCase):
 
     def test_get_transposition(self):
+        st = settonnez.SetTonnez({0, 1, 2}, n_shared_pitches=2, use_transpositions=False)
+        with self.assertRaises(KeyError):
+            assert hasattr(st, 't1')
         st = settonnez.SetTonnez({0, 1, 2}, n_shared_pitches=2)
         assert st.p1.pitch_classes == {1,2,3}
 
     def test_get_inversion(self):
+        st = settonnez.SetTonnez({0, 1, 2}, n_shared_pitches=2, use_inversions=False)
+        with self.assertRaises(KeyError):
+            assert hasattr(st, 'i1')
         st = settonnez.SetTonnez({0, 1, 2}, n_shared_pitches=2)
         assert st.i1.pitch_classes == {1,0,11}
+
+    def test_custom_transformation(self):
+        def my_transformation(pitch_classes):
+            pitch_classes = list(pitch_classes)
+            sorted(pitch_classes)
+            transformed = pitch_classes[:-1] + [pitch_classes[-1] +1]
+            return {"op": set(transformed)}
+        st = settonnez.SetTonnez({0, 1, 2}, n_shared_pitches=2, use_transpositions=False, use_inversions=False,
+                                 other_transformations=[my_transformation])
+        assert st.op.pitch_classes == {0,1,3}
+
 
     def test_min_pitch_intersections(self):
         st = settonnez.SetTonnez({0,1,2}, n_shared_pitches=2)
