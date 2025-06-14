@@ -348,5 +348,20 @@ class TestPulseLabyrinth(unittest.TestCase):
             self.pl = getattr(self.pl, op)
         assert int(self.pl.bpm) > 400 and int(self.pl.bpm) < 450
 
+class TestInfinitySeries(unittest.TestCase):
+
+    def test_infinity_series(self):
+        series = infinityseries.infinityseries(0, 1)
+        assert next(series) == 0
+        assert next(series) == 1
+        assert next(series) == -1
+        assert next(series) == 2
+        assert next(series) == 1
+        assert next(series) == 0
+        assert next(series) == -2
+        assert next(series) == 3
+        assert next(series) == -1
+        assert next(series) == 2
+
 if __name__ == "__main__":
     unittest.main()
