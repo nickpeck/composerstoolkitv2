@@ -228,6 +228,9 @@ def using_markov_table(starting_event: Event,
     while is_not_terminal():
         i = i + 1
         weights = list(markov_table[previous_note_pc].values())
+        if sum(weights) == 0:
+            yield(Event([previous_note], starting_event.duration))
+            continue
         pitch = random.choices(choices, weights)[0]
         original_8va = math.floor(previous_note / 12)
         _pitch = (original_8va * 12) + pitch
